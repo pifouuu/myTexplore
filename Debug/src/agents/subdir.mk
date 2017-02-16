@@ -9,7 +9,8 @@ CC_SRCS += \
 ../src/agents/ModelBasedAgent.cc \
 ../src/agents/QLearner.cc \
 ../src/agents/Sarsa.cc \
-../src/agents/SavedPolicy.cc 
+../src/agents/SavedPolicy.cc \
+../src/agents/myAgent.cc 
 
 CC_DEPS += \
 ./src/agents/DiscretizationAgent.d \
@@ -17,7 +18,8 @@ CC_DEPS += \
 ./src/agents/ModelBasedAgent.d \
 ./src/agents/QLearner.d \
 ./src/agents/Sarsa.d \
-./src/agents/SavedPolicy.d 
+./src/agents/SavedPolicy.d \
+./src/agents/myAgent.d 
 
 OBJS += \
 ./src/agents/DiscretizationAgent.o \
@@ -25,14 +27,15 @@ OBJS += \
 ./src/agents/ModelBasedAgent.o \
 ./src/agents/QLearner.o \
 ./src/agents/Sarsa.o \
-./src/agents/SavedPolicy.o 
+./src/agents/SavedPolicy.o \
+./src/agents/myAgent.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 src/agents/%.o: ../src/agents/%.cc
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	g++ -D__GXX_EXPERIMENTAL_CXX0X__ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++11 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

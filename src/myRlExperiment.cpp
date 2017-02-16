@@ -609,6 +609,10 @@ int main(int argc, char **argv) {
     }
   }
 
+  cout << "explore : " << exploreType << endl;
+  cout << "planner :" << plannerType << endl;
+  cout << "model : " << modelType << endl;
+  cout << "prediction " << predType << endl;
   // default back to greedy if no coefficients
   if (exploreType == DIFF_AND_NOVEL_BONUS && v == 0 && n == 0)
     exploreType = GREEDY;
@@ -804,6 +808,7 @@ int main(int argc, char **argv) {
     statesPerDim.resize(minValues.size(), nstates);
   }
 
+
   for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
     // Construct agent here.
@@ -996,6 +1001,7 @@ int main(int argc, char **argv) {
   }
 
   if (PRINTS) cout << "Avg Rsum: " << (rsum / (float)NUMTRIALS) << endl;
+
 
 } // end main
 
