@@ -10,6 +10,8 @@
 
 #include "../common/Random.h"
 #include "../common/core.hh"
+#include <random>
+#include <algorithm>
 
 
 
@@ -33,8 +35,11 @@ public:
 
 	friend std::ostream &operator<<(std::ostream &out, const BlockRoom &blockroom);
 
-	Random &rng;
+	/** Prints the current map. */
+	void print_map() const;
 
+	Random &rng;
+	bool LWDEBUG;
 	int height;
 	int width;
 
@@ -46,52 +51,42 @@ public:
 		BLUE
 	};
 
+	std::default_random_engine engine;
+
+
 	struct block_t{
-			float ns;
-			float ew;
-			float color;
-			float is_in_robot_hand = false;
-			float is_in_blue_box = false;
-			float is_in_red_box = false;
-		};
-
-	struct agent_t{
-		float ns;
-		float ew;
-		float block_hold = -1;
-		float eye_ns;
-		float eye_ew;
-		float is_synchronous = false;
+		float* ns;
+		float* ew;
+		float* color;
+		float* is_in_robot_hand;
+		float* is_in_blue_box;
+		float* is_in_red_box;
+		block_t(float* a, float* b, float* c, float* d,
+				float* e, float* f){
+			ns = a;
+			ew = b;
+			color = c;
+			is_in_robot_hand = d;
+			is_in_blue_box = e;
+			is_in_red_box = f;
+		}
 	};
 
-	struct red_box_t{
-		float ns;
-		float ew;
-		float color = RED;
-	};
-
-	struct blue_box_t{
-		float ns;
-		float ew;
-		float color = BLUE;
-	};
-
-	struct tutor_t{
-		float eye_ns;
-		float eye_ew;
-	};
-
-	agent_t agent;
-	blue_box_t blue_box;
-	red_box_t red_box;
+	float& agent_ns;
+	float& agent_ew;
+	float& block_hold;
+	float& agent_eye_ns;
+	float& agent_eye_ew;
+	float& red_box_ns;
+	float& red_box_ew;
+	float& blue_box_ns;
+	float& blue_box_ew;
+	float& tutor_eye_ns;
+	float& tutor_eye_ew;
 	std::vector<block_t> blocks;
-	tutor_t tutor;
 
 	std::map<std::string, int> actions;
 	int num_actions;
-
-	std::random_device rd;
-	std::mt19937 g(rd());
 
 	std::vector<float> s;
 	const std::vector<float> &sensation() const;
@@ -100,6 +95,7 @@ public:
 	std::vector<int> find_blue_block_under_hand();
 	bool terminal() const;
 	bool eye_hand_sync();
+
 
 
 };

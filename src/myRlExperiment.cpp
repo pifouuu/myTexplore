@@ -22,6 +22,7 @@
 #include "../include/envs/MountainCar.hh"
 #include "../include/envs/CartPole.hh"
 #include "../include/envs/LightWorld.hh"
+#include "../include/envs/BlockRoom.hh"
 
 
 ////////////
@@ -673,6 +674,11 @@ int main(int argc, char **argv) {
 
   // Construct environment here.
   Environment* e;
+
+  if (strcmp(envType, "blockroom") == 0){
+	  if (PRINTS) cout << "Environment: blockroom\n";
+	  e = new BlockRoom(rng);
+  }
 
   if (strcmp(envType, "cartpole") == 0){
     if (PRINTS) cout << "Environment: Cart Pole\n";
