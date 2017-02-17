@@ -12,7 +12,8 @@ BlockRoom::BlockRoom(Random &rand):
 	width(10),
 	nbRedBlocks(2),
 	nbBlueBlocks(3),
-	rng(rand)
+	rng(rand),
+	s(12+6*(nbBlueBlocks+nbBlueBlocks))
 {
 	/* Agent and item attributes, actions */
 	agent.ew = rng.uniformDiscrete(0, width-1);
