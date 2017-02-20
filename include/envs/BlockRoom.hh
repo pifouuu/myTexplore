@@ -96,8 +96,6 @@ public:
 	bool terminal() const;
 	bool eye_hand_sync();
 
-
-
 };
 
 

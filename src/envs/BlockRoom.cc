@@ -108,11 +108,11 @@ void BlockRoom::getMinMaxReward(float *minR,
 
 }
 
-/*void BlockRoom::print_map() const{
+void BlockRoom::print_map() const{
 
-  cout << "\nBlock room" << endl;
+  std::cout << "\nBlock room" << std::endl;
 
-  // for each row
+  /*// for each row
   for (int j = height-1; j >= 0; --j){
     // for each column
     for (int i = 0; i < width; i++){
@@ -134,10 +134,10 @@ void BlockRoom::getMinMaxReward(float *minR,
   cout << "NORTH: key: " << key_n << ", door: " << door_n << ", lock: " << lock_n << endl;
   cout << "EAST: key: " << key_e << ", door: " << door_e << ", lock: " << lock_e << endl;
   cout << "SOUTH: key: " << key_s << ", door: " << door_s << ", lock: " << lock_s << endl;
-  cout << "WEST: key: " << key_w << ", door: " << door_w << ", lock: " << lock_w << endl;
+  cout << "WEST: key: " << key_w << ", door: " << door_w << ", lock: " << lock_w << endl;*/
 
 
-}*/
+}
 
 void BlockRoom::reset(){
 	agent_ew = rng.uniformDiscrete(0, width-1);
@@ -177,23 +177,30 @@ void BlockRoom::reset(){
 }
 
 int BlockRoom::applyNoise(int action){
-  switch(action) {
-  case actions["NORTH"]:
-  	  return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ? actions["EAST"] : actions["WEST"]);
-  case actions["SOUTH"]:
-    return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ? actions["EAST"] : actions["WEST"]);
-  case actions["EAST"]:
-	  return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ? actions["NORTH"] : actions["SOUTH"]);
-  case actions["WEST"]:
-    return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ? actions["NORTH"] : actions["SOUTH"]);
-  default:
-    return action;
-  }
+	if (action == actions["NORTH"]){
+		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
+				actions["EAST"] : actions["WEST"]);
+	}
+	if (action == actions["SOUTH"]){
+		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
+				actions["EAST"] : actions["WEST"]);
+	}
+	if (action == actions["EAST"]){
+		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
+				actions["EAST"] : actions["WEST"]);
+	}
+	if (action==actions["WEST"]){
+		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
+				actions["NORTH"] : actions["SOUTH"]);
+	}
+	else {
+		return action;
+	}
 }
 
 std::vector<int> BlockRoom::find_red_block_under_hand() {
 	std::vector<int> l;
-	for (std::vector::iterator it = blocks.begin(); it != blocks.end(); ++it){
+	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
 		if (*(it->ns)==agent_ns && *(it->ew)==agent_ew && *(it->color)==RED){
 			l.push_back(it-blocks.begin());
 		}
@@ -203,7 +210,7 @@ std::vector<int> BlockRoom::find_red_block_under_hand() {
 
 std::vector<int> BlockRoom::find_blue_block_under_hand() {
 	std::vector<int> l;
-	for (std::vector::iterator it = blocks.begin(); it != blocks.end(); ++it){
+	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
 		if (*(it->ns)==agent_ns && *(it->ew)==agent_ew && *(it->color)==BLUE){
 			l.push_back(it-blocks.begin());
 		}
@@ -235,8 +242,8 @@ float BlockRoom::apply(int action){
 		if (block_hold==-1 && eye_hand_sync()) {
 			std::vector<int> blue_blocks_under = find_blue_block_under_hand();
 			if (!blue_blocks_under.empty()) {
-				std::shuffle(blue_blocks_under.begin(), blue_blocks_under.end());
-				int idx = blue_blocks_under.pop_back();
+				std::shuffle(blue_blocks_under.begin(), blue_blocks_under.end(), engine);
+				int idx = blue_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
 				*(blocks[idx].ns) = -1;
 				*(blocks[idx].ew) = -1;
@@ -248,8 +255,8 @@ float BlockRoom::apply(int action){
 		if (block_hold==-1 && eye_hand_sync()) {
 			std::vector<int> red_blocks_under = find_red_block_under_hand();
 			if (!red_blocks_under.empty()) {
-				std::shuffle(red_blocks_under.begin(), red_blocks_under.end());
-				int idx = red_blocks_under.pop_back();
+				std::shuffle(red_blocks_under.begin(), red_blocks_under.end(), engine);
+				int idx = red_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
 				*(blocks[idx].ns) = -1;
 				*(blocks[idx].ew) = -1;
@@ -258,8 +265,8 @@ float BlockRoom::apply(int action){
 		}
 	}
 	if (action==actions["PUT_DOWN"]) {
-		std::list<int> red_blocks_under = find_red_block_under_hand();
-		std::list<int> blue_blocks_under = find_blue_block_under_hand();
+		std::vector<int> red_blocks_under = find_red_block_under_hand();
+		std::vector<int> blue_blocks_under = find_blue_block_under_hand();
 		if ((block_hold!=-1)
 				&& eye_hand_sync()
 				&& red_blocks_under.empty()
