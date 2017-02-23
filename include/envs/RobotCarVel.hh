@@ -33,11 +33,15 @@ public:
 
   virtual const std::vector<float> &sensation() const;
   virtual float apply(int action);
+  void apply_tutor(int action){};
+
 
   virtual bool terminal() const;
   virtual void reset();
 
   virtual int getNumActions();
+  virtual int getNumTutorActions(){};
+
   virtual void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
   virtual void getMinMaxReward(float* minR, float* maxR);
 

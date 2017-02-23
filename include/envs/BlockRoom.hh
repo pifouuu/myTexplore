@@ -26,9 +26,12 @@ public:
 	~BlockRoom();
 
 	float apply(int action);
+	void apply_tutor(int action);
 	bool terminal();
 	void reset();
 	int getNumActions();
+	int getNumTutorActions();
+
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
@@ -39,7 +42,7 @@ public:
 	void print_map() const;
 
 	Random &rng;
-	bool LWDEBUG;
+	bool BRDEBUG = false;
 	int height;
 	int width;
 
@@ -72,6 +75,7 @@ public:
 		}
 	};
 
+	std::vector<float> s;
 	float& agent_ns;
 	float& agent_ew;
 	float& block_hold;
@@ -85,10 +89,12 @@ public:
 	float& tutor_eye_ew;
 	std::vector<block_t> blocks;
 
+	std::map<std::string, int> tutor_actions;
 	std::map<std::string, int> actions;
 	int num_actions;
+	int num_tutor_actions;
 
-	std::vector<float> s;
+
 	const std::vector<float> &sensation() const;
 	int applyNoise(int action);
 	std::vector<int> find_red_block_under_hand();

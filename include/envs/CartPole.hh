@@ -30,6 +30,7 @@ public:
 
   virtual const std::vector<float> &sensation() const;
   virtual float apply(int action);
+  void apply_tutor(int action){};
 
   /** Calculate the new state and reward for the given force */
   float transition(float force);
@@ -38,6 +39,7 @@ public:
   virtual void reset();
 
   virtual int getNumActions();
+  virtual int getNumTutorActions(){};
   virtual void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
   virtual void getMinMaxReward(float* minR, float* maxR);
 

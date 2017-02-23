@@ -103,10 +103,10 @@ void ModelBasedAgent::initParams(){
   
   BATCH_FREQ = 1; //50;
 
-  TIMEDEBUG = true; //true;
-  AGENTDEBUG = true;
-  ACTDEBUG = true;//true;
-  SIMPLEDEBUG = true; //true; //false; //true;
+  TIMEDEBUG = false; //true;
+  AGENTDEBUG = false;
+  ACTDEBUG = false;//true;
+  SIMPLEDEBUG = false; //true; //false; //true;
 
   // check
   if (qmax <= 0.1 && (exploreType == TWO_MODE_PLUS_R || 
@@ -171,7 +171,7 @@ int ModelBasedAgent::next_action(float r, const std::vector<float> &s) {
 	 << ", s = " << &s << ")" << endl;
   }
   
-  if (SIMPLEDEBUG) cout << "Got Reward " << r;
+  if (SIMPLEDEBUG) cout << "Got Reward " << r << endl;
  
   // update our models
   // this is where we possibly plan again if model changes
@@ -286,7 +286,7 @@ void ModelBasedAgent::initModel(int nfactors){
 void ModelBasedAgent::initPlanner(){
   if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-  int max_path = 200; //500;
+  int max_path = 50; //500;
 
   // init planner based on type
   if (plannerType == VALUE_ITERATION){
