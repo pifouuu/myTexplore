@@ -25,7 +25,7 @@ public:
 	 */
 	~BlockRoom();
 
-	float apply(int action);
+
 	void apply_tutor(int action);
 	bool terminal();
 	void reset();
@@ -35,6 +35,7 @@ public:
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
+	bool isEpisodic(){ return true;}
 
 	friend std::ostream &operator<<(std::ostream &out, const BlockRoom &blockroom);
 
@@ -56,6 +57,9 @@ public:
 
 	std::default_random_engine engine;
 
+
+
+	occ_info_t apply(int action);
 
 	struct block_t{
 		float* ns;
@@ -101,6 +105,11 @@ public:
 	std::vector<int> find_blue_block_under_hand();
 	bool terminal() const;
 	bool eye_hand_sync();
+
+
+
+	int numstep;
+	std::map<int, std::list<int>> actions_occurences;
 
 };
 

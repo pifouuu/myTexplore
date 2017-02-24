@@ -176,6 +176,18 @@ struct classPair {
 	float out;
 };
 
+/** To store information about occurrences of actions **/
+struct occ_info_t{
+		float reward;
+		bool success;
+		int occ_step;
+		occ_info_t(float r, bool s, int o){
+			reward =r ;
+			success =s;
+			occ_step = o;
+		}
+	};
+
 /** Interface for an environment, whose states can be represented as
     vectors of floats and whose actions can be represented as ints.
     Implementations of the Environment interface determine how actions
@@ -192,7 +204,7 @@ public:
 	/** Allows an agent to affect its environment.
       \param action The action the agent wishes to apply.
       \return The immediate one-step reward caused by the action. */
-	virtual float apply(int action) = 0;
+	virtual occ_info_t apply(int action) = 0;
 
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.

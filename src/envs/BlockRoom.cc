@@ -30,7 +30,8 @@ BlockRoom::BlockRoom(Random &rand):
 	blue_box_ns(s[7]),
 	blue_box_ew(s[8]),
 	tutor_eye_ns(s[9]),
-	tutor_eye_ew(s[10])
+	tutor_eye_ew(s[10]),
+	numstep(0)
 {
 	int cnt_actions = 0;
 
@@ -332,24 +333,39 @@ void BlockRoom::apply_tutor(int action){
 		}
 	}
 }
-float BlockRoom::apply(int action){
+occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
+	bool success = false;
+	int step = numstep++;
 
 	if (action==actions["NORTH"]) {
-		if (agent_ns < height-1) {agent_ns++;}
+		if (agent_ns < height-1) {
+			agent_ns++;
+			success = true;
+		}
 	}
 	if (action==actions["SOUTH"]) {
-		if (agent_ns > 0) {agent_ns--;}
+		if (agent_ns > 0) {
+			agent_ns--;
+			success = true;
+		}
 	}
 	if (action==actions["EAST"]) {
-		if (agent_ew < width-1) {agent_ew++;}
+		if (agent_ew < width-1) {
+			agent_ew++;
+			success = true;
+		}
 	}
 	if (action==actions["WEST"]) {
-		if (agent_ew > 0) {agent_ew--;}
+		if (agent_ew > 0) {
+			agent_ew--;
+			success = true;
+		}
 	}
 	if (action==actions["GO_TO_EYE"]) {
 		agent_ns = agent_eye_ns;
 		agent_ew = agent_eye_ew;
+		success = true;
 	}
 	if (action==actions["PICK_BLUE"]) {
 		if (block_hold==-1 && eye_hand_sync()) {
@@ -359,6 +375,7 @@ float BlockRoom::apply(int action){
 				int idx = blue_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
 				block_hold = idx;
+				success = true;
 			}
 		}
 	}
@@ -370,6 +387,7 @@ float BlockRoom::apply(int action){
 				int idx = red_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
 				block_hold = idx;
+				success = true;
 			}
 		}
 	}
@@ -386,6 +404,7 @@ float BlockRoom::apply(int action){
 			*(blocks[block_hold].ns) = agent_ns;
 			*(blocks[block_hold].ew) = agent_ew;
 			block_hold = -1;
+			success = true;
 		}
 	}
 	if (action==actions["PUT_IN"]) {
@@ -396,6 +415,7 @@ float BlockRoom::apply(int action){
 				*(blocks[block_hold].ns) = red_box_ns;
 				*(blocks[block_hold].ew) = red_box_ew;
 				block_hold = -1;
+				success = true;
 			}
 			else if (blue_box_ns==agent_ns && blue_box_ew==agent_ew){
 				*(blocks[block_hold].is_in_robot_hand) = false;
@@ -403,6 +423,7 @@ float BlockRoom::apply(int action){
 				*(blocks[block_hold].ns) = blue_box_ns;
 				*(blocks[block_hold].ew) = blue_box_ew;
 				block_hold = -1;
+				success = true;
 			}
 		}
 	}
@@ -411,15 +432,18 @@ float BlockRoom::apply(int action){
 			agent_eye_ew = tutor_eye_ew;
 			agent_eye_ns = tutor_eye_ns,
 			reward=+1;
+			success = true;
 		}
 	}
 	if (action==actions["LOOK_RED_BOX"])	{
 		agent_eye_ew = red_box_ew;
 		agent_eye_ns = red_box_ns;
+		success = true;
 	}
 	if (action==actions["LOOK_BLUE_BOX"]){
 		agent_eye_ew = blue_box_ew;
 		agent_eye_ns = blue_box_ns;
+		success = true;
 	}
 	if (action>num_actions-nbBlueBlocks-nbRedBlocks-1
 			&& action<num_actions){
@@ -429,6 +453,7 @@ float BlockRoom::apply(int action){
 				&& !(*(blocks[num_block].is_in_robot_hand))){
 			agent_eye_ew = *(blocks[num_block].ew);
 			agent_eye_ns = *(blocks[num_block].ns);
+			success = true;
 		}
 	}
 	if (block_hold>-1){
@@ -436,7 +461,9 @@ float BlockRoom::apply(int action){
 		*(blocks[block_hold].ew) = agent_ew;
 	}
 
-	return reward;
+	actions_occurences[action].push_back(numstep);
+	numstep++;
+	return occ_info_t(reward, success, step);
 }
 
 

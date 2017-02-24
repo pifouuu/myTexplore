@@ -1002,7 +1002,7 @@ int main(int argc, char **argv) {
 				int tutor_action = tutor->first_action(es);
 				e->apply_tutor(tutor_action);
 				int a = agent->first_action(es);
-				float r = e->apply(a);
+				occ_info_t info = e->apply(a);
 
 				// update performance
 				sum += r;
