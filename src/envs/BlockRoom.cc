@@ -336,7 +336,6 @@ void BlockRoom::apply_tutor(int action){
 occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
 	bool success = false;
-	int step = numstep++;
 
 	if (action==actions["NORTH"]) {
 		if (agent_ns < height-1) {
@@ -463,7 +462,7 @@ occ_info_t BlockRoom::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, step);
+	return occ_info_t(reward, success);
 }
 
 

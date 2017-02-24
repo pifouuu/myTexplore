@@ -69,6 +69,7 @@ public:
                                          float reward, bool term);
   virtual void planOnNewModel();
   virtual int getBestAction(const std::vector<float> &s);
+  void evaluate_model();
 
   virtual void setSeeding(bool seed);
   virtual void setFirst();

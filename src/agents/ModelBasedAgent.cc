@@ -286,10 +286,10 @@ void ModelBasedAgent::initModel(int nfactors){
 void ModelBasedAgent::initPlanner(){
   if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-  int max_path = 50; //500;
+  int max_path = 200; //500;
 
   // init planner based on type
-  if (plannerType == VALUE_ITERATION){
+  /*if (plannerType == VALUE_ITERATION){
     planner = new ValueIteration(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, rng);
   }
   else if (plannerType == MBS_VI){
@@ -303,16 +303,16 @@ void ModelBasedAgent::initPlanner(){
   }
   else if (plannerType == MOD_PRI_SWEEPING){
     planner = new PrioritizedSweeping(numactions, gamma, 10.0, false, modelType, featmax, featmin, rng);
-  }
-  else if (plannerType == ET_UCT){
+  }*/
+  if (plannerType == ET_UCT){
     planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
   }
-  else if (plannerType == POMDP_ETUCT){
+ /* else if (plannerType == POMDP_ETUCT){
     planner = new PO_ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }
   else if (plannerType == POMDP_PAR_ETUCT){
     planner = new PO_ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
-  }
+  }*/
   else if (plannerType == ET_UCT_ACTUAL){
     planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }
@@ -322,9 +322,9 @@ void ModelBasedAgent::initPlanner(){
   else if (plannerType == PAR_ETUCT_ACTUAL){
     planner = new ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }
-  else if (plannerType == ET_UCT_L1){
+  /*else if (plannerType == ET_UCT_L1){
     planner = new ETUCT(numactions, gamma, rrange, 1.0, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
-  }
+  }*/
   else {
     std::cerr << "ERROR: invalid planner type: " << plannerType << endl;
     exit(-1);
@@ -384,6 +384,9 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
 
 }
 
+/*void ModelBasedAgent::evaluate_model(){
+	planner->evaluate_model();
+}*/
 
 int ModelBasedAgent::chooseAction(const std::vector<float> &s){
   if (AGENTDEBUG) cout << "chooseAction(s = " << &s 

@@ -49,6 +49,10 @@ local.properties
 .loadpath
 .recommenders
 
+# Fichiers sérialisés
+resultats/
+*.ser
+
 # Eclipse Core
 .project
 
@@ -59,7 +63,10 @@ local.properties
 *.launch
 
 # PyDev specific (Python IDE for Eclipse)
-*.pydevproject
+*.pydevprojectgit pull
+
+# debug giles
+/Debug
 
 # CDT-specific (C/C++ Development Tooling)
 .cproject

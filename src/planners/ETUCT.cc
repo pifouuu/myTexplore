@@ -252,6 +252,10 @@ bool ETUCT::updateModelWithExperience(const std::vector<float> &laststate,
 
 }
 
+void ETUCT::evaluate_model(){
+
+}
+
 void ETUCT::updateStateActionFromModel(state_t s, int a, state_info* info) {
 
 	if (HISTORY_SIZE == 0) {

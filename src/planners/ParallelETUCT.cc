@@ -160,6 +160,9 @@ void ParallelETUCT::setModel(MDPModel* m){
 // Functional functions :) //
 /////////////////////////////
 
+void ParallelETUCT::evaluate_model(){
+
+}
 
 
 /** Use the latest experience to update state info and the model. */

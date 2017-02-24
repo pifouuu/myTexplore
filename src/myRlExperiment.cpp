@@ -9,31 +9,35 @@
 #include <string.h>
 #include <sys/time.h>
 
+// include input and output archivers
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
+// include this header to serialize vectors
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
+
+/** Plotting tools **/
+#include "../include/gnuplot-iostream.h"
+
+
 //////////////////
 // Environments //
 //////////////////
-#include "../include/envs/RobotCarVel.hh"
-#include "../include/envs/fourrooms.hh"
-#include "../include/envs/tworooms.hh"
-#include "../include/envs/taxi.hh"
-#include "../include/envs/FuelRooms.hh"
-#include "../include/envs/stocks.hh"
-#include "../include/envs/energyrooms.hh"
-#include "../include/envs/MountainCar.hh"
-#include "../include/envs/CartPole.hh"
-#include "../include/envs/LightWorld.hh"
 #include "../include/envs/BlockRoom.hh"
 
 
 ////////////
 // Agents //
 ////////////
-#include "../include/agents/QLearner.hh"
+// #include "../include/agents/QLearner.hh"
 #include "../include/agents/ModelBasedAgent.hh"
+/*
 #include "../include/agents/DiscretizationAgent.hh"
 #include "../include/agents/SavedPolicy.hh"
 #include "../include/agents/Dyna.hh"
 #include "../include/agents/Sarsa.hh"
+*/
 
 // Tutors
 #include "../include/tutors/s_dep_tutor.hpp"
@@ -46,9 +50,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 1000; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 50; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 1000; // per episode
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+unsigned MAXSTEPS = 1000000; // per episode
 bool PRINTS = false;
 
 
@@ -700,7 +704,7 @@ int main(int argc, char **argv) {
 		e = new BlockRoom(rng);
 	}
 
-	else if (strcmp(envType, "cartpole") == 0){
+	/*else if (strcmp(envType, "cartpole") == 0){
 		if (PRINTS) cout << "Environment: Cart Pole\n";
 		e = new CartPole(rng, stochastic);
 	}
@@ -785,7 +789,7 @@ int main(int argc, char **argv) {
 		if (PRINTS) cout << "Enironment: Stocks with " << nsectors
 				<< " sectors and " << nstocks << " stocks\n";
 		e = new Stocks(rng, stochastic, nsectors, nstocks);
-	}
+	}*/
 
 	else {
 		std::cerr << "Invalid env type" << endl;
@@ -852,7 +856,7 @@ int main(int argc, char **argv) {
 		// Construct agent here.
 		Agent* agent;
 
-		if (strcmp(agentType, "qlearner") == 0){
+		/*if (strcmp(agentType, "qlearner") == 0){
 			if (PRINTS) cout << "Agent: QLearner" << endl;
 			agent = new QLearner(numactions,
 					discountfactor,
@@ -882,9 +886,9 @@ int main(int argc, char **argv) {
 					epsilon, // epsilon
 					lambda,
 					rng);
-		}
+		}*/
 
-		else if (strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") || strcmp(agentType, "texplore")){
+		if (strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") || strcmp(agentType, "texplore")){
 			if (PRINTS) cout << "Agent: Model Based" << endl;
 			agent = new ModelBasedAgent(numactions,
 					discountfactor,
@@ -905,10 +909,10 @@ int main(int argc, char **argv) {
 					rng);
 		}
 
-		else if (strcmp(agentType, "savedpolicy") == 0){
+		/*else if (strcmp(agentType, "savedpolicy") == 0){
 			if (PRINTS) cout << "Agent: Saved Policy" << endl;
 			agent = new SavedPolicy(numactions,filename);
-		}
+		}*/
 
 		else {
 			std::cerr << "ERROR: Invalid agent type" << endl;
@@ -919,7 +923,7 @@ int main(int argc, char **argv) {
 		int totalStates = 1;
 		Agent* a2 = agent;
 		// not for model based when doing continuous model
-		if (nstates > 0 && (modelType != M5ALLMULTI || strcmp(agentType, "qlearner") == 0)){
+		/*if (nstates > 0 && (modelType != M5ALLMULTI || strcmp(agentType, "qlearner") == 0)){
 			int totalStates = powf(nstates,minValues.size());
 			if (PRINTS) cout << "Discretize with " << nstates << ", total: " << totalStates << endl;
 			agent = new DiscretizationAgent(nstates, a2,
@@ -932,22 +936,34 @@ int main(int argc, char **argv) {
 				totalStates *= range;
 			}
 			if (PRINTS) cout << "No discretization, total: " << totalStates << endl;
-		}
+		}*/
 
 		// before we start, seed the agent with some experiences
 		// agent->seedExp(e->getSeedings());
 
+		struct act_info_t{
+			std::list<int> occ_list;
+			int success;
+		};
+		std::vector<act_info_t> act_to_occ;
+		std::vector<int> act_count(numactions);
+
+		std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
+		std::map<int,std::vector<std::pair<float, float>>> plot_act_try;
+		std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
+
+
 		// STEP BY STEP DOMAIN
 		if (!episodic){
 
-			// performance tracking
+			/*// performance tracking
 			float sum = 0;
 			int steps = 0;
 			float trialSum = 0.0;
 
 			int tutor_action = 0;
 			int a = 0;
-			float r = 0;
+			occ_info_t info = 0;
 
 			//////////////////////////////////
 			// non-episodic
@@ -981,7 +997,7 @@ int main(int argc, char **argv) {
 			rsum += sum;
 			trialSum += sum;
 			if (PRINTS) cout << "Rsum(trial " << j << "): " << trialSum << " Avg: "
-					<< (rsum / (float)(j+1))<< endl;
+					<< (rsum / (float)(j+1))<< endl;*/
 
 		}
 
@@ -997,15 +1013,22 @@ int main(int argc, char **argv) {
 				float sum = 0;
 				int steps = 0;
 
+
 				// first action
 				std::vector<float> es = e->sensation();
 				int tutor_action = tutor->first_action(es);
 				e->apply_tutor(tutor_action);
 				int a = agent->first_action(es);
 				occ_info_t info = e->apply(a);
-
+				act_count[a]++;
+				if (info.success){
+					plot_act_succes[a].push_back(std::make_pair(steps,1));
+				}
+				plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+				plot_act_acc[a].push_back(std::make_pair(steps,
+						plot_act_succes[a].size()/act_count[a]));
 				// update performance
-				sum += r;
+				sum += info.reward;
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
@@ -1014,21 +1037,55 @@ int main(int argc, char **argv) {
 					es = e->sensation();
 					tutor_action = tutor->next_action(es);
 					e->apply_tutor(tutor_action);
-					a = agent->next_action(r, es);
-					r = e->apply(a);
-
-					// update performance info
-					sum += r;
+					a = agent->next_action(info.reward, es);
+					info = e->apply(a);
+					act_count[a]++;
+					if (info.success){
+						plot_act_succes[a].push_back(std::make_pair(steps,1));
+					}
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_acc[a].push_back(std::make_pair(steps,
+							plot_act_succes[a].size()/act_count[a]));
+					// update performance
+					sum += info.reward;
 					++steps;
+					if (steps % 10 == 0){
+						std::cout << steps << std::endl;
+					}
+					if (steps % 1000 == 0){
+						// agent->evaluate_model();
+						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+								it != plot_act_succes.end(); ++it){
+							// serialize vector
+							std::ofstream ofs("act_succes_"+std::to_string(it->first)+".ser");
+							boost::archive::text_oarchive oa(ofs);
+							oa & it->second;
+						}
+						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
+								it != plot_act_try.end(); ++it){
+							// serialize vector
+							std::ofstream ofs("act_try_"+std::to_string(it->first)+".ser");
+							boost::archive::text_oarchive oa(ofs);
+							oa & it->second;
+						}
+						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
+								it != plot_act_acc.end(); ++it){
+							// serialize vector
+							std::ofstream ofs("act_acc_"+std::to_string(it->first)+".ser");
+							boost::archive::text_oarchive oa(ofs);
+							oa & it->second;
+						}
+					}
 
 				}
 
 				// terminal/last state
 				if (e->terminal()){
-					agent->last_action(r);
+					agent->last_action(info.reward);
 				}else{
-					agent->next_action(r, e->sensation());
+					agent->next_action(info.reward, e->sensation());
 				}
+
 
 				e->reset();
 				std::cerr << sum << endl;

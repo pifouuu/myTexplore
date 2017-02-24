@@ -180,11 +180,9 @@ struct classPair {
 struct occ_info_t{
 		float reward;
 		bool success;
-		int occ_step;
-		occ_info_t(float r, bool s, int o){
+		occ_info_t(float r, bool s){
 			reward =r ;
 			success =s;
-			occ_step = o;
 		}
 	};
 
@@ -409,6 +407,9 @@ public:
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;
+
+	/** Evaluate the prediction from the planner **/
+/*	virtual void evaluate_model() = 0;*/
 
 	/** Return the best action for a given state. */
 	virtual int getBestAction(const std::vector<float> &s) = 0;

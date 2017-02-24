@@ -102,6 +102,7 @@ public:
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
+/*  void evaluate_model();*/
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);
