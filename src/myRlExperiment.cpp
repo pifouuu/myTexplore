@@ -60,6 +60,7 @@ void displayHelp(){
 	cout << "\n Call experiment --agent type --env type [options]\n";
 	cout << "Agent types: qlearner sarsa modelbased rmax texplore dyna savedpolicy\n";
 	cout << "Env types: taxi tworooms fourrooms energy fuelworld mcar cartpole car2to7 car7to2 carrandom stocks lightworld\n";
+	cout << "Tutor types : s_dep_tutor, no_tutor\n";
 
 	cout << "\n Agent Options:\n";
 	cout << "--gamma value (discount factor between 0 and 1)\n";
@@ -251,6 +252,7 @@ int main(int argc, char **argv) {
 	bool mChanged = false;
 	bool bvnChanged = false;
 	bool lambdaChanged = false;
+	bool with_tutor = true;
 
 	while(-1 != (ch = getopt_long_only(argc, argv, optflags, long_options, &option_index))) {
 		switch(ch) {
@@ -624,6 +626,7 @@ int main(int argc, char **argv) {
 		case 13:
 			// already processed this one
 			cout << "tutor: " << tutorType << endl;
+			if (strcmp(tutorType,"no_tutor") == 0) {with_tutor = false;}
 			break;
 
 		case 'h':
@@ -634,7 +637,6 @@ int main(int argc, char **argv) {
 			break;
 		}
 	}
-
 	cout << "explore : " << exploreType << endl;
 	cout << "planner :" << plannerType << endl;
 	cout << "model : " << modelType << endl;
@@ -701,7 +703,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "blockroom") == 0){
 		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng);
+		e = new BlockRoom(rng, with_tutor);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -842,7 +844,10 @@ int main(int argc, char **argv) {
 	// Construct tutor here.
 	Tutor* tutor;
 
-	if (strcmp(tutorType, "s_dep_tutor") == 0) {
+	if (!with_tutor){
+		std::cout<<"Tutor : without a tutor."<<std::endl;
+	}
+	else if (strcmp(tutorType, "s_dep_tutor") == 0) {
 		if (PRINTS) cout << "Tutor: State-dependent" << endl;
 		tutor = new s_dep_tutor(num_tutor_actions);
 	}
@@ -1016,8 +1021,11 @@ int main(int argc, char **argv) {
 
 				// first action
 				std::vector<float> es = e->sensation();
-				int tutor_action = tutor->first_action(es);
-				e->apply_tutor(tutor_action);
+				if (with_tutor){
+					int tutor_action = tutor->first_action(es);
+					e->apply_tutor(tutor_action);
+				}
+
 				int a = agent->first_action(es);
 				occ_info_t info = e->apply(a);
 				act_count[a]++;
@@ -1035,8 +1043,11 @@ int main(int argc, char **argv) {
 
 					// perform an action
 					es = e->sensation();
-					tutor_action = tutor->next_action(es);
-					e->apply_tutor(tutor_action);
+					if (with_tutor){
+						int tutor_action = tutor->next_action(es);
+						e->apply_tutor(tutor_action);
+					}
+
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
 					act_count[a]++;

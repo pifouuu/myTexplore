@@ -18,7 +18,7 @@
 class BlockRoom: public Environment {
 public:
 	// Constructor
-	BlockRoom(Random &rand);
+	BlockRoom(Random &rand, bool with_tutor);
 
 	/* Blockroom is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -44,6 +44,7 @@ public:
 
 	Random &rng;
 	bool BRDEBUG = false;
+	bool WITH_TUTOR;
 	int height;
 	int width;
 
@@ -80,17 +81,17 @@ public:
 	};
 
 	std::vector<float> s;
-	float& agent_ns;
-	float& agent_ew;
-	float& block_hold;
-	float& agent_eye_ns;
-	float& agent_eye_ew;
-	float& red_box_ns;
-	float& red_box_ew;
-	float& blue_box_ns;
-	float& blue_box_ew;
-	float& tutor_eye_ns;
-	float& tutor_eye_ew;
+	float* agent_ns;
+	float* agent_ew;
+	float* block_hold;
+	float* agent_eye_ns;
+	float* agent_eye_ew;
+	float* red_box_ns;
+	float* red_box_ew;
+	float* blue_box_ns;
+	float* blue_box_ew;
+	float* tutor_eye_ns;
+	float* tutor_eye_ew;
 	std::vector<block_t> blocks;
 
 	std::map<std::string, int> tutor_actions;

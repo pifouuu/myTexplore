@@ -13,48 +13,54 @@
 
 using namespace cv;
 
-BlockRoom::BlockRoom(Random &rand):
+BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 	height(10),
 	width(10),
 	nbRedBlocks(2),
 	nbBlueBlocks(3),
 	rng(rand),
-	s(11+6*(nbRedBlocks+nbBlueBlocks)),
-	agent_ns(s[0]),
-	agent_ew(s[1]),
-	block_hold(s[2]),
-	agent_eye_ns(s[3]),
-	agent_eye_ew(s[4]),
-	red_box_ns(s[5]),
-	red_box_ew(s[6]),
-	blue_box_ns(s[7]),
-	blue_box_ew(s[8]),
-	tutor_eye_ns(s[9]),
-	tutor_eye_ew(s[10]),
+	WITH_TUTOR(with_tutor),
+	s(9+6*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
+	agent_ns(&(s[0])),
+	agent_ew(&(s[1])),
+	block_hold(&(s[2])),
+	agent_eye_ns(&(s[3])),
+	agent_eye_ew(&(s[4])),
+	red_box_ns(&(s[5])),
+	red_box_ew(&(s[6])),
+	blue_box_ns(&(s[7])),
+	blue_box_ew(&(s[8])),
 	numstep(0)
 {
 	int cnt_actions = 0;
-
-	actions[std::string("NORTH")] = cnt_actions++;
-	actions[std::string("SOUTH")] = cnt_actions++;
-	actions[std::string("EAST")] = cnt_actions++;
-	actions[std::string("WEST")] = cnt_actions++;
-	actions[std::string("GO_TO_EYE")] = cnt_actions++;
-	actions[std::string("PICK_BLUE")] = cnt_actions++;
-	actions[std::string("PICK_RED")] = cnt_actions++;
-	actions[std::string("PUT_DOWN")] = cnt_actions++;
-	actions[std::string("PUT_IN")] = cnt_actions++;
-	actions[std::string("LOOK_TUTOR")] = cnt_actions++;
-	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
-	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
-
-	int nb_fix_actions = cnt_actions;
-
 	int cnt_tutor_actions = 0;
 
-	tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
-	tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
-	tutor_actions[std::string("LOOK_BLUE_BOX")] = cnt_tutor_actions++;
+	/*actions[std::string("NORTH")] = cnt_actions++;
+	actions[std::string("SOUTH")] = cnt_actions++;
+	actions[std::string("EAST")] = cnt_actions++;
+	actions[std::string("WEST")] = cnt_actions++;*/
+	actions[std::string("GO_TO_EYE")] = cnt_actions++;
+	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
+	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
+	/*actions[std::string("PICK_BLUE")] = cnt_actions++;
+	actions[std::string("PICK_RED")] = cnt_actions++;*/
+	actions[std::string("PICK")] = cnt_actions++;
+	actions[std::string("PUT_DOWN")] = cnt_actions++;
+	actions[std::string("PUT_IN")] = cnt_actions++;
+
+
+	if (WITH_TUTOR){
+		tutor_eye_ns = &(s[9]);
+		tutor_eye_ew = &(s[10]);
+		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
+
+
+		tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
+		tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
+		tutor_actions[std::string("LOOK_BLUE_BOX")] = cnt_tutor_actions++;
+	}
+
+	int nb_fix_actions = cnt_actions;
 
 	for (int i = 0; i<nbRedBlocks; i++){
 		block_t block(
@@ -69,7 +75,10 @@ BlockRoom::BlockRoom(Random &rand):
 		std::string name = "LOOK_RED_BLOCK_";
 		name += std::to_string(i);
 		actions[name] = cnt_actions++;
-		tutor_actions[name] = cnt_tutor_actions++;
+		if (WITH_TUTOR){
+			tutor_actions[name] = cnt_tutor_actions++;
+		}
+
 	}
 
 	for (int i = 0; i<nbBlueBlocks; i++){
@@ -85,7 +94,9 @@ BlockRoom::BlockRoom(Random &rand):
 		std::string name = "LOOK_BLUE_BLOCK_";
 		name += std::to_string(i);
 		actions[name]= cnt_actions++;
-		tutor_actions[name] = cnt_tutor_actions++;
+		if (WITH_TUTOR){
+			tutor_actions[name] = cnt_tutor_actions++;
+		}
 	}
 
 	num_actions = cnt_actions;
@@ -190,11 +201,11 @@ void BlockRoom::print_map() const{
 		}
 	}
 
-	posToImg[std::pair<int,int>(blockSize*blue_box_ew,blockSize*blue_box_ns)].push_back(blue_box_img);
-	posToImg[std::pair<int,int>(blockSize*red_box_ew,blockSize*red_box_ns)].push_back(red_box_img);
-	posToImg[std::pair<int,int>(blockSize*agent_eye_ew,blockSize*agent_eye_ns)].push_back(agent_eye_img);
-	posToImg[std::pair<int,int>(blockSize*tutor_eye_ew,blockSize*tutor_eye_ns)].push_back(tutor_eye_img);
-	posToImg[std::pair<int,int>(blockSize*agent_ew,blockSize*agent_ns)].push_back(agent_hand_img);
+	posToImg[std::pair<int,int>(blockSize*(*blue_box_ew),blockSize*(*blue_box_ns))].push_back(blue_box_img);
+	posToImg[std::pair<int,int>(blockSize*(*red_box_ew),blockSize*(*red_box_ns))].push_back(red_box_img);
+	posToImg[std::pair<int,int>(blockSize*(*agent_eye_ew),blockSize*(*agent_eye_ns))].push_back(agent_eye_img);
+	posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
+	posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(agent_hand_img);
 
 	for (auto elem : posToImg){
 		if (elem.second.size()==1){
@@ -226,19 +237,21 @@ void BlockRoom::print_map() const{
 }
 
 void BlockRoom::reset(){
-	block_hold = -1;
-	agent_ew = rng.uniformDiscrete(0, width-1);
-	agent_ns = rng.uniformDiscrete(0, height-1);
-	agent_eye_ew = rng.uniformDiscrete(0, width-1);
-	agent_eye_ns = rng.uniformDiscrete(0, height-1);
-	tutor_eye_ew = rng.uniformDiscrete(0, width -1);
-	tutor_eye_ns = rng.uniformDiscrete(0, height-1);
-	red_box_ew = rng.uniformDiscrete(0, width-1);
-	red_box_ns = rng.uniformDiscrete(0, height-1);
+	(*block_hold) = -1;
+	(*agent_ew) = rng.uniformDiscrete(0, width-1);
+	(*agent_ns) = rng.uniformDiscrete(0, height-1);
+	(*agent_eye_ew) = rng.uniformDiscrete(0, width-1);
+	(*agent_eye_ns) = rng.uniformDiscrete(0, height-1);
+	if (WITH_TUTOR){
+		(*tutor_eye_ew) = rng.uniformDiscrete(0, width -1);
+		(*tutor_eye_ns) = rng.uniformDiscrete(0, height-1);
+	}
+	(*red_box_ew) = rng.uniformDiscrete(0, width-1);
+	(*red_box_ns) = rng.uniformDiscrete(0, height-1);
 	do {
-		blue_box_ew = rng.uniformDiscrete(0, width-1);
-		blue_box_ns = rng.uniformDiscrete(0, height-1);
-	} while (red_box_ew==blue_box_ew && blue_box_ns==blue_box_ns);
+		(*blue_box_ew) = rng.uniformDiscrete(0, width-1);
+		(*blue_box_ns) = rng.uniformDiscrete(0, height-1);
+	} while ((*red_box_ew)==(*blue_box_ew) && (*blue_box_ns)==(*blue_box_ns));
 
 	std::vector<int> x(height*width-1);
 	std::iota(x.begin(), x.end(), 0);
@@ -264,31 +277,13 @@ void BlockRoom::reset(){
 }
 
 int BlockRoom::applyNoise(int action){
-	if (action == actions["NORTH"]){
-		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
-				actions["EAST"] : actions["WEST"]);
-	}
-	if (action == actions["SOUTH"]){
-		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
-				actions["EAST"] : actions["WEST"]);
-	}
-	if (action == actions["EAST"]){
-		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
-				actions["EAST"] : actions["WEST"]);
-	}
-	if (action==actions["WEST"]){
-		return rng.bernoulli(0.9) ? action : (rng.bernoulli(0.5) ?
-				actions["NORTH"] : actions["SOUTH"]);
-	}
-	else {
-		return action;
-	}
+	return action;
 }
 
 std::vector<int> BlockRoom::find_red_block_under_hand() {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==agent_ns && *(it->ew)==agent_ew && *(it->color)==RED){
+		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==RED){
 			l.push_back(it-blocks.begin());
 		}
 	}
@@ -298,7 +293,7 @@ std::vector<int> BlockRoom::find_red_block_under_hand() {
 std::vector<int> BlockRoom::find_blue_block_under_hand() {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==agent_ns && *(it->ew)==agent_ew && *(it->color)==BLUE){
+		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==BLUE){
 			l.push_back(it-blocks.begin());
 		}
 	}
@@ -306,21 +301,21 @@ std::vector<int> BlockRoom::find_blue_block_under_hand() {
 }
 
 bool BlockRoom::eye_hand_sync(){
-	return ((BlockRoom::agent_eye_ns==BlockRoom::agent_ns)
-			&& (BlockRoom::agent_eye_ew==BlockRoom::agent_ew));
+	return (*(BlockRoom::agent_eye_ns)==*(BlockRoom::agent_ns)
+			&& *(BlockRoom::agent_eye_ew)==*(BlockRoom::agent_ew));
 }
 void BlockRoom::apply_tutor(int action){
 	if (action==actions["LOOK_TUTOR"]){
-		tutor_eye_ew = agent_eye_ew;
-		tutor_eye_ns = agent_eye_ns;
+		(*tutor_eye_ew) = (*agent_eye_ew);
+		(*tutor_eye_ns) = (*agent_eye_ns);
 	}
 	if (action==tutor_actions["LOOK_RED_BOX"])	{
-		tutor_eye_ew = red_box_ew;
-		tutor_eye_ns = red_box_ns;
+		(*tutor_eye_ew) = (*red_box_ew);
+		(*tutor_eye_ns) = (*red_box_ns);
 	}
 	if (action==tutor_actions["LOOK_BLUE_BOX"]){
-		tutor_eye_ew = blue_box_ew;
-		tutor_eye_ns = blue_box_ns;
+		(*tutor_eye_ew) = (*blue_box_ew);
+		(*tutor_eye_ns) = (*blue_box_ns);
 	}
 	if (action>num_tutor_actions-nbBlueBlocks-nbRedBlocks-1
 			&& action<num_tutor_actions){
@@ -328,8 +323,8 @@ void BlockRoom::apply_tutor(int action){
 		if (!(*(blocks[num_block].is_in_blue_box))
 				&& !(*(blocks[num_block].is_in_red_box))
 				&& !(*(blocks[num_block].is_in_robot_hand))){
-			tutor_eye_ew = *(blocks[num_block].ew);
-			tutor_eye_ns = *(blocks[num_block].ns);
+			(*tutor_eye_ew) = *(blocks[num_block].ew);
+			(*tutor_eye_ns) = *(blocks[num_block].ns);
 		}
 	}
 }
@@ -337,55 +332,55 @@ occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
 	bool success = false;
 
-	if (action==actions["NORTH"]) {
-		if (agent_ns < height-1) {
-			agent_ns++;
+	/*if (action==actions["NORTH"]) {
+		if ((*agent_ns) < height-1) {
+			(*agent_ns)++;
 			success = true;
 		}
 	}
 	if (action==actions["SOUTH"]) {
-		if (agent_ns > 0) {
-			agent_ns--;
+		if ((*agent_ns) > 0) {
+			(*agent_ns)--;
 			success = true;
 		}
 	}
 	if (action==actions["EAST"]) {
-		if (agent_ew < width-1) {
-			agent_ew++;
+		if ((*agent_ew) < width-1) {
+			(*agent_ew)++;
 			success = true;
 		}
 	}
 	if (action==actions["WEST"]) {
-		if (agent_ew > 0) {
-			agent_ew--;
+		if ((*agent_ew) > 0) {
+			(*agent_ew)--;
 			success = true;
 		}
-	}
+	}*/
 	if (action==actions["GO_TO_EYE"]) {
-		agent_ns = agent_eye_ns;
-		agent_ew = agent_eye_ew;
+		(*agent_ns) = (*agent_eye_ns);
+		(*agent_ew) = (*agent_eye_ew);
 		success = true;
 	}
 	if (action==actions["PICK_BLUE"]) {
-		if (block_hold==-1 && eye_hand_sync()) {
+		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> blue_blocks_under = find_blue_block_under_hand();
 			if (!blue_blocks_under.empty()) {
 				std::shuffle(blue_blocks_under.begin(), blue_blocks_under.end(), engine);
 				int idx = blue_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
-				block_hold = idx;
+				(*block_hold) = idx;
 				success = true;
 			}
 		}
 	}
 	if (action==actions["PICK_RED"]) {
-		if (block_hold==-1 && eye_hand_sync()) {
+		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> red_blocks_under = find_red_block_under_hand();
 			if (!red_blocks_under.empty()) {
 				std::shuffle(red_blocks_under.begin(), red_blocks_under.end(), engine);
 				int idx = red_blocks_under.back();
 				*(blocks[idx].is_in_robot_hand) = true;
-				block_hold = idx;
+				(*block_hold) = idx;
 				success = true;
 			}
 		}
@@ -393,55 +388,55 @@ occ_info_t BlockRoom::apply(int action){
 	if (action==actions["PUT_DOWN"]) {
 		std::vector<int> red_blocks_under = find_red_block_under_hand();
 		std::vector<int> blue_blocks_under = find_blue_block_under_hand();
-		if ((block_hold!=-1)
+		if (((*block_hold)!=-1)
 				&& eye_hand_sync()
 				&& red_blocks_under.empty()
 				&& blue_blocks_under.empty()
-				&& (red_box_ns!=agent_ns || red_box_ew!=agent_ew)
-				&& (red_box_ns!=agent_ns || red_box_ew!=agent_ew)){
-			*(blocks[block_hold].is_in_robot_hand) = false;
-			*(blocks[block_hold].ns) = agent_ns;
-			*(blocks[block_hold].ew) = agent_ew;
-			block_hold = -1;
+				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
+				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))){
+			*(blocks[(*block_hold)].is_in_robot_hand) = false;
+			*(blocks[(*block_hold)].ns) = (*agent_ns);
+			*(blocks[(*block_hold)].ew) = (*agent_ew);
+			(*block_hold) = -1;
 			success = true;
 		}
 	}
 	if (action==actions["PUT_IN"]) {
-		if (block_hold!=-1){
-			if (red_box_ns==agent_ns && red_box_ew==agent_ew){
-				*(blocks[block_hold].is_in_robot_hand) = false;
-				*(blocks[block_hold].is_in_red_box) = true;
-				*(blocks[block_hold].ns) = red_box_ns;
-				*(blocks[block_hold].ew) = red_box_ew;
-				block_hold = -1;
+		if ((*block_hold)!=-1){
+			if ((*red_box_ns)==(*agent_ns) && (*red_box_ew)==(*agent_ew)){
+				*(blocks[(*block_hold)].is_in_robot_hand) = false;
+				*(blocks[(*block_hold)].is_in_red_box) = true;
+				*(blocks[(*block_hold)].ns) = (*red_box_ns);
+				*(blocks[(*block_hold)].ew) = (*red_box_ew);
+				(*block_hold) = -1;
 				success = true;
 			}
-			else if (blue_box_ns==agent_ns && blue_box_ew==agent_ew){
-				*(blocks[block_hold].is_in_robot_hand) = false;
-				*(blocks[block_hold].is_in_blue_box) = true;
-				*(blocks[block_hold].ns) = blue_box_ns;
-				*(blocks[block_hold].ew) = blue_box_ew;
-				block_hold = -1;
+			else if ((*blue_box_ns)==(*agent_ns) && (*blue_box_ew)==(*agent_ew)){
+				*(blocks[(*block_hold)].is_in_robot_hand) = false;
+				*(blocks[(*block_hold)].is_in_blue_box) = true;
+				*(blocks[(*block_hold)].ns) = (*blue_box_ns);
+				*(blocks[(*block_hold)].ew) = (*blue_box_ew);
+				(*block_hold) = -1;
 				success = true;
 			}
 		}
 	}
-	if (action==actions["LOOK_TUTOR"]){
-		if (agent_eye_ew != tutor_eye_ew || agent_eye_ns != tutor_eye_ns){
-			agent_eye_ew = tutor_eye_ew;
-			agent_eye_ns = tutor_eye_ns,
+	if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
+		if ((*agent_eye_ew) != (*tutor_eye_ew) || (*agent_eye_ns) != (*tutor_eye_ns)){
+			(*agent_eye_ew) = (*tutor_eye_ew);
+			(*agent_eye_ns) = (*tutor_eye_ns),
 			reward=+1;
 			success = true;
 		}
 	}
 	if (action==actions["LOOK_RED_BOX"])	{
-		agent_eye_ew = red_box_ew;
-		agent_eye_ns = red_box_ns;
+		(*agent_eye_ew) = (*red_box_ew);
+		(*agent_eye_ns) = (*red_box_ns);
 		success = true;
 	}
 	if (action==actions["LOOK_BLUE_BOX"]){
-		agent_eye_ew = blue_box_ew;
-		agent_eye_ns = blue_box_ns;
+		(*agent_eye_ew) = (*blue_box_ew);
+		(*agent_eye_ns) = (*blue_box_ns);
 		success = true;
 	}
 	if (action>num_actions-nbBlueBlocks-nbRedBlocks-1
@@ -450,14 +445,14 @@ occ_info_t BlockRoom::apply(int action){
 		if (!(*(blocks[num_block].is_in_blue_box))
 				&& !(*(blocks[num_block].is_in_red_box))
 				&& !(*(blocks[num_block].is_in_robot_hand))){
-			agent_eye_ew = *(blocks[num_block].ew);
-			agent_eye_ns = *(blocks[num_block].ns);
+			(*agent_eye_ew) = *(blocks[num_block].ew);
+			(*agent_eye_ns) = *(blocks[num_block].ns);
 			success = true;
 		}
 	}
-	if (block_hold>-1){
-		*(blocks[block_hold].ns) = agent_ns;
-		*(blocks[block_hold].ew) = agent_ew;
+	if ((*block_hold)>-1){
+		*(blocks[(*block_hold)].ns) = (*agent_ns);
+		*(blocks[(*block_hold)].ew) = (*agent_ew);
 	}
 
 	actions_occurences[action].push_back(numstep);
