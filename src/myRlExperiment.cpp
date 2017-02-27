@@ -50,7 +50,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 1000; //10; //200; //500; //200;
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000000; // per episode
 bool PRINTS = false;
@@ -801,6 +801,8 @@ int main(int argc, char **argv) {
 	const int numactions = e->getNumActions(); // Most agents will need this?
 	const int num_tutor_actions = e->getNumTutorActions();
 
+	std::map<int,std::string> action_names = e->get_action_names();
+
 	std::vector<float> minValues;
 	std::vector<float> maxValues;
 	e->getMinMaxFeatures(&minValues, &maxValues);
@@ -1028,6 +1030,34 @@ int main(int argc, char **argv) {
 				sum += info.reward;
 				++steps;
 
+				if (steps % 10 == 0){
+					std::cout << steps << std::endl;
+				}
+				if (steps % 1000 == 0){
+					// agent->evaluate_model();
+					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+							it != plot_act_succes.end(); ++it){
+						// serialize vector
+						std::ofstream ofs("act_succes_"+action_names[it->first]+".ser");
+						boost::archive::text_oarchive oa(ofs);
+						oa & it->second;
+					}
+					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
+							it != plot_act_try.end(); ++it){
+						// serialize vector
+						std::ofstream ofs("act_try_"+action_names[it->first]+".ser");
+						boost::archive::text_oarchive oa(ofs);
+						oa & it->second;
+					}
+					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
+							it != plot_act_acc.end(); ++it){
+						// serialize vector
+						std::ofstream ofs("act_acc_"+action_names[it->first]+".ser");
+						boost::archive::text_oarchive oa(ofs);
+						oa & it->second;
+					}
+				}
+
 				std::cerr << info.reward << endl;
 
 			}
@@ -1102,25 +1132,26 @@ int main(int argc, char **argv) {
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 								it != plot_act_succes.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_succes_"+std::to_string(it->first)+".ser");
+							std::ofstream ofs("act_succes_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 								it != plot_act_try.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_try_"+std::to_string(it->first)+".ser");
+							std::ofstream ofs("act_try_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
 								it != plot_act_acc.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_acc_"+std::to_string(it->first)+".ser");
+							std::ofstream ofs("act_acc_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
 					}
+
 
 				}
 

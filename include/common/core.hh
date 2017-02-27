@@ -233,6 +233,9 @@ public:
 	  \return The number of actions available */
 	virtual int getNumTutorActions() = 0;
 
+	/** Return the names of the action for plotting and debugging **/
+	virtual std::map<int,std::string> get_action_names() = 0;
+
 	/** Gets the minimum and maximum of the features in the environment.
 	 */
 	virtual void getMinMaxFeatures(std::vector<float> *minFeat,

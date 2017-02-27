@@ -103,14 +103,16 @@ public:
 	int num_tutor_actions;
 	int state_dim_base;
 
-	std::map<std::vector<float>, std::string> valuable_states;
-	std
+	std::map<int, std::string> action_names;
 
+	std::map<int, std::string> get_action_names();
 
 	const std::vector<float> &sensation() const;
 	int applyNoise(int action);
+	std::pair<int,int> get_rand_nearby_pos(int, int);
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
+	std::vector<int> find_block_under_hand();
 	bool terminal() const;
 	bool eye_hand_sync();
 

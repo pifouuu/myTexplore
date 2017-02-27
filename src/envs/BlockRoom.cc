@@ -102,6 +102,10 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 
 	num_actions = cnt_actions;
 	num_tutor_actions = cnt_tutor_actions;
+	for (std::map<std::string, int>::iterator it = actions.begin();
+			it != actions.end() ; ++it ){
+		action_names[it->second] = it->first;
+	}
 	reset();
 
 	if (BRDEBUG) print_map();
@@ -116,6 +120,10 @@ const std::vector<float> &BlockRoom::sensation() const {
 
 bool BlockRoom::terminal() const {
 	return false;
+}
+
+std::map<int, std::string> BlockRoom::get_action_names(){
+	return action_names;
 }
 
 int BlockRoom::get_blocks_in() const {
@@ -296,6 +304,16 @@ int BlockRoom::applyNoise(int action){
 	return action;
 }
 
+std::vector<int> BlockRoom::find_block_under_hand() {
+	std::vector<int> l;
+	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
+		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew)){
+			l.push_back(it-blocks.begin());
+		}
+	}
+	return(l);
+}
+
 std::vector<int> BlockRoom::find_red_block_under_hand() {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
@@ -344,6 +362,17 @@ void BlockRoom::apply_tutor(int action){
 		}
 	}
 }
+
+std::pair<int,int> BlockRoom::get_rand_nearby_pos(int ns, int ew){
+	std::vector<std::pair<int,int>> nearby_pos;
+	if (ns<height-1){nearby_pos.push_back(std::make_pair(ns+1,ew));}
+	if (ew<width-1){nearby_pos.push_back(std::make_pair(ns,ew+1));}
+	if (ew>0){nearby_pos.push_back(std::make_pair(ns,ew-1));}
+	if (ns>0){nearby_pos.push_back(std::make_pair(ns-1,ew));}
+	std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
+	return nearby_pos.front();
+}
+
 occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
 	bool success = false;
@@ -374,11 +403,32 @@ occ_info_t BlockRoom::apply(int action){
 		}
 	}*/
 	if (action==actions["GO_TO_EYE"]) {
-		(*agent_ns) = (*agent_eye_ns);
-		(*agent_ew) = (*agent_eye_ew);
+		if (rng.bernoulli(0.8)) {
+			(*agent_ns) = (*agent_eye_ns);
+			(*agent_ew) = (*agent_eye_ew);
+		}
+		else {
+			std::pair<int,int> target = get_rand_nearby_pos(*agent_eye_ns,*agent_eye_ew);
+			(*agent_ns) = target.first;
+			(*agent_ew) = target.second;
+		}
 		success = true;
 	}
-	if (action==actions["PICK_BLUE"]) {
+	if (action == actions["PICK"]){
+		if ((*block_hold)==-1 && eye_hand_sync()) {
+			std::vector<int> blocks_under = find_block_under_hand();
+			if (!blocks_under.empty()) {
+				std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
+				int idx = blocks_under.back();
+				if (rng.bernoulli(0.8)){
+					*(blocks[idx].is_in_robot_hand) = true;
+					(*block_hold) = idx;
+				}
+				success = true;
+			}
+		}
+	}
+	/*if (action==actions["PICK_BLUE"]) {
 		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> blue_blocks_under = find_blue_block_under_hand();
 			if (!blue_blocks_under.empty()) {
@@ -401,7 +451,7 @@ occ_info_t BlockRoom::apply(int action){
 				success = true;
 			}
 		}
-	}
+	}*/
 	if (action==actions["PUT_DOWN"]) {
 		std::vector<int> red_blocks_under = find_red_block_under_hand();
 		std::vector<int> blue_blocks_under = find_blue_block_under_hand();
@@ -412,8 +462,16 @@ occ_info_t BlockRoom::apply(int action){
 				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
 				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))){
 			*(blocks[(*block_hold)].is_in_robot_hand) = false;
-			*(blocks[(*block_hold)].ns) = (*agent_ns);
-			*(blocks[(*block_hold)].ew) = (*agent_ew);
+			if (rng.bernoulli(0.8)){
+				*(blocks[(*block_hold)].ns) = (*agent_ns);
+				*(blocks[(*block_hold)].ew) = (*agent_ew);
+			}
+			else{
+				std::pair<int,int> target = get_rand_nearby_pos(*agent_ns,*agent_ew);
+				*(blocks[(*block_hold)].ns) = target.first;
+				*(blocks[(*block_hold)].ew) = target.second;
+			}
+
 			(*block_hold) = -1;
 			success = true;
 		}
@@ -422,17 +480,31 @@ occ_info_t BlockRoom::apply(int action){
 		if ((*block_hold)!=-1){
 			if ((*red_box_ns)==(*agent_ns) && (*red_box_ew)==(*agent_ew)){
 				*(blocks[(*block_hold)].is_in_robot_hand) = false;
-				*(blocks[(*block_hold)].is_in_red_box) = true;
-				*(blocks[(*block_hold)].ns) = (*red_box_ns);
-				*(blocks[(*block_hold)].ew) = (*red_box_ew);
+				if (rng.bernoulli(0.8)){
+					*(blocks[(*block_hold)].is_in_red_box) = true;
+					*(blocks[(*block_hold)].ns) = (*red_box_ns);
+					*(blocks[(*block_hold)].ew) = (*red_box_ew);
+				}
+				else{
+					std::pair<int,int> target = get_rand_nearby_pos(*red_box_ns,*red_box_ew);
+					*(blocks[(*block_hold)].ns) = target.first;
+					*(blocks[(*block_hold)].ew) = target.second;
+				}
 				(*block_hold) = -1;
 				success = true;
 			}
 			else if ((*blue_box_ns)==(*agent_ns) && (*blue_box_ew)==(*agent_ew)){
 				*(blocks[(*block_hold)].is_in_robot_hand) = false;
-				*(blocks[(*block_hold)].is_in_blue_box) = true;
-				*(blocks[(*block_hold)].ns) = (*blue_box_ns);
-				*(blocks[(*block_hold)].ew) = (*blue_box_ew);
+				if (rng.bernoulli(0.8)){
+					*(blocks[(*block_hold)].is_in_blue_box) = true;
+					*(blocks[(*block_hold)].ns) = (*blue_box_ns);
+					*(blocks[(*block_hold)].ew) = (*blue_box_ew);
+				}
+				else{
+					std::pair<int,int> target = get_rand_nearby_pos(*blue_box_ns,*blue_box_ew);
+					*(blocks[(*block_hold)].ns) = target.first;
+					*(blocks[(*block_hold)].ew) = target.second;
+				}
 				(*block_hold) = -1;
 				success = true;
 			}
