@@ -50,7 +50,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+unsigned NUMEPISODES = 100000; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000000; // per episode
 bool PRINTS = false;
@@ -961,14 +961,14 @@ int main(int argc, char **argv) {
 		// STEP BY STEP DOMAIN
 		if (!episodic){
 
-			/*// performance tracking
+			// performance tracking
 			float sum = 0;
 			int steps = 0;
 			float trialSum = 0.0;
 
 			int tutor_action = 0;
 			int a = 0;
-			occ_info_t info = 0;
+			occ_info_t info(0, 1);
 
 			//////////////////////////////////
 			// non-episodic
@@ -981,20 +981,44 @@ int main(int argc, char **argv) {
 				if (i == 0){
 
 					// first action
+					std::vector<float> es = e->sensation();
+					if (with_tutor){
+						tutor_action = tutor->first_action(es);
+						e->apply_tutor(tutor_action);
+					}
+
 					a = agent->first_action(es);
-					r = e->apply(a);
+					info = e->apply(a);
+					act_count[a]++;
+					if (info.success){
+						plot_act_succes[a].push_back(std::make_pair(steps,1));
+					}
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_acc[a].push_back(std::make_pair(steps,
+							plot_act_succes[a].size()/act_count[a]));
 
 				} else {
-					// next action
-					a = agent->next_action(r, es);
-					r = e->apply(a);
+					if (with_tutor){
+						int tutor_action = tutor->next_action(es);
+						e->apply_tutor(tutor_action);
+					}
+
+					a = agent->next_action(info.reward, es);
+					info = e->apply(a);
+					act_count[a]++;
+					if (info.success){
+						plot_act_succes[a].push_back(std::make_pair(steps,1));
+					}
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_acc[a].push_back(std::make_pair(steps,
+							plot_act_succes[a].size()/act_count[a]));
 				}
 
 				// update performance
-				sum += r;
+				sum += info.reward;
 				++steps;
 
-				std::cerr << r << endl;
+				std::cerr << info.reward << endl;
 
 			}
 			///////////////////////////////////
@@ -1002,7 +1026,7 @@ int main(int argc, char **argv) {
 			rsum += sum;
 			trialSum += sum;
 			if (PRINTS) cout << "Rsum(trial " << j << "): " << trialSum << " Avg: "
-					<< (rsum / (float)(j+1))<< endl;*/
+					<< (rsum / (float)(j+1))<< endl;
 
 		}
 

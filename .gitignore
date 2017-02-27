@@ -67,8 +67,8 @@ resultats/
 # PyDev specific (Python IDE for Eclipse)
 *.pydevprojectgit pull
 
-# debug giles
-/Debug
+# debug files 
+Debug/
 
 # CDT-specific (C/C++ Development Tooling)
 .cproject

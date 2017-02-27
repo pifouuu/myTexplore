@@ -35,7 +35,7 @@ public:
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
-	bool isEpisodic(){ return true;}
+	bool isEpisodic(){ return false;}
 
 	friend std::ostream &operator<<(std::ostream &out, const BlockRoom &blockroom);
 
