@@ -50,8 +50,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100000; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 1000; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000000; // per episode
 bool PRINTS = false;
 
@@ -856,6 +856,8 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
+
+
 	for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
 		// Construct agent here.
@@ -951,11 +953,13 @@ int main(int argc, char **argv) {
 			int success;
 		};
 		std::vector<act_info_t> act_to_occ;
-		std::vector<int> act_count(numactions);
+		std::vector<float> act_count(numactions);
 
 		std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
 		std::map<int,std::vector<std::pair<float, float>>> plot_act_try;
 		std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
+		std::list<std::pair<int,int>> plot_blocks_in;
+		std::list<std::pair<int,int>> plot_blocks_right;
 
 
 		// STEP BY STEP DOMAIN
@@ -965,10 +969,12 @@ int main(int argc, char **argv) {
 			float sum = 0;
 			int steps = 0;
 			float trialSum = 0.0;
+			int blocks_in = 0;
+			int blocks_right = 0;
 
 			int tutor_action = 0;
 			int a = 0;
-			occ_info_t info(0, 1);
+			occ_info_t info(0, 1, 0, 0);
 
 			//////////////////////////////////
 			// non-episodic
@@ -990,6 +996,8 @@ int main(int argc, char **argv) {
 					a = agent->first_action(es);
 					info = e->apply(a);
 					act_count[a]++;
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
 					if (info.success){
 						plot_act_succes[a].push_back(std::make_pair(steps,1));
 					}
@@ -1005,6 +1013,8 @@ int main(int argc, char **argv) {
 
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
 					act_count[a]++;
 					if (info.success){
 						plot_act_succes[a].push_back(std::make_pair(steps,1));

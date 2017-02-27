@@ -180,9 +180,13 @@ struct classPair {
 struct occ_info_t{
 		float reward;
 		bool success;
-		occ_info_t(float r, bool s){
+		int blocks_in;
+		int blocks_right;
+		occ_info_t(float r, bool s, int i, int ri){
 			reward =r ;
 			success =s;
+			blocks_in = i;
+			blocks_right = ri;
 		}
 	};
 

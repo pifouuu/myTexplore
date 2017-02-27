@@ -56,6 +56,9 @@ public:
 		BLUE
 	};
 
+	int get_blocks_in() const;
+	int get_blocks_right() const;
+
 	std::default_random_engine engine;
 
 
@@ -98,6 +101,10 @@ public:
 	std::map<std::string, int> actions;
 	int num_actions;
 	int num_tutor_actions;
+	int state_dim_base;
+
+	std::map<std::vector<float>, std::string> valuable_states;
+	std
 
 
 	const std::vector<float> &sensation() const;

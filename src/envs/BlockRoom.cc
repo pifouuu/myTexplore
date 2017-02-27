@@ -20,7 +20,8 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 	nbBlueBlocks(3),
 	rng(rand),
 	WITH_TUTOR(with_tutor),
-	s(9+6*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
+	state_dim_base(9),
+	s(state_dim_base+6*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
 	agent_ns(&(s[0])),
 	agent_ew(&(s[1])),
 	block_hold(&(s[2])),
@@ -50,8 +51,8 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 
 
 	if (WITH_TUTOR){
-		tutor_eye_ns = &(s[9]);
-		tutor_eye_ew = &(s[10]);
+		tutor_eye_ns = &(s[state_dim_base]);
+		tutor_eye_ew = &(s[state_dim_base]);
 		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
 
 
@@ -64,12 +65,12 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 
 	for (int i = 0; i<nbRedBlocks; i++){
 		block_t block(
-				&(s[6*i+nb_fix_actions + 0]),
-				&(s[6*i+nb_fix_actions + 1]),
-				&(s[6*i+nb_fix_actions + 2]),
-				&(s[6*i+nb_fix_actions + 3]),
-				&(s[6*i+nb_fix_actions + 4]),
-				&(s[6*i+nb_fix_actions + 5]));
+				&(s[6*i+state_dim_base+2*with_tutor + 0]),
+				&(s[6*i+state_dim_base+2*with_tutor + 1]),
+				&(s[6*i+state_dim_base+2*with_tutor + 2]),
+				&(s[6*i+state_dim_base+2*with_tutor + 3]),
+				&(s[6*i+state_dim_base+2*with_tutor + 4]),
+				&(s[6*i+state_dim_base+2*with_tutor + 5]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_RED_BLOCK_";
@@ -83,12 +84,12 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 
 	for (int i = 0; i<nbBlueBlocks; i++){
 		block_t block(
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 0]),
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 1]),
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 2]),
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 3]),
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 4]),
-				&(s[6*(i+nbRedBlocks)+nb_fix_actions + 5]));
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 0]),
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 1]),
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 2]),
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 3]),
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]),
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 5]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_BLUE_BLOCK_";
@@ -116,6 +117,21 @@ const std::vector<float> &BlockRoom::sensation() const {
 bool BlockRoom::terminal() const {
 	return false;
 }
+
+int BlockRoom::get_blocks_in() const {
+	int nb_blocks_in = 0;
+	for (int i = state_dim_base + 2*WITH_TUTOR + 4; i<s.size();i+=6){
+		nb_blocks_in += (s[i]==1 || s[i+1]==1);
+	}
+}
+
+int BlockRoom::get_blocks_right() const {
+	int nb_blocks_right = 0;
+	for (int i = state_dim_base + 2*WITH_TUTOR; i<s.size();i+=6){
+		nb_blocks_right += ((s[i+2]==0 && s[i+5]==1) || (s[i+2]==1 && s[i+4]==1));
+	}
+}
+
 
 int BlockRoom::getNumActions() {
   if (BRDEBUG) cout << "Return number of actions: " << num_actions << endl;
@@ -332,6 +348,7 @@ occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
 	bool success = false;
 
+
 	/*if (action==actions["NORTH"]) {
 		if ((*agent_ns) < height-1) {
 			(*agent_ns)++;
@@ -457,7 +474,7 @@ occ_info_t BlockRoom::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success);
+	return occ_info_t(reward, success, get_blocks_in(), get_blocks_right());
 }
 
 
