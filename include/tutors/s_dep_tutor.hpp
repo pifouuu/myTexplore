@@ -19,8 +19,8 @@ public:
 	virtual ~s_dep_tutor();
 
 	virtual void setDebug(bool d);
-	int first_action(const std::vector<float> &s);
-	int next_action(const std::vector<float> &s);
+	tutor_feedback first_action(const std::vector<float> &s);
+	tutor_feedback next_action(const std::vector<float> &s, const int a);
 
 	void printState(const std::vector<float> &s);
 	bool red_box_ok(const std::vector<float> &s);
@@ -30,7 +30,6 @@ private:
 	bool ACTDEBUG;
 	const int numactions;
 	int previous_action;
-
 };
 
 

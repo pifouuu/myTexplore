@@ -61,7 +61,7 @@ public:
                                          float reward, bool term);
   virtual void planOnNewModel();
   virtual int getBestAction(const std::vector<float> &s);
-  void evaluate_model();
+  std::map<std::vector<float>, std::vector<StateActionInfo>> eval(int nstates);
 
   virtual void setSeeding(bool seed);
   virtual void setFirst();
@@ -84,6 +84,7 @@ public:
   bool UCTDEBUG;
   bool REALSTATEDEBUG;
   bool HISTORYDEBUG;
+  bool QDEBUG;
 
   /** MDPModel that we're using with planning */
   MDPModel* model;

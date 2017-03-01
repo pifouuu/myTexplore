@@ -8,6 +8,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/tutors/subdir.mk
 -include src/planners/subdir.mk
 -include src/models/subdir.mk
 -include src/envs/subdir.mk

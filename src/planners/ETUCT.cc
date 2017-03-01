@@ -42,6 +42,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	UCTDEBUG = false; //true;//false;
 	REALSTATEDEBUG = false;
 	HISTORYDEBUG = false; //true; //false;
+	QDEBUG = true;
 
 	featmax = fmax;
 	featmin = fmin;
@@ -138,6 +139,28 @@ void ETUCT::initNewState(state_t s) {
 	// dont init any model info
 	// we'll get it during search if we have to
 
+}
+
+std::map<std::vector<float>, std::vector<StateActionInfo>> ETUCT::eval(int ns){
+	std::map<std::vector<float>, std::vector<StateActionInfo>> samples;
+	int tot_states = statespace.size();
+	std::deque<float> history(1, 0.0);
+	for (int i=0;i<ns;i++){
+		double r = rand() % tot_states;
+		std::set<std::vector<float>>::iterator it(statespace.begin());
+		std::advance(it, r);
+		const std::vector<float> &sample = *it;
+		state_t s = canonicalize(sample);
+		state_info* info = &(statedata[s]);
+		std::vector<StateActionInfo> statePreds;
+		for (int action = 0; action<numactions; action++){
+			StateActionInfo pred = info->historyModel[action][history];
+			statePreds.push_back(pred);
+			samples[*it] = statePreds;
+		}
+	}
+
+	return samples;
 }
 
 bool ETUCT::updateModelWithExperience(const std::vector<float> &laststate,
@@ -252,9 +275,6 @@ bool ETUCT::updateModelWithExperience(const std::vector<float> &laststate,
 
 }
 
-void ETUCT::evaluate_model(){
-
-}
 
 void ETUCT::updateStateActionFromModel(state_t s, int a, state_info* info) {
 
@@ -358,6 +378,13 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 
 	// Get Q values
 	std::vector<float> &Q = info->Q;
+	if (QDEBUG){
+		cout << "Q values : ";
+		for (auto qval:Q){
+			cout << qval << " | ";
+		}
+		cout << endl;
+	}
 
 	// Choose an action
 	const std::vector<float>::iterator a = random_max_element(Q.begin(),

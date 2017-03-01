@@ -15,6 +15,8 @@
 
 // include this header to serialize vectors
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/list.hpp>
+
 #include <boost/serialization/utility.hpp>
 
 /** Plotting tools **/
@@ -41,7 +43,7 @@
 
 // Tutors
 #include "../include/tutors/s_dep_tutor.hpp"
-
+#include "../include/tutors/no_tutor.hpp"
 
 #include <vector>
 #include <sstream>
@@ -50,7 +52,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+unsigned NUMEPISODES = 5000; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000000; // per episode
 bool PRINTS = false;
@@ -848,6 +850,7 @@ int main(int argc, char **argv) {
 
 	if (!with_tutor){
 		std::cout<<"Tutor : without a tutor."<<std::endl;
+		tutor = new no_tutor(num_tutor_actions);
 	}
 	else if (strcmp(tutorType, "s_dep_tutor") == 0) {
 		if (PRINTS) cout << "Tutor: State-dependent" << endl;
@@ -929,10 +932,10 @@ int main(int argc, char **argv) {
 		}
 
 		// start discrete agent if we're discretizing (if nstates > 0 and not agent type 'c')
-		int totalStates = 1;
+		/*int totalStates = 1;
 		Agent* a2 = agent;
 		// not for model based when doing continuous model
-		/*if (nstates > 0 && (modelType != M5ALLMULTI || strcmp(agentType, "qlearner") == 0)){
+		if (nstates > 0 && (modelType != M5ALLMULTI || strcmp(agentType, "qlearner") == 0)){
 			int totalStates = powf(nstates,minValues.size());
 			if (PRINTS) cout << "Discretize with " << nstates << ", total: " << totalStates << endl;
 			agent = new DiscretizationAgent(nstates, a2,
@@ -962,6 +965,7 @@ int main(int argc, char **argv) {
 		std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
 		std::list<std::pair<int,int>> plot_blocks_in;
 		std::list<std::pair<int,int>> plot_blocks_right;
+		std::list<std::pair<int,float>> plot_model_acc;
 
 
 		// STEP BY STEP DOMAIN
@@ -974,7 +978,7 @@ int main(int argc, char **argv) {
 			int blocks_in = 0;
 			int blocks_right = 0;
 
-			int tutor_action = 0;
+			tutor_feedback t_feedback(0.,0);
 			int a = 0;
 			occ_info_t info(0, 1, 0, 0);
 
@@ -991,8 +995,8 @@ int main(int argc, char **argv) {
 					// first action
 					std::vector<float> es = e->sensation();
 					if (with_tutor){
-						tutor_action = tutor->first_action(es);
-						e->apply_tutor(tutor_action);
+						t_feedback = tutor->first_action(es);
+						e->apply_tutor(t_feedback.action);
 					}
 
 					a = agent->first_action(es);
@@ -1008,9 +1012,9 @@ int main(int argc, char **argv) {
 							plot_act_succes[a].size()/act_count[a]));
 
 				} else {
+					t_feedback = tutor->next_action(es, a);
 					if (with_tutor){
-						int tutor_action = tutor->next_action(es);
-						e->apply_tutor(tutor_action);
+						e->apply_tutor(t_feedback.action);
 					}
 
 					a = agent->next_action(info.reward, es);
@@ -1033,29 +1037,55 @@ int main(int argc, char **argv) {
 				if (steps % 10 == 0){
 					std::cout << steps << std::endl;
 				}
-				if (steps % 1000 == 0){
+				if (steps % 20 == 0){
 					// agent->evaluate_model();
+					std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 							it != plot_act_succes.end(); ++it){
 						// serialize vector
-						std::ofstream ofs("act_succes_"+action_names[it->first]+".ser");
+						std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 						boost::archive::text_oarchive oa(ofs);
 						oa & it->second;
 					}
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 							it != plot_act_try.end(); ++it){
 						// serialize vector
-						std::ofstream ofs("act_try_"+action_names[it->first]+".ser");
+						std::ofstream ofs(name+"_act_try_"+action_names[it->first]+".ser");
 						boost::archive::text_oarchive oa(ofs);
 						oa & it->second;
 					}
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
 							it != plot_act_acc.end(); ++it){
 						// serialize vector
-						std::ofstream ofs("act_acc_"+action_names[it->first]+".ser");
+						std::ofstream ofs(name+"_act_acc_"+action_names[it->first]+".ser");
 						boost::archive::text_oarchive oa(ofs);
 						oa & it->second;
 					}
+					std::ofstream ofs(name+"_blocks_in.ser");
+					boost::archive::text_oarchive oa_in(ofs);
+					oa_in & plot_blocks_in;
+					ofs.close();
+					ofs.clear();
+
+					ofs.open(name+"_blocks_right.ser");
+					boost::archive::text_oarchive oa_right(ofs);
+					oa_right & plot_blocks_right;
+					ofs.close();
+					ofs.clear();
+
+					std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+					float model_error = 0.;
+					for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
+							it!=samples.end();++it){
+						float error = e->getStateActionInfoError(it->first, it->second);
+						model_error += error;
+
+					}
+					model_error /= samples.size();
+					plot_model_acc.push_back(std::make_pair(steps, model_error));
+					ofs.open(name+"_model_acc.ser");
+					boost::archive::text_oarchive oa_model_acc(ofs);
+					oa_model_acc & plot_model_acc;
 				}
 
 				std::cerr << info.reward << endl;
@@ -1086,8 +1116,8 @@ int main(int argc, char **argv) {
 				// first action
 				std::vector<float> es = e->sensation();
 				if (with_tutor){
-					int tutor_action = tutor->first_action(es);
-					e->apply_tutor(tutor_action);
+					tutor_feedback tutor_action = tutor->first_action(es);
+					e->apply_tutor(tutor_action.action);
 				}
 
 				int a = agent->first_action(es);
@@ -1108,8 +1138,8 @@ int main(int argc, char **argv) {
 					// perform an action
 					es = e->sensation();
 					if (with_tutor){
-						int tutor_action = tutor->next_action(es);
-						e->apply_tutor(tutor_action);
+						tutor_feedback tutor_action = tutor->next_action(es,a);
+						e->apply_tutor(tutor_action.action);
 					}
 
 					a = agent->next_action(info.reward, es);
@@ -1127,7 +1157,7 @@ int main(int argc, char **argv) {
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
 					}
-					if (steps % 1000 == 0){
+					if (steps % 20 == 0){
 						// agent->evaluate_model();
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 								it != plot_act_succes.end(); ++it){

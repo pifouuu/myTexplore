@@ -59,7 +59,9 @@ ExplorationModel::~ExplorationModel() {
 	delete model;
 }
 
-
+/*std::list<std::tuple<std::vector<float>, int, StateActionInfo>> ExplorationModel::eval(std::list<std::vector<float>> samples){
+	return model->eval(samples);
+}*/
 
 bool ExplorationModel::updateWithExperiences(std::vector<experience> &instances){
 	bool changed = model->updateWithExperiences(instances);

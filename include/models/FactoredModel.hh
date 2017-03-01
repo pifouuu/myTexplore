@@ -54,6 +54,7 @@ public:
 
   virtual bool updateWithExperiences(std::vector<experience> &instances);
   virtual bool updateWithExperience(experience &e);
+  std::list<std::tuple<std::vector<float>, int, StateActionInfo>> eval(std::list<std::vector<float>> samples);
 
   /** Initialize the MDP model with the given # of state features */
   bool initMDPModel(int nfactors);

@@ -4,46 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/envs/BlockRoom.cc \
-../src/envs/CartPole.cc \
-../src/envs/FuelRooms.cc \
-../src/envs/LightWorld.cc \
-../src/envs/MountainCar.cc \
-../src/envs/RobotCarVel.cc \
-../src/envs/energyrooms.cc \
-../src/envs/fourrooms.cc \
-../src/envs/gridworld.cc \
-../src/envs/stocks.cc \
-../src/envs/taxi.cc \
-../src/envs/tworooms.cc 
+../src/envs/BlockRoom.cc 
 
 CC_DEPS += \
-./src/envs/BlockRoom.d \
-./src/envs/CartPole.d \
-./src/envs/FuelRooms.d \
-./src/envs/LightWorld.d \
-./src/envs/MountainCar.d \
-./src/envs/RobotCarVel.d \
-./src/envs/energyrooms.d \
-./src/envs/fourrooms.d \
-./src/envs/gridworld.d \
-./src/envs/stocks.d \
-./src/envs/taxi.d \
-./src/envs/tworooms.d 
+./src/envs/BlockRoom.d 
 
 OBJS += \
-./src/envs/BlockRoom.o \
-./src/envs/CartPole.o \
-./src/envs/FuelRooms.o \
-./src/envs/LightWorld.o \
-./src/envs/MountainCar.o \
-./src/envs/RobotCarVel.o \
-./src/envs/energyrooms.o \
-./src/envs/fourrooms.o \
-./src/envs/gridworld.o \
-./src/envs/stocks.o \
-./src/envs/taxi.o \
-./src/envs/tworooms.o 
+./src/envs/BlockRoom.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes

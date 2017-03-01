@@ -15,7 +15,7 @@ s_dep_tutor::s_dep_tutor(int numactions):
 
 s_dep_tutor::~s_dep_tutor() {};
 
-int s_dep_tutor::first_action(const std::vector<float> &s) {
+tutor_feedback s_dep_tutor::first_action(const std::vector<float> &s) {
 	if (ACTDEBUG){
 		std::cout<< "Tutor observe state :";
 		printState(s);
@@ -25,7 +25,7 @@ int s_dep_tutor::first_action(const std::vector<float> &s) {
 	int act;
 	if (s[2]>=0){
 		int idx = s[2];
-		int color = s[6*idx+2+12];
+		int color = s[6*idx+2+11];
 		if (color == 1) {act = 2;}
 		else if (color == 0) {act = 1;}
 	}
@@ -40,7 +40,7 @@ int s_dep_tutor::first_action(const std::vector<float> &s) {
 			bool found_block = false;
 			int test = 0;
 			do {
-				found_block = (s[6*test+12+4]==0 && s[6*test+12+5]==0);
+				found_block = (s[6*test+11+4]==0 && s[6*test+11+5]==0);
 				test++;
 			} while (!found_block && test<numactions-2);
 			if (test==numactions-2){
@@ -56,20 +56,25 @@ int s_dep_tutor::first_action(const std::vector<float> &s) {
 
 	if (ACTDEBUG)
 		cout << "Took action " << act << endl;
-	return act;
+	return tutor_feedback(0.,act);
 }
 
-int s_dep_tutor::next_action(const std::vector<float> &s) {
+tutor_feedback s_dep_tutor::next_action(const std::vector<float> &s,const int a) {
 	if (ACTDEBUG){
 		std::cout<< "Tutor observe state :";
 		printState(s);
 		std::cout << std::endl;
 	}
 
+	float reward = 0.;
+	if (previous_action == 1 || previous_action == 2){
+		if (a==5 && s[0]==s[9] && s[1]==s[10]){reward+=1;}
+	}
+
 	int act;
 	if (s[2]>=0){
 		int idx = s[2];
-		int color = s[6*idx+2+12];
+		int color = s[6*idx+2+11];
 		if (color == 1) {act = 2;}
 		else if (color == 0) {act = 1;}
 	}
@@ -88,7 +93,7 @@ int s_dep_tutor::next_action(const std::vector<float> &s) {
 				bool found_block = false;
 				int test = 0;
 				do {
-					found_block = (s[6*test+12+4]==0 && s[6*test+12+5]==0);
+					found_block = (s[6*test+11+4]==0 && s[6*test+11+5]==0);
 					test++;
 				} while (!found_block && test<numactions-2);
 				if (test==numactions-2){
@@ -112,14 +117,14 @@ int s_dep_tutor::next_action(const std::vector<float> &s) {
 		}
 		cout << endl;
 	}
-	return act;
+	return tutor_feedback(reward, act);
 }
 
 bool s_dep_tutor::red_box_ok(const std::vector<float> &s){
 	bool no_error = true;
 	int idx = 0;
 	while (no_error && idx<numactions-3){
-		no_error = (s[6*idx+2+12]==0 || s[6*idx+5+12]==0);
+		no_error = (s[6*idx+2+11]==0 || s[6*idx+5+11]==0);
 		idx++;
 	}
 	return no_error;
@@ -129,7 +134,7 @@ bool s_dep_tutor::blue_box_ok(const std::vector<float> &s){
 	bool no_error = true;
 	int idx = 0;
 	while (no_error && idx<numactions-3){
-		no_error = (s[6*idx+2+12]==1 || s[6*idx+4+12]==0);
+		no_error = (s[6*idx+2+11]==1 || s[6*idx+4+11]==0);
 		idx++;
 	}
 	return no_error;

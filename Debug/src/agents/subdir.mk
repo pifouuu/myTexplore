@@ -4,28 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/agents/DiscretizationAgent.cc \
-../src/agents/Dyna.cc \
-../src/agents/ModelBasedAgent.cc \
-../src/agents/QLearner.cc \
-../src/agents/Sarsa.cc \
-../src/agents/SavedPolicy.cc 
+../src/agents/ModelBasedAgent.cc 
 
 CC_DEPS += \
-./src/agents/DiscretizationAgent.d \
-./src/agents/Dyna.d \
-./src/agents/ModelBasedAgent.d \
-./src/agents/QLearner.d \
-./src/agents/Sarsa.d \
-./src/agents/SavedPolicy.d 
+./src/agents/ModelBasedAgent.d 
 
 OBJS += \
-./src/agents/DiscretizationAgent.o \
-./src/agents/Dyna.o \
-./src/agents/ModelBasedAgent.o \
-./src/agents/QLearner.o \
-./src/agents/Sarsa.o \
-./src/agents/SavedPolicy.o 
+./src/agents/ModelBasedAgent.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes

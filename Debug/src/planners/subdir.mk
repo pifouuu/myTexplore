@@ -5,33 +5,15 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
 ../src/planners/ETUCT.cc \
-../src/planners/MBS.cc \
-../src/planners/PO_ETUCT.cc \
-../src/planners/PO_ParallelETUCT.cc \
-../src/planners/ParallelETUCT.cc \
-../src/planners/PolicyIteration.cc \
-../src/planners/PrioritizedSweeping.cc \
-../src/planners/ValueIteration.cc 
+../src/planners/ParallelETUCT.cc 
 
 CC_DEPS += \
 ./src/planners/ETUCT.d \
-./src/planners/MBS.d \
-./src/planners/PO_ETUCT.d \
-./src/planners/PO_ParallelETUCT.d \
-./src/planners/ParallelETUCT.d \
-./src/planners/PolicyIteration.d \
-./src/planners/PrioritizedSweeping.d \
-./src/planners/ValueIteration.d 
+./src/planners/ParallelETUCT.d 
 
 OBJS += \
 ./src/planners/ETUCT.o \
-./src/planners/MBS.o \
-./src/planners/PO_ETUCT.o \
-./src/planners/PO_ParallelETUCT.o \
-./src/planners/ParallelETUCT.o \
-./src/planners/PolicyIteration.o \
-./src/planners/PrioritizedSweeping.o \
-./src/planners/ValueIteration.o 
+./src/planners/ParallelETUCT.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes

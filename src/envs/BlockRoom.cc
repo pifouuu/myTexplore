@@ -52,7 +52,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 
 	if (WITH_TUTOR){
 		tutor_eye_ns = &(s[state_dim_base]);
-		tutor_eye_ew = &(s[state_dim_base]);
+		tutor_eye_ew = &(s[state_dim_base+1]);
 		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
 
 
@@ -100,7 +100,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor):
 		}
 	}
 
-	num_actions = cnt_actions;
+	numactions = cnt_actions;
 	num_tutor_actions = cnt_tutor_actions;
 	for (std::map<std::string, int>::iterator it = actions.begin();
 			it != actions.end() ; ++it ){
@@ -142,8 +142,8 @@ int BlockRoom::get_blocks_right() const {
 
 
 int BlockRoom::getNumActions() {
-  if (BRDEBUG) cout << "Return number of actions: " << num_actions << endl;
-  return num_actions; //num_actions;
+  if (BRDEBUG) cout << "Return number of actions: " << numactions << endl;
+  return numactions; //num_actions;
 }
 
 int BlockRoom::getNumTutorActions() {
@@ -228,7 +228,9 @@ void BlockRoom::print_map() const{
 	posToImg[std::pair<int,int>(blockSize*(*blue_box_ew),blockSize*(*blue_box_ns))].push_back(blue_box_img);
 	posToImg[std::pair<int,int>(blockSize*(*red_box_ew),blockSize*(*red_box_ns))].push_back(red_box_img);
 	posToImg[std::pair<int,int>(blockSize*(*agent_eye_ew),blockSize*(*agent_eye_ns))].push_back(agent_eye_img);
-	posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
+	if (WITH_TUTOR){
+		posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
+	}
 	posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(agent_hand_img);
 
 	for (auto elem : posToImg){
@@ -304,10 +306,10 @@ int BlockRoom::applyNoise(int action){
 	return action;
 }
 
-std::vector<int> BlockRoom::find_block_under_hand() {
+std::vector<int> BlockRoom::find_block_under(int ns, int ew) {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew)){
+		if (*(it->ns)==(ns) && *(it->ew)==(ew)){
 			l.push_back(it-blocks.begin());
 		}
 	}
@@ -363,18 +365,140 @@ void BlockRoom::apply_tutor(int action){
 	}
 }
 
-std::pair<int,int> BlockRoom::get_rand_nearby_pos(int ns, int ew){
+std::vector<std::pair<int,int>> BlockRoom::get_nearby_pos(int ns, int ew){
 	std::vector<std::pair<int,int>> nearby_pos;
 	if (ns<height-1){nearby_pos.push_back(std::make_pair(ns+1,ew));}
 	if (ew<width-1){nearby_pos.push_back(std::make_pair(ns,ew+1));}
 	if (ew>0){nearby_pos.push_back(std::make_pair(ns,ew-1));}
 	if (ns>0){nearby_pos.push_back(std::make_pair(ns-1,ew));}
-	std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
-	return nearby_pos.front();
+	return nearby_pos;
+}
+
+float BlockRoom::getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds){
+	float diff = 0.;
+	for (int action = 0;action<numactions;action++){
+		std::vector<float> next_state = s;
+		std::map< std::vector<float> , float> trueTransitionProbs;
+		if (action==actions["GO_TO_EYE"]) {
+			next_state[0] = s[3];
+			next_state[1] = s[4];
+			if (s[2]>=0){
+				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR]=s[3];
+				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+1]=s[4];
+			}
+			trueTransitionProbs[next_state] = 1.;
+		}
+		if (action == actions["PICK"]){
+			if ((s[2])==-1 && s[3]==s[0] && s[4]==s[1]) {
+				std::vector<int> blocks_under = find_block_under(s[0],s[1]);
+				if (!blocks_under.empty()) {
+					int nb_blocks = blocks_under.size();
+					for (auto block:blocks_under){
+						next_state[2]=block;
+						next_state[6*block+state_dim_base+2*WITH_TUTOR + 3] = 1;
+						trueTransitionProbs[next_state] = 1./nb_blocks;
+					}
+				}
+				else {
+					trueTransitionProbs[next_state] = 1.;
+				}
+			}
+			else {
+				trueTransitionProbs[next_state] = 1.;
+			}
+		}
+		if (action==actions["PUT_DOWN"]) {
+			if (s[2]!=-1
+					&& s[3]==s[0] && s[4]==s[1]
+					&& find_block_under(s[0],s[1]).empty()
+					&& ((s[5])!=(s[0]) || (s[6])!=(s[1]))
+					&& ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
+				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
+				next_state[2]=-1;
+				trueTransitionProbs[next_state] = 1.;
+			}
+			else {
+				trueTransitionProbs[next_state] = 1.;
+			}
+		}
+		if (action==actions["PUT_IN"]) {
+			if ((s[2])!=-1){
+				if ((s[5])==(s[0]) && (s[6])==(s[1])){
+					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
+					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+5] = 1;
+					next_state[2]=-1;
+					trueTransitionProbs[next_state]=1.;
+				}
+				else if ((s[7])==(s[0]) && (s[8])==(s[1])){
+					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
+					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+4] = 1;
+					next_state[2]=-1;
+					trueTransitionProbs[next_state]=1.;
+				}
+				else {
+					trueTransitionProbs[next_state] = 1.;
+				}
+			}
+			else {
+				trueTransitionProbs[next_state] = 1.;
+			}
+		}
+		if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
+			if ((s[4]) != (s[10]) || (s[3]) != (s[9])){
+				next_state[4] = (s[10]);
+				next_state[3] = (s[9]);
+				trueTransitionProbs[next_state] = 1.;
+			}
+			else {
+				trueTransitionProbs[next_state]=1.;
+			}
+		}
+		if (WITH_TUTOR && action==actions["LOOK_RED_BOX"]){
+			next_state[4] = (s[6]);
+			next_state[3] = (s[5]);
+			trueTransitionProbs[next_state] = 1.;
+		}
+		if (WITH_TUTOR && action==actions["LOOK_BLUE_BOX"]){
+			next_state[4] = (s[8]);
+			next_state[3] = (s[7]);
+			trueTransitionProbs[next_state] = 1.;
+		}
+		if (action>numactions-nbBlueBlocks-nbRedBlocks-1
+				&& action<numactions){
+			int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
+			if (s[6*num_block+state_dim_base+2*WITH_TUTOR+3]==0
+					&& s[6*num_block+state_dim_base+2*WITH_TUTOR+4]==0
+					&& s[6*num_block+state_dim_base+2*WITH_TUTOR+5]==0) {
+				next_state[4] = s[6*num_block+state_dim_base+2*WITH_TUTOR+1];
+				next_state[3] = s[6*num_block+state_dim_base+2*WITH_TUTOR];
+				trueTransitionProbs[next_state]=1.;
+			}
+			else{
+				trueTransitionProbs[next_state] = 1;
+			}
+		}
+		for (auto elem:trueTransitionProbs){
+			auto insert_pair = preds[action].transitionProbs.insert(elem);
+			if (insert_pair.second){
+				diff += pow(insert_pair.first->second,2);
+			}
+			else {
+				diff += pow(insert_pair.first->second-elem.second,2);
+			}
+		}
+		for (auto elem:preds[action].transitionProbs){
+			if (trueTransitionProbs.find(elem.first) == trueTransitionProbs.end()){
+				diff += pow(elem.second,2);
+			}
+		}
+	}
+
+	return diff;
 }
 
 occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
+	float virtual_reward = 0;
 	bool success = false;
 
 
@@ -408,15 +532,16 @@ occ_info_t BlockRoom::apply(int action){
 			(*agent_ew) = (*agent_eye_ew);
 		}
 		else {
-			std::pair<int,int> target = get_rand_nearby_pos(*agent_eye_ns,*agent_eye_ew);
-			(*agent_ns) = target.first;
-			(*agent_ew) = target.second;
+			std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_eye_ns,*agent_eye_ew);
+			std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
+			(*agent_ns) = nearby_pos.front().first;
+			(*agent_ew) = nearby_pos.front().second;
 		}
 		success = true;
 	}
 	if (action == actions["PICK"]){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
-			std::vector<int> blocks_under = find_block_under_hand();
+			std::vector<int> blocks_under = find_block_under(*agent_ns,*agent_ew);
 			if (!blocks_under.empty()) {
 				std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
 				int idx = blocks_under.back();
@@ -460,16 +585,17 @@ occ_info_t BlockRoom::apply(int action){
 				&& red_blocks_under.empty()
 				&& blue_blocks_under.empty()
 				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
-				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))){
+				&& ((*blue_box_ns)!=(*agent_ns) || (*blue_box_ew)!=(*agent_ew))){
 			*(blocks[(*block_hold)].is_in_robot_hand) = false;
 			if (rng.bernoulli(0.8)){
 				*(blocks[(*block_hold)].ns) = (*agent_ns);
 				*(blocks[(*block_hold)].ew) = (*agent_ew);
 			}
 			else{
-				std::pair<int,int> target = get_rand_nearby_pos(*agent_ns,*agent_ew);
-				*(blocks[(*block_hold)].ns) = target.first;
-				*(blocks[(*block_hold)].ew) = target.second;
+				std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_ns,*agent_ew);
+				std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
+				*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
+				*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 			}
 
 			(*block_hold) = -1;
@@ -486,9 +612,10 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[(*block_hold)].ew) = (*red_box_ew);
 				}
 				else{
-					std::pair<int,int> target = get_rand_nearby_pos(*red_box_ns,*red_box_ew);
-					*(blocks[(*block_hold)].ns) = target.first;
-					*(blocks[(*block_hold)].ew) = target.second;
+					std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*red_box_ns,*red_box_ew);
+					std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
+					*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
+					*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 				}
 				(*block_hold) = -1;
 				success = true;
@@ -501,9 +628,10 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[(*block_hold)].ew) = (*blue_box_ew);
 				}
 				else{
-					std::pair<int,int> target = get_rand_nearby_pos(*blue_box_ns,*blue_box_ew);
-					*(blocks[(*block_hold)].ns) = target.first;
-					*(blocks[(*block_hold)].ew) = target.second;
+					std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*blue_box_ns,*blue_box_ew);
+					std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
+					*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
+					*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 				}
 				(*block_hold) = -1;
 				success = true;
@@ -528,9 +656,9 @@ occ_info_t BlockRoom::apply(int action){
 		(*agent_eye_ns) = (*blue_box_ns);
 		success = true;
 	}
-	if (action>num_actions-nbBlueBlocks-nbRedBlocks-1
-			&& action<num_actions){
-		int num_block = action-(num_actions-nbBlueBlocks-nbRedBlocks);
+	if (action>numactions-nbBlueBlocks-nbRedBlocks-1
+			&& action<numactions){
+		int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
 		if (!(*(blocks[num_block].is_in_blue_box))
 				&& !(*(blocks[num_block].is_in_red_box))
 				&& !(*(blocks[num_block].is_in_robot_hand))){

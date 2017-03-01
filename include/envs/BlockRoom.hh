@@ -64,6 +64,7 @@ public:
 
 
 	occ_info_t apply(int action);
+	float getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds);
 
 	struct block_t{
 		float* ns;
@@ -99,7 +100,7 @@ public:
 
 	std::map<std::string, int> tutor_actions;
 	std::map<std::string, int> actions;
-	int num_actions;
+	int numactions;
 	int num_tutor_actions;
 	int state_dim_base;
 
@@ -109,10 +110,10 @@ public:
 
 	const std::vector<float> &sensation() const;
 	int applyNoise(int action);
-	std::pair<int,int> get_rand_nearby_pos(int, int);
+	std::vector<std::pair<int,int>> get_nearby_pos(int, int);
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
-	std::vector<int> find_block_under_hand();
+	std::vector<int> find_block_under(int ns ,int ew);
 	bool terminal() const;
 	bool eye_hand_sync();
 

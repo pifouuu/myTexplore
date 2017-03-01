@@ -137,6 +137,10 @@ ModelBasedAgent::~ModelBasedAgent() {
   prevstate.clear();
 }
 
+std::map<std::vector<float>, std::vector<StateActionInfo>> ModelBasedAgent::eval_model(int ns){
+	return planner->eval(ns);
+}
+
 int ModelBasedAgent::first_action(const std::vector<float> &s) {
   if (AGENTDEBUG) cout << "first_action(s)" << endl;
 
@@ -316,12 +320,12 @@ void ModelBasedAgent::initPlanner(){
   else if (plannerType == ET_UCT_ACTUAL){
     planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }
-  else if (plannerType == PARALLEL_ET_UCT){
+  /*else if (plannerType == PARALLEL_ET_UCT){
     planner = new ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
   }
   else if (plannerType == PAR_ETUCT_ACTUAL){
     planner = new ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
-  }
+  }*/
   /*else if (plannerType == ET_UCT_L1){
     planner = new ETUCT(numactions, gamma, rrange, 1.0, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
   }*/

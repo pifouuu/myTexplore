@@ -96,13 +96,14 @@ public:
 
   virtual ~ModelBasedAgent();
 
+
   virtual int first_action(const std::vector<float> &s);
   virtual int next_action(float r, const std::vector<float> &s);
   virtual void last_action(float r);
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
-/*  void evaluate_model();*/
+  std::map<std::vector<float>, std::vector<StateActionInfo>> eval_model(int nstates);
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);

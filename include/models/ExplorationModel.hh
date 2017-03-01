@@ -53,7 +53,7 @@ public:
 
   virtual ~ExplorationModel();
   virtual ExplorationModel* getCopy();
-
+  std::list<std::tuple<std::vector<float>, int, StateActionInfo>> eval(std::list<std::vector<float>> samples);
   virtual bool updateWithExperiences(std::vector<experience> &instances);
   virtual bool updateWithExperience(experience &e);
   virtual float getStateActionInfo(const std::vector<float> &state, int act, StateActionInfo* retval);

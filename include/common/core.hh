@@ -179,6 +179,7 @@ struct classPair {
 /** To store information about occurrences of actions **/
 struct occ_info_t{
 		float reward;
+		float virtual_reward;
 		bool success;
 		int blocks_in;
 		int blocks_right;
@@ -189,6 +190,36 @@ struct occ_info_t{
 			blocks_right = ri;
 		}
 	};
+
+struct tutor_feedback{
+	float virtual_reward;
+	int action;
+	tutor_feedback(float r, int a){
+		virtual_reward =r;
+		action = a;
+	}
+
+};
+
+/** All the relevant information predicted by a model for a given state-action.
+    This includes predicted reward, next state probabilities, probability of episod termination, and model confidence.
+ */
+struct StateActionInfo {
+	bool known;
+	float reward;
+	float termProb;
+	int frameUpdated;
+
+	// map from outcome state to probability
+	std::map< std::vector<float> , float> transitionProbs;
+
+	StateActionInfo(){
+		known = false;
+		reward = 0.0;
+		termProb = 0.0;
+		frameUpdated = -1;
+	};
+};
 
 /** Interface for an environment, whose states can be represented as
     vectors of floats and whose actions can be represented as ints.
@@ -207,6 +238,12 @@ public:
       \param action The action the agent wishes to apply.
       \return The immediate one-step reward caused by the action. */
 	virtual occ_info_t apply(int action) = 0;
+
+	/** Retrieve a true prediction with for a state and an action in a
+	 * given environment given its dynamics and compares it to a provided
+	 *  prediction.
+	 */
+	virtual float getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.
@@ -249,10 +286,10 @@ public:
 
 	/** Get seeding experiences for agent. */
 	virtual std::vector<experience> getSeedings()
-		  {
+	{
 		std::vector<experience> e;
 		return e;
-		  } ;
+	};
 
 	/** Set the current state for testing purposes. */
 	virtual void setSensation(std::vector<float> s){};
@@ -266,6 +303,8 @@ public:
     rewards. */
 class Agent {
 public:
+	/** Evaluate the model used by the agent **/
+	virtual std::map<std::vector<float>, std::vector<StateActionInfo>> eval_model(int nstates) = 0;
 	/** Determines the first action that an agent takes in an
       environment.  This method implies that the environment is
       currently in an initial state.
@@ -310,7 +349,7 @@ public:
       currently in an initial state.
       \param s The initial sensation from the environment.
       \return The action the agent wishes to take first. */
-	virtual int first_action(const std::vector<float> &s) = 0;
+	virtual tutor_feedback first_action(const std::vector<float> &s) = 0;
 
 	/** Determines the next action that an agent takes in an environment
       and gives feedback for the previous action.  This method may
@@ -319,7 +358,7 @@ public:
       \param r The one-step reward resulting from the previous action.
       \param s The current sensation from the environment.
       \return The action the agent wishes to take next. */
-	virtual int next_action(const std::vector<float> &s) = 0;
+	virtual tutor_feedback next_action(const std::vector<float> &s, const int agent_action) = 0;
 
 
 	virtual ~Tutor() {};
@@ -362,30 +401,15 @@ public:
 	virtual ~Classifier() {};
 };
 
-/** All the relevant information predicted by a model for a given state-action.
-    This includes predicted reward, next state probabilities, probability of episod termination, and model confidence.
- */
-struct StateActionInfo {
-	bool known;
-	float reward;
-	float termProb;
-	int frameUpdated;
 
-	// map from outcome state to probability
-	std::map< std::vector<float> , float> transitionProbs;
-
-	StateActionInfo(){
-		known = false;
-		reward = 0.0;
-		termProb = 0.0;
-		frameUpdated = -1;
-	};
-};
 
 
 /** Interface for a model of an MDP. */
 class MDPModel {
 public:
+	/** Eval mdp model *
+	virtual std::list<std::tuple<std::vector<float>, int, StateActionInfo>> eval(std::list<std::vector<float>> samples) = 0;*/
+
 	/** Update the MDP model with a vector of experiences. */
 	virtual bool updateWithExperiences(std::vector<experience> &instances) = 0;
 
@@ -411,6 +435,8 @@ public:
 			int act,
 			const std::vector<float>& curr,
 			float reward, bool terminal) = 0;
+
+	virtual std::map<std::vector<float>, std::vector<StateActionInfo>> eval(int nstates) = 0;
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;

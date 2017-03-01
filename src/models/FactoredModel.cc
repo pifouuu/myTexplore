@@ -208,6 +208,12 @@ bool FactoredModel::initMDPModel(int nfactors) {
 
 }
 
+/*std::list<std::tuple<std::vector<float>, int, StateActionInfo>> FactoredModel::eval(std::list<std::vector<float>> samples){
+	for (auto it:samples){
+		StateA
+	}
+}*/
+
 // update all trees with multiple experiences
 bool FactoredModel::updateWithExperiences(std::vector<experience> &instances) {
 	if (MODEL_DEBUG)
