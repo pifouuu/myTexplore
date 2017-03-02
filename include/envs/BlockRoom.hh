@@ -42,14 +42,14 @@ public:
 	/** Prints the current map. */
 	void print_map() const;
 
-	Random &rng;
-	bool BRDEBUG = false;
-	bool WITH_TUTOR;
 	int height;
 	int width;
-
 	int nbRedBlocks;
 	int nbBlueBlocks;
+	Random &rng;
+	bool WITH_TUTOR;
+	int state_dim_base;
+	std::vector<float> s;
 
 	enum color{
 		RED,
@@ -64,7 +64,7 @@ public:
 
 
 	occ_info_t apply(int action);
-	float getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds);
+	float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds);
 
 	struct block_t{
 		float* ns;
@@ -84,7 +84,7 @@ public:
 		}
 	};
 
-	std::vector<float> s;
+
 	float* agent_ns;
 	float* agent_ew;
 	float* block_hold;
@@ -102,7 +102,7 @@ public:
 	std::map<std::string, int> actions;
 	int numactions;
 	int num_tutor_actions;
-	int state_dim_base;
+
 
 	std::map<int, std::string> action_names;
 
@@ -118,7 +118,7 @@ public:
 	bool eye_hand_sync();
 
 
-
+	bool BRDEBUG = false;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
 

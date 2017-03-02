@@ -243,7 +243,7 @@ public:
 	 * given environment given its dynamics and compares it to a provided
 	 *  prediction.
 	 */
-	virtual float getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
+	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.

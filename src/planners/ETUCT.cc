@@ -156,8 +156,8 @@ std::map<std::vector<float>, std::vector<StateActionInfo>> ETUCT::eval(int ns){
 		for (int action = 0; action<numactions; action++){
 			StateActionInfo pred = info->historyModel[action][history];
 			statePreds.push_back(pred);
-			samples[*it] = statePreds;
 		}
+		samples[*it] = statePreds;
 	}
 
 	return samples;

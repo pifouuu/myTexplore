@@ -1037,7 +1037,7 @@ int main(int argc, char **argv) {
 				if (steps % 10 == 0){
 					std::cout << steps << std::endl;
 				}
-				if (steps % 20 == 0){
+				if (steps % 50 == 0){
 					// agent->evaluate_model();
 					std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();

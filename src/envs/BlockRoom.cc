@@ -374,7 +374,7 @@ std::vector<std::pair<int,int>> BlockRoom::get_nearby_pos(int ns, int ew){
 	return nearby_pos;
 }
 
-float BlockRoom::getStateActionInfoError(const std::vector<float> s, std::vector<StateActionInfo> preds){
+float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){
 	float diff = 0.;
 	for (int action = 0;action<numactions;action++){
 		std::vector<float> next_state = s;
