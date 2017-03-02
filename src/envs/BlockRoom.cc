@@ -255,7 +255,19 @@ void BlockRoom::print_map() const{
 			}
 		}
 		else if (elem.second.size()>4) {
-			std::cout << "fuck" << std::endl;
+			int i = 0;
+			while (!elem.second.empty()){
+				Size size3(blockSize/4, blockSize/4);
+				resize(elem.second.front(), elem.second.front(), size3);
+				int x_decal = i % 4;
+				int y_decal = i/4;
+				elem.second.front().copyTo(chessBoard(cv::Rect(elem.first.first+x_decal*blockSize/4,
+								elem.first.second+y_decal*blockSize/4,
+								elem.second.front().cols,
+								elem.second.front().rows)));
+				elem.second.pop_front();
+				i++;
+			}
 		}
 	}
 
@@ -397,6 +409,8 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 					for (auto block:blocks_under){
 						next_state[2]=block;
 						next_state[6*block+state_dim_base+2*WITH_TUTOR + 3] = 1;
+						next_state[6*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
+						next_state[6*block+state_dim_base+2*WITH_TUTOR + 5] = 0;
 						trueTransitionProbs[next_state] = 1./nb_blocks;
 					}
 				}
@@ -454,12 +468,12 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 				trueTransitionProbs[next_state]=1.;
 			}
 		}
-		if (WITH_TUTOR && action==actions["LOOK_RED_BOX"]){
+		if (action==actions["LOOK_RED_BOX"]){
 			next_state[4] = (s[6]);
 			next_state[3] = (s[5]);
 			trueTransitionProbs[next_state] = 1.;
 		}
-		if (WITH_TUTOR && action==actions["LOOK_BLUE_BOX"]){
+		if (action==actions["LOOK_BLUE_BOX"]){
 			next_state[4] = (s[8]);
 			next_state[3] = (s[7]);
 			trueTransitionProbs[next_state] = 1.;
@@ -549,6 +563,8 @@ occ_info_t BlockRoom::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*(blocks[idx].is_in_robot_hand) = true;
 					(*block_hold) = idx;
+					*(blocks[idx].is_in_blue_box) = false;
+					*(blocks[idx].is_in_red_box) = false;
 				}
 				success = true;
 			}

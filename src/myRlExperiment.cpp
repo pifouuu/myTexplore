@@ -52,9 +52,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100; //10; //200; //500; //200;
+unsigned NUMEPISODES = 1; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 5000; // per episode
+unsigned MAXSTEPS = 10000; // per episode
 bool PRINTS = false;
 
 
@@ -957,8 +957,9 @@ int main(int argc, char **argv) {
 			std::list<int> occ_list;
 			int success;
 		};
-		std::vector<act_info_t> act_to_occ;
-		std::vector<float> act_count(numactions);
+
+		//std::vector<act_info_t> act_to_occ;
+		std::vector<std::pair<float,float>> act_count(numactions);
 
 		std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
 		std::map<int,std::vector<std::pair<float, float>>> plot_act_try;
@@ -999,15 +1000,16 @@ int main(int argc, char **argv) {
 
 					a = agent->first_action(es);
 					info = e->apply(a);
-					act_count[a]++;
+					act_count[a].first++;
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
 					if (info.success){
-						plot_act_succes[a].push_back(std::make_pair(steps,1));
+						act_count[a].second++;
+						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 					}
-					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 					plot_act_acc[a].push_back(std::make_pair(steps,
-							plot_act_succes[a].size()/act_count[a]));
+							act_count[a].second/act_count[a].first));
 
 				} else {
 					t_feedback = tutor->next_action(es, a);
@@ -1019,13 +1021,14 @@ int main(int argc, char **argv) {
 					info = e->apply(a);
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
-					act_count[a]++;
+					act_count[a].first++;
 					if (info.success){
-						plot_act_succes[a].push_back(std::make_pair(steps,1));
+						act_count[a].second++;
+						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 					}
-					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 					plot_act_acc[a].push_back(std::make_pair(steps,
-							plot_act_succes[a].size()/act_count[a]));
+							act_count[a].second/act_count[a].first));
 				}
 
 				// update performance
@@ -1120,13 +1123,14 @@ int main(int argc, char **argv) {
 
 				int a = agent->first_action(es);
 				occ_info_t info = e->apply(a);
-				act_count[a]++;
+				act_count[a].first++;
 				if (info.success){
-					plot_act_succes[a].push_back(std::make_pair(steps,1));
+					act_count[a].second++;
+					plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 				}
-				plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+				plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 				plot_act_acc[a].push_back(std::make_pair(steps,
-						plot_act_succes[a].size()/act_count[a]));
+						act_count[a].second/act_count[a].first));
 				// update performance
 				sum += info.reward;
 				++steps;
@@ -1144,13 +1148,14 @@ int main(int argc, char **argv) {
 					info = e->apply(a);
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
-					act_count[a]++;
+					act_count[a].first++;
 					if (info.success){
-						plot_act_succes[a].push_back(std::make_pair(steps,1));
+						act_count[a].second++;
+						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 					}
-					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
+					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 					plot_act_acc[a].push_back(std::make_pair(steps,
-							plot_act_succes[a].size()/act_count[a]));
+							act_count[a].second/act_count[a].first));
 
 					// update performance
 					sum += info.reward;
