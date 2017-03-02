@@ -52,9 +52,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 5000; //10; //200; //500; //200;
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 1000000; // per episode
+unsigned MAXSTEPS = 5000; // per episode
 bool PRINTS = false;
 
 
@@ -705,7 +705,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "blockroom") == 0){
 		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng, with_tutor);
+		e = new BlockRoom(rng, with_tutor, stochastic);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -992,8 +992,6 @@ int main(int argc, char **argv) {
 				// first step
 				if (i == 0){
 
-					// first action
-					std::vector<float> es = e->sensation();
 					if (with_tutor){
 						t_feedback = tutor->first_action(es);
 						e->apply_tutor(t_feedback.action);
@@ -1111,13 +1109,13 @@ int main(int argc, char **argv) {
 				// performance tracking
 				float sum = 0;
 				int steps = 0;
-
+				tutor_feedback t_feedback(0.,0);
 
 				// first action
 				std::vector<float> es = e->sensation();
 				if (with_tutor){
-					tutor_feedback tutor_action = tutor->first_action(es);
-					e->apply_tutor(tutor_action.action);
+					t_feedback = tutor->first_action(es);
+					e->apply_tutor(t_feedback.action);
 				}
 
 				int a = agent->first_action(es);
@@ -1134,16 +1132,18 @@ int main(int argc, char **argv) {
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
-
 					// perform an action
 					es = e->sensation();
+
+					t_feedback = tutor->next_action(es, a);
 					if (with_tutor){
-						tutor_feedback tutor_action = tutor->next_action(es,a);
-						e->apply_tutor(tutor_action.action);
+						e->apply_tutor(t_feedback.action);
 					}
 
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
+					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
 					act_count[a]++;
 					if (info.success){
 						plot_act_succes[a].push_back(std::make_pair(steps,1));
@@ -1151,35 +1151,62 @@ int main(int argc, char **argv) {
 					plot_act_try[a].push_back(std::make_pair(steps, act_count[a]));
 					plot_act_acc[a].push_back(std::make_pair(steps,
 							plot_act_succes[a].size()/act_count[a]));
+
 					// update performance
 					sum += info.reward;
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
 					}
-					if (steps % 20 == 0){
+					if (steps % 50 == 0){
 						// agent->evaluate_model();
+						std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 								it != plot_act_succes.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_succes_"+action_names[it->first]+".ser");
+							std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 								it != plot_act_try.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_try_"+action_names[it->first]+".ser");
+							std::ofstream ofs(name+"_act_try_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
 								it != plot_act_acc.end(); ++it){
 							// serialize vector
-							std::ofstream ofs("act_acc_"+action_names[it->first]+".ser");
+							std::ofstream ofs(name+"_act_acc_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
 						}
+						std::ofstream ofs(name+"_blocks_in.ser");
+						boost::archive::text_oarchive oa_in(ofs);
+						oa_in & plot_blocks_in;
+						ofs.close();
+						ofs.clear();
+
+						ofs.open(name+"_blocks_right.ser");
+						boost::archive::text_oarchive oa_right(ofs);
+						oa_right & plot_blocks_right;
+						ofs.close();
+						ofs.clear();
+
+						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+						float model_error = 0.;
+						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
+								it!=samples.end();++it){
+							float error = e->getStateActionInfoError(it->first, it->second);
+							model_error += error;
+
+						}
+						model_error /= samples.size();
+						plot_model_acc.push_back(std::make_pair(steps, model_error));
+						ofs.open(name+"_model_acc.ser");
+						boost::archive::text_oarchive oa_model_acc(ofs);
+						oa_model_acc & plot_model_acc;
 					}
 
 

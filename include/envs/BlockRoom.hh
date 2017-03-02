@@ -18,7 +18,7 @@
 class BlockRoom: public Environment {
 public:
 	// Constructor
-	BlockRoom(Random &rand, bool with_tutor);
+	BlockRoom(Random &rand, bool with_tutor, bool stochastic);
 
 	/* Blockroom is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -27,7 +27,7 @@ public:
 
 
 	void apply_tutor(int action);
-	bool terminal();
+	bool terminal() const;
 	void reset();
 	int getNumActions();
 	int getNumTutorActions();
@@ -35,7 +35,7 @@ public:
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
-	bool isEpisodic(){ return false;}
+	bool isEpisodic(){ return true;}
 
 	friend std::ostream &operator<<(std::ostream &out, const BlockRoom &blockroom);
 
@@ -46,6 +46,7 @@ public:
 	int width;
 	int nbRedBlocks;
 	int nbBlueBlocks;
+	bool stochastic;
 	Random &rng;
 	bool WITH_TUTOR;
 	int state_dim_base;
@@ -114,11 +115,10 @@ public:
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
 	std::vector<int> find_block_under(int ns ,int ew);
-	bool terminal() const;
 	bool eye_hand_sync();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
 
