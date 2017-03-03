@@ -303,6 +303,9 @@ void BlockRoom::reset(){
 		*(blocks[i].color) = RED;
 		*(blocks[i].ew) = (*it % width);
 		*(blocks[i].ns) = (*it / width);
+		*(blocks[i].is_in_blue_box) = false;
+		*(blocks[i].is_in_red_box) = false;
+		*(blocks[i].is_in_robot_hand) = false;
 	}
 
 	for (std::vector<int>::iterator it = x.begin()+nbRedBlocks;
@@ -311,6 +314,9 @@ void BlockRoom::reset(){
 		*(blocks[i].color) = BLUE;
 		*(blocks[i].ew) = (*it % width);
 		*(blocks[i].ns) = (*it / width);
+		*(blocks[i].is_in_blue_box) = false;
+		*(blocks[i].is_in_red_box) = false;
+		*(blocks[i].is_in_robot_hand) = false;
 	}
 
 }

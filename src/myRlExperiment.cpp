@@ -1128,14 +1128,14 @@ int main(int argc, char **argv) {
 				act_count[a].first++;
 				if (info.success){
 					act_count[a].second++;
-					plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
+					plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
 				}
-				plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
-				plot_act_acc[a].push_back(std::make_pair(steps,
+				plot_act_try[a].push_back(std::make_pair(tot_steps+steps, act_count[a].first));
+				plot_act_acc[a].push_back(std::make_pair(tot_steps+steps,
 						act_count[a].second/act_count[a].first));
 				// update performance
 				sum += info.reward;
-				accu_rewards.push_back(std::make_pair(steps,sum)
+				accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
@@ -1162,6 +1162,7 @@ int main(int argc, char **argv) {
 
 					// update performance
 					sum += info.reward;
+					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
@@ -1215,6 +1216,14 @@ int main(int argc, char **argv) {
 						ofs.open(name+"_model_acc.ser");
 						boost::archive::text_oarchive oa_model_acc(ofs);
 						oa_model_acc & plot_model_acc;
+						ofs.close();
+						ofs.clear();
+
+						ofs.open(name+"_accumulated_reawards.ser");
+						boost::archive::text_oarchive oa_reward(ofs);
+						oa_reward & accu_rewards;
+						ofs.close();
+						ofs.clear();
 					}
 
 
