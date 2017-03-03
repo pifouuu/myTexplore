@@ -118,7 +118,7 @@ public:
 	bool eye_hand_sync();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
 

@@ -132,6 +132,7 @@ int BlockRoom::get_blocks_in() const {
 	for (int i = state_dim_base + 2*WITH_TUTOR + 4; i<s.size();i+=6){
 		nb_blocks_in += (s[i]==1 || s[i+1]==1);
 	}
+	return nb_blocks_in;
 }
 
 int BlockRoom::get_blocks_right() const {
@@ -139,6 +140,7 @@ int BlockRoom::get_blocks_right() const {
 	for (int i = state_dim_base + 2*WITH_TUTOR; i<s.size();i+=6){
 		nb_blocks_right += ((s[i+2]==0 && s[i+5]==1) || (s[i+2]==1 && s[i+4]==1));
 	}
+	return nb_blocks_right;
 }
 
 
@@ -172,8 +174,6 @@ void BlockRoom::getMinMaxReward(float *minR,
 }
 
 void BlockRoom::print_map() const{
-
-	std::cout << "\nBlock room" << std::endl;
 
 	int blockSize=80;
 	Size size(blockSize, blockSize);

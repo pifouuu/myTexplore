@@ -517,7 +517,8 @@ void ETUCT::initStateInfo(state_t s, state_info* info) {
 	info->needsUpdate = true;
 
 	for (int i = 0; i < numactions; i++) {
-		info->Q[i] = rng.uniform(0, 0.01);
+		//info->Q[i] = rng.uniform(0, 0.01);
+		info->Q[i] = 0.0;
 	}
 
 	//if (PLANNERDEBUG) cout << "done with initStateInfo()" << endl;
