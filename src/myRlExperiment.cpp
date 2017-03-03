@@ -961,7 +961,7 @@ int main(int argc, char **argv) {
 		//std::vector<act_info_t> act_to_occ;
 		std::vector<std::pair<float,float>> act_count(numactions);
 
-		std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
+		//std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
 		std::map<int,std::vector<std::pair<float, float>>> plot_act_try;
 		std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
 		std::list<std::pair<int,int>> plot_blocks_in;
@@ -969,6 +969,9 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,float>> plot_model_acc;
 		std::list<std::pair<int,float>> accu_rewards;
 
+		// agent->evaluate_model();
+		std::string name = std::string(agentType)+"_"+std::string(tutorType)+"_"+
+				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
 
 		// STEP BY STEP DOMAIN
 		if (!episodic){
@@ -1128,7 +1131,7 @@ int main(int argc, char **argv) {
 				act_count[a].first++;
 				if (info.success){
 					act_count[a].second++;
-					plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
+					//plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
 				}
 				plot_act_try[a].push_back(std::make_pair(tot_steps+steps, act_count[a].first));
 				plot_act_acc[a].push_back(std::make_pair(tot_steps+steps,
@@ -1149,15 +1152,15 @@ int main(int argc, char **argv) {
 
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
-					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
-					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
+					plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_in));
+					plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_right));
 					act_count[a].first++;
 					if (info.success){
 						act_count[a].second++;
-						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
+						//plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
 					}
-					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
-					plot_act_acc[a].push_back(std::make_pair(steps,
+					plot_act_try[a].push_back(std::make_pair(tot_steps+steps, act_count[a].first));
+					plot_act_acc[a].push_back(std::make_pair(tot_steps+steps,
 							act_count[a].second/act_count[a].first));
 
 					// update performance
@@ -1168,15 +1171,14 @@ int main(int argc, char **argv) {
 						std::cout << steps << std::endl;
 					}
 					if (steps % 50 == 0){
-						// agent->evaluate_model();
-						std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
-						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+
+						/*for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 								it != plot_act_succes.end(); ++it){
 							// serialize vector
 							std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
-						}
+						}*/
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 								it != plot_act_try.end(); ++it){
 							// serialize vector
@@ -1219,7 +1221,7 @@ int main(int argc, char **argv) {
 						ofs.close();
 						ofs.clear();
 
-						ofs.open(name+"_accumulated_reawards.ser");
+						ofs.open(name+"_accumulated_rewards.ser");
 						boost::archive::text_oarchive oa_reward(ofs);
 						oa_reward & accu_rewards;
 						ofs.close();
