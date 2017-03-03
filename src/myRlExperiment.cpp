@@ -52,7 +52,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 10000; // per episode
 bool PRINTS = false;
@@ -967,6 +967,7 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,int>> plot_blocks_in;
 		std::list<std::pair<int,int>> plot_blocks_right;
 		std::list<std::pair<int,float>> plot_model_acc;
+		std::list<std::pair<int,float>> accu_rewards;
 
 
 		// STEP BY STEP DOMAIN
@@ -1103,6 +1104,7 @@ int main(int argc, char **argv) {
 
 		// EPISODIC DOMAINS
 		else {
+			int tot_steps = 0;
 
 			//////////////////////////////////
 			// episodic
@@ -1133,6 +1135,7 @@ int main(int argc, char **argv) {
 						act_count[a].second/act_count[a].first));
 				// update performance
 				sum += info.reward;
+				accu_rewards.push_back(std::make_pair(steps,sum)
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
@@ -1229,6 +1232,7 @@ int main(int argc, char **argv) {
 				std::cerr << sum << endl;
 
 				rsum += sum;
+				tot_steps+=steps;
 
 			}
 
