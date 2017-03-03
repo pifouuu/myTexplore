@@ -1009,7 +1009,7 @@ int main(int argc, char **argv) {
 					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
 					if (info.success){
 						act_count[a].second++;
-						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
+						//plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 					}
 					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 					plot_act_acc[a].push_back(std::make_pair(steps,
@@ -1028,7 +1028,7 @@ int main(int argc, char **argv) {
 					act_count[a].first++;
 					if (info.success){
 						act_count[a].second++;
-						plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
+						//plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
 					}
 					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
 					plot_act_acc[a].push_back(std::make_pair(steps,
@@ -1045,13 +1045,13 @@ int main(int argc, char **argv) {
 				if (steps % 50 == 0){
 					// agent->evaluate_model();
 					std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
-					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+					/*for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 							it != plot_act_succes.end(); ++it){
 						// serialize vector
 						std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 						boost::archive::text_oarchive oa(ofs);
 						oa & it->second;
-					}
+					}*/
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 							it != plot_act_try.end(); ++it){
 						// serialize vector

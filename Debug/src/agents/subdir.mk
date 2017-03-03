@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/agents/ModelBasedAgent.cc 
+../src/agents/ModelBasedAgent.cc \
+../src/agents/QLearner.cc 
 
 CC_DEPS += \
-./src/agents/ModelBasedAgent.d 
+./src/agents/ModelBasedAgent.d \
+./src/agents/QLearner.d 
 
 OBJS += \
-./src/agents/ModelBasedAgent.o 
+./src/agents/ModelBasedAgent.o \
+./src/agents/QLearner.o 
 
 
 # Each subdirectory must supply rules for building sources it contributes
