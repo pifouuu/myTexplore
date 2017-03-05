@@ -292,11 +292,13 @@ void ModelBasedAgent::initPlanner(){
 
   int max_path = 10; //500;
 
-  // init planner based on type
-  /*if (plannerType == VALUE_ITERATION){
+  // init planner based on typ
+  /*
+  if (plannerType == VALUE_ITERATION){
     planner = new ValueIteration(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, rng);
   }
-  else if (plannerType == MBS_VI){
+
+  if (plannerType == MBS_VI){
     planner = new MBS(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, history, rng);
   }
   else if (plannerType == POLICY_ITERATION){
