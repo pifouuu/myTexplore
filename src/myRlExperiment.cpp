@@ -1263,6 +1263,7 @@ int main(int argc, char **argv) {
 				std::cerr << sum << endl;
 
 				rsum += sum;
+				tutor_rsum += tutor_sum;
 				tot_steps+=steps;
 
 			}
