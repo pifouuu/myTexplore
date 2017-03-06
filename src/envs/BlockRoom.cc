@@ -16,8 +16,8 @@ using namespace cv;
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 	height(10),
 	width(10),
-	nbRedBlocks(1),
-	nbBlueBlocks(1),
+	nbRedBlocks(3),
+	nbBlueBlocks(3),
 	stochastic(stochastic),
 	rng(rand),
 	WITH_TUTOR(with_tutor),

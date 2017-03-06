@@ -320,7 +320,7 @@ void ModelBasedAgent::initPlanner(){
     planner = new PO_ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }*/
   else if (plannerType == ET_UCT_ACTUAL){
-    planner = new ETUCT(numactions, gamma, rrange, lambda, 10, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
+    planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }
   /*else if (plannerType == PARALLEL_ET_UCT){
     planner = new ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
