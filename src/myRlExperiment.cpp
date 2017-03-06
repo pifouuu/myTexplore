@@ -974,6 +974,8 @@ int main(int argc, char **argv) {
 		// agent->evaluate_model();
 		std::string name = std::string(agentType)+"_"+std::string(tutorType)+"_"+
 				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
+		if (v != 0) {name += "_v_"+std::to_string(v);}
+		if (n != 0) {name += "_n_"+std::to_string(n);}
 
 		// STEP BY STEP DOMAIN
 		if (!episodic){

@@ -17,7 +17,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 	height(10),
 	width(10),
 	nbRedBlocks(2),
-	nbBlueBlocks(3),
+	nbBlueBlocks(2),
 	stochastic(stochastic),
 	rng(rand),
 	WITH_TUTOR(with_tutor),
