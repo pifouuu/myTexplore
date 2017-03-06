@@ -21,6 +21,18 @@ tutor_feedback s_dep_tutor::first_action(const std::vector<float> &s) {
 		printState(s);
 		std::cout << std::endl;
 	}
+	float reward = 0.;
+	if (s[2]>=0){
+		int idx = s[2];
+		int color = s[6*idx+9+2];
+		/*if (is_tutor_terminal()){
+			reward =+ 10;
+		}
+		else*/
+		if (color == 1 && a ==3 && s[0]==s[7] && s[1]==s[8] ) {reward += 1;}
+		if (color == 0 && a ==3 && s[0]==s[5] && s[1]==s[6] ) {reward += 1;}
+
+	}
 
 	int act;
 	if (s[2]>=0){
@@ -56,7 +68,7 @@ tutor_feedback s_dep_tutor::first_action(const std::vector<float> &s) {
 
 	if (ACTDEBUG)
 		cout << "Took action " << act << endl;
-	return tutor_feedback(0.,act);
+	return tutor_feedback(reward,act);
 }
 
 tutor_feedback s_dep_tutor::next_action(const std::vector<float> &s,const int a) {

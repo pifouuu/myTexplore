@@ -16,13 +16,13 @@ using namespace cv;
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 	height(10),
 	width(10),
-	nbRedBlocks(3),
+	nbRedBlocks(2),
 	nbBlueBlocks(3),
 	stochastic(stochastic),
 	rng(rand),
 	WITH_TUTOR(with_tutor),
 	state_dim_base(9),
-	s(state_dim_base+6*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
+	s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
 	agent_ns(&(s[0])),
 	agent_ew(&(s[1])),
 	block_hold(&(s[2])),
@@ -70,8 +70,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 				&(s[6*i+state_dim_base+2*with_tutor + 1]),
 				&(s[6*i+state_dim_base+2*with_tutor + 2]),
 				&(s[6*i+state_dim_base+2*with_tutor + 3]),
-				&(s[6*i+state_dim_base+2*with_tutor + 4]),
-				&(s[6*i+state_dim_base+2*with_tutor + 5]));
+				&(s[6*i+state_dim_base+2*with_tutor + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_RED_BLOCK_";
@@ -89,8 +88,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 1]),
 				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 2]),
 				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 3]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 5]));
+				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_BLUE_BLOCK_";
@@ -120,7 +118,7 @@ const std::vector<float> &BlockRoom::sensation() const {
 }
 
 bool BlockRoom::terminal() const {
-	return get_blocks_right()==nbBlueBlocks+nbRedBlocks;
+	return get_blocks_in()==nbBlueBlocks+nbRedBlocks;
 }
 
 std::map<int, std::string> BlockRoom::get_action_names(){
@@ -129,7 +127,7 @@ std::map<int, std::string> BlockRoom::get_action_names(){
 
 int BlockRoom::get_blocks_in() const {
 	int nb_blocks_in = 0;
-	for (int i = state_dim_base + 2*WITH_TUTOR + 4; i<s.size();i+=6){
+	for (int i = state_dim_base + 2*WITH_TUTOR + 3; i<s.size();i+=5){
 		nb_blocks_in += (s[i]==1 || s[i+1]==1);
 	}
 	return nb_blocks_in;
@@ -137,8 +135,8 @@ int BlockRoom::get_blocks_in() const {
 
 int BlockRoom::get_blocks_right() const {
 	int nb_blocks_right = 0;
-	for (int i = state_dim_base + 2*WITH_TUTOR; i<s.size();i+=6){
-		nb_blocks_right += ((s[i+2]==0 && s[i+5]==1) || (s[i+2]==1 && s[i+4]==1));
+	for (int i = state_dim_base + 2*WITH_TUTOR; i<s.size();i+=5){
+		nb_blocks_right += ((s[i+2]==0 && s[i+4]==1) || (s[i+2]==1 && s[i+3]==1));
 	}
 	return nb_blocks_right;
 }
@@ -645,6 +643,10 @@ occ_info_t BlockRoom::apply(int action){
 				if (terminal()){
 					reward += 10;
 				}
+				else {
+					reward += 1;
+				}
+
 			}
 			else if ((*blue_box_ns)==(*agent_ns) && (*blue_box_ew)==(*agent_ew)){
 				*(blocks[(*block_hold)].is_in_robot_hand) = false;
@@ -663,6 +665,9 @@ occ_info_t BlockRoom::apply(int action){
 				success = true;
 				if (terminal()){
 					reward += 10;
+				}
+				else {
+					reward += 1;
 				}
 			}
 		}

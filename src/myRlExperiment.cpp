@@ -839,6 +839,7 @@ int main(int argc, char **argv) {
 
 
 	float rsum = 0;
+	float tutor_rsum;
 
 	if (statesPerDim.size() == 0){
 		cout << "set statesPerDim to " << nstates << " for all dim" << endl;
@@ -968,6 +969,7 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,int>> plot_blocks_right;
 		std::list<std::pair<int,float>> plot_model_acc;
 		std::list<std::pair<int,float>> accu_rewards;
+		std::list<std::pair<int,float>> accu_tutor_rewards;
 
 		// agent->evaluate_model();
 		std::string name = std::string(agentType)+"_"+std::string(tutorType)+"_"+
@@ -1116,6 +1118,7 @@ int main(int argc, char **argv) {
 
 				// performance tracking
 				float sum = 0;
+				float tutor_sum;
 				int steps = 0;
 				tutor_feedback t_feedback(0.,0);
 
@@ -1128,6 +1131,12 @@ int main(int argc, char **argv) {
 
 				int a = agent->first_action(es);
 				occ_info_t info = e->apply(a);
+
+				t_feedback = tutor->next_action(es, a);
+				if (with_tutor){
+					e->apply_tutor(t_feedback.action);
+				}
+
 				act_count[a].first++;
 				if (info.success){
 					act_count[a].second++;
@@ -1138,20 +1147,23 @@ int main(int argc, char **argv) {
 						act_count[a].second/act_count[a].first));
 				// update performance
 				sum += info.reward;
+				tutor_sum += t_feedback.virtual_reward;
 				accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
+				accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
 					// perform an action
 					es = e->sensation();
 
+					a = agent->next_action(info.reward, es);
+					info = e->apply(a);
+
 					t_feedback = tutor->next_action(es, a);
 					if (with_tutor){
 						e->apply_tutor(t_feedback.action);
 					}
 
-					a = agent->next_action(info.reward, es);
-					info = e->apply(a);
 					plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_in));
 					plot_blocks_right.push_back(std::make_pair(tot_steps+steps, info.blocks_right));
 					act_count[a].first++;
@@ -1165,7 +1177,9 @@ int main(int argc, char **argv) {
 
 					// update performance
 					sum += info.reward;
+					tutor_sum += t_feedback.virtual_reward;
 					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
+					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;

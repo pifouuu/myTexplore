@@ -71,15 +71,13 @@ public:
 		float* ns;
 		float* ew;
 		float* color;
-		float* is_in_robot_hand;
 		float* is_in_blue_box;
 		float* is_in_red_box;
-		block_t(float* a, float* b, float* c, float* d,
+		block_t(float* a, float* b, float* c,
 				float* e, float* f){
 			ns = a;
 			ew = b;
 			color = c;
-			is_in_robot_hand = d;
 			is_in_blue_box = e;
 			is_in_red_box = f;
 		}

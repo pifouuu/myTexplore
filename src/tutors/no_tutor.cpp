@@ -17,14 +17,34 @@ no_tutor::~no_tutor() {};
 
 tutor_feedback no_tutor::first_action(const std::vector<float> &s){};
 
+/*int no_tutor::get_blocks_right(const std::vector<float> &s) {
+	int nb_blocks_right = 0;
+	for (int i = 9; i<s.size();i+=6){
+		nb_blocks_right += ((s[i+2]==0 && s[i+5]==1) || (s[i+2]==1 && s[i+4]==1));
+	}
+	return nb_blocks_right;
+}
+
+bool no_tutor::is_tutor_terminal(){
+	return get_blocks_right()==nbBlueBlocks+nbRedBlocks;
+}*/
+
 tutor_feedback no_tutor::next_action(const std::vector<float> &s, const int a) {
 
 	float reward = 0.;
-	if (previous_action == 1 || previous_action == 2){
-		if (a==5 && s[0]==s[9] && s[1]==s[10]){reward+=1;}
+	if (s[2]>=0){
+		int idx = s[2];
+		int color = s[6*idx+9+2];
+		/*if (is_tutor_terminal()){
+			reward =+ 10;
+		}
+		else*/
+		if (color == 1 && a ==3 && s[0]==s[7] && s[1]==s[8] ) {reward += 1;}
+		if (color == 0 && a ==3 && s[0]==s[5] && s[1]==s[6] ) {reward += 1;}
+
 	}
 
-	int act;
+	/*int act;
 	if (s[2]>=0){
 		int idx = s[2];
 		int color = s[6*idx+2+11];
@@ -61,7 +81,8 @@ tutor_feedback no_tutor::next_action(const std::vector<float> &s, const int a) {
 	}
 
 	previous_action = act;
-	return tutor_feedback(reward, act);
+	*/
+	return tutor_feedback(reward, 0);
 }
 
 bool no_tutor::red_box_ok(const std::vector<float> &s){
