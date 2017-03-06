@@ -1153,7 +1153,7 @@ int main(int argc, char **argv) {
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
 					plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_in));
-					plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_right));
+					plot_blocks_right.push_back(std::make_pair(tot_steps+steps, info.blocks_right));
 					act_count[a].first++;
 					if (info.success){
 						act_count[a].second++;
