@@ -1219,25 +1219,31 @@ int main(int argc, char **argv) {
 						ofs.close();
 						ofs.clear();
 
-						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
-						float model_error = 0.;
-						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
-								it!=samples.end();++it){
-							float error = e->getStateActionInfoError(it->first, it->second);
-							model_error += error;
-
-						}
-						model_error /= samples.size();
-						plot_model_acc.push_back(std::make_pair(steps, model_error));
-						ofs.open(name+"_model_acc.ser");
-						boost::archive::text_oarchive oa_model_acc(ofs);
-						oa_model_acc & plot_model_acc;
-						ofs.close();
-						ofs.clear();
+//						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+//						float model_error = 0.;
+//						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
+//								it!=samples.end();++it){
+//							float error = e->getStateActionInfoError(it->first, it->second);
+//							model_error += error;
+//
+//						}
+//						model_error /= samples.size();
+//						plot_model_acc.push_back(std::make_pair(steps, model_error));
+//						ofs.open(name+"_model_acc.ser");
+//						boost::archive::text_oarchive oa_model_acc(ofs);
+//						oa_model_acc & plot_model_acc;
+//						ofs.close();
+//						ofs.clear();
 
 						ofs.open(name+"_accumulated_rewards.ser");
 						boost::archive::text_oarchive oa_reward(ofs);
 						oa_reward & accu_rewards;
+						ofs.close();
+						ofs.clear();
+
+						ofs.open(name+"_accu_tutor_rewards.ser");
+						boost::archive::text_oarchive oa_tutor_r(ofs);
+						oa_tutor_r & accu_tutor_rewards;
 						ofs.close();
 						ofs.clear();
 					}

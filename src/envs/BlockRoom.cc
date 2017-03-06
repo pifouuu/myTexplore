@@ -303,7 +303,6 @@ void BlockRoom::reset(){
 		*(blocks[i].ns) = (*it / width);
 		*(blocks[i].is_in_blue_box) = false;
 		*(blocks[i].is_in_red_box) = false;
-		*(blocks[i].is_in_robot_hand) = false;
 	}
 
 	for (std::vector<int>::iterator it = x.begin()+nbRedBlocks;
@@ -314,7 +313,6 @@ void BlockRoom::reset(){
 		*(blocks[i].ns) = (*it / width);
 		*(blocks[i].is_in_blue_box) = false;
 		*(blocks[i].is_in_red_box) = false;
-		*(blocks[i].is_in_robot_hand) = false;
 	}
 
 }
@@ -375,7 +373,7 @@ void BlockRoom::apply_tutor(int action){
 		int num_block = action-(num_tutor_actions-nbBlueBlocks-nbRedBlocks);
 		if (!(*(blocks[num_block].is_in_blue_box))
 				&& !(*(blocks[num_block].is_in_red_box))
-				&& !(*(blocks[num_block].is_in_robot_hand))){
+				&& *(block_hold) != num_block){
 			(*tutor_eye_ew) = *(blocks[num_block].ew);
 			(*tutor_eye_ns) = *(blocks[num_block].ns);
 		}
@@ -565,7 +563,6 @@ occ_info_t BlockRoom::apply(int action){
 				std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
 				int idx = blocks_under.back();
 				if (rng.bernoulli(stoch_param)){
-					*(blocks[idx].is_in_robot_hand) = true;
 					(*block_hold) = idx;
 					*(blocks[idx].is_in_blue_box) = false;
 					*(blocks[idx].is_in_red_box) = false;
@@ -607,7 +604,6 @@ occ_info_t BlockRoom::apply(int action){
 				&& blue_blocks_under.empty()
 				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
 				&& ((*blue_box_ns)!=(*agent_ns) || (*blue_box_ew)!=(*agent_ew))){
-			*(blocks[(*block_hold)].is_in_robot_hand) = false;
 			if (rng.bernoulli(stoch_param)){
 				*(blocks[(*block_hold)].ns) = (*agent_ns);
 				*(blocks[(*block_hold)].ew) = (*agent_ew);
@@ -626,7 +622,6 @@ occ_info_t BlockRoom::apply(int action){
 	if (action==actions["PUT_IN"]) {
 		if ((*block_hold)!=-1){
 			if ((*red_box_ns)==(*agent_ns) && (*red_box_ew)==(*agent_ew)){
-				*(blocks[(*block_hold)].is_in_robot_hand) = false;
 				if (rng.bernoulli(stoch_param)){
 					*(blocks[(*block_hold)].is_in_red_box) = true;
 					*(blocks[(*block_hold)].ns) = (*red_box_ns);
@@ -649,7 +644,6 @@ occ_info_t BlockRoom::apply(int action){
 
 			}
 			else if ((*blue_box_ns)==(*agent_ns) && (*blue_box_ew)==(*agent_ew)){
-				*(blocks[(*block_hold)].is_in_robot_hand) = false;
 				if (rng.bernoulli(stoch_param)){
 					*(blocks[(*block_hold)].is_in_blue_box) = true;
 					*(blocks[(*block_hold)].ns) = (*blue_box_ns);
@@ -695,7 +689,7 @@ occ_info_t BlockRoom::apply(int action){
 		int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
 		if (!(*(blocks[num_block].is_in_blue_box))
 				&& !(*(blocks[num_block].is_in_red_box))
-				&& !(*(blocks[num_block].is_in_robot_hand))){
+				&& *(block_hold)!=num_block){
 			(*agent_eye_ew) = *(blocks[num_block].ew);
 			(*agent_eye_ns) = *(blocks[num_block].ns);
 			success = true;

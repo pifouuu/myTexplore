@@ -34,7 +34,7 @@ tutor_feedback no_tutor::next_action(const std::vector<float> &s, const int a) {
 	float reward = 0.;
 	if (s[2]>=0){
 		int idx = s[2];
-		int color = s[6*idx+9+2];
+		int color = s[5*idx+9+2];
 		/*if (is_tutor_terminal()){
 			reward =+ 10;
 		}
@@ -85,24 +85,25 @@ tutor_feedback no_tutor::next_action(const std::vector<float> &s, const int a) {
 	return tutor_feedback(reward, 0);
 }
 
-bool no_tutor::red_box_ok(const std::vector<float> &s){
-	bool no_error = true;
-	int idx = 0;
-	while (no_error && idx<numactions-3){
-		no_error = (s[6*idx+2+12]==0 || s[6*idx+5+12]==0);
-		idx++;
-	}
-	return no_error;
-}
-
-bool no_tutor::blue_box_ok(const std::vector<float> &s){
-	bool no_error = true;
-	int idx = 0;
-	while (no_error && idx<numactions-3){
-		no_error = (s[6*idx+2+12]==1 || s[6*idx+4+12]==0);
-		idx++;
-	}
-	return no_error;
-}
+/* WILL NOT WORK !!!!!!!! */
+//bool no_tutor::red_box_ok(const std::vector<float> &s){
+//	bool no_error = true;
+//	int idx = 0;
+//	while (no_error && idx<numactions-3){
+//		no_error = (s[5*idx+2+12]==0 || s[5*idx+5+12]==0);
+//		idx++;
+//	}
+//	return no_error;
+//}
+//
+//bool no_tutor::blue_box_ok(const std::vector<float> &s){
+//	bool no_error = true;
+//	int idx = 0;
+//	while (no_error && idx<numactions-3){
+//		no_error = (s[6*idx+2+12]==1 || s[6*idx+4+12]==0);
+//		idx++;
+//	}
+//	return no_error;
+//}
 
 
