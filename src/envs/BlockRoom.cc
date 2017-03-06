@@ -66,11 +66,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 	for (int i = 0; i<nbRedBlocks; i++){
 		block_t block(
-				&(s[6*i+state_dim_base+2*with_tutor + 0]),
-				&(s[6*i+state_dim_base+2*with_tutor + 1]),
-				&(s[6*i+state_dim_base+2*with_tutor + 2]),
-				&(s[6*i+state_dim_base+2*with_tutor + 3]),
-				&(s[6*i+state_dim_base+2*with_tutor + 4]));
+				&(s[5*i+state_dim_base+2*with_tutor + 0]),
+				&(s[5*i+state_dim_base+2*with_tutor + 1]),
+				&(s[5*i+state_dim_base+2*with_tutor + 2]),
+				&(s[5*i+state_dim_base+2*with_tutor + 3]),
+				&(s[5*i+state_dim_base+2*with_tutor + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_RED_BLOCK_";
@@ -84,11 +84,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 	for (int i = 0; i<nbBlueBlocks; i++){
 		block_t block(
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 0]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 1]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 2]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 3]),
-				&(s[6*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]));
+				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 0]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 1]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 2]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 3]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_BLUE_BLOCK_";
@@ -389,17 +389,98 @@ std::vector<std::pair<int,int>> BlockRoom::get_nearby_pos(int ns, int ew){
 	return nearby_pos;
 }
 
+float BlockRoom::getEuclidiantDistance(std::vector<float> & s1, std::vector<float> & s2){
+	float res = 0.;
+	if (s1.size()!=s2.size()){return -1;}
+	for (int i=0; i<s1.size(); i++){
+		res+=pow((s1[i]-s2[i]),2);
+	}
+	return sqrt(res);
+}
+
+std::vector<float> BlockRoom::getMostProbNextState(std::vector<float> s, int action){
+	std::vector<float> next_state = s;
+	if (action==actions["GO_TO_EYE"]) {
+		next_state[0] = s[3];
+		next_state[1] = s[4];
+		if (s[2]>=0){
+			next_state[5*s[2]+state_dim_base+2*WITH_TUTOR]=s[3];
+			next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+1]=s[4];
+		}
+	}
+	if (action == actions["PICK"]){
+		if ((s[2])==-1 && s[3]==s[0] && s[4]==s[1]) {
+			std::vector<int> blocks_under = find_block_under(s[0],s[1]);
+			if (!blocks_under.empty()) {
+				int block = blocks_under.back();
+				next_state[2] = block;
+				next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 0;
+				next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
+			}
+		}
+	}
+	if (action==actions["PUT_DOWN"]) {
+		if (s[2]!=-1
+				&& s[3]==s[0] && s[4]==s[1]
+				&& find_block_under(s[0],s[1]).empty()
+				&& ((s[5])!=(s[0]) || (s[6])!=(s[1]))
+				&& ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
+			next_state[2]=-1;
+		}
+	}
+	if (action==actions["PUT_IN"]) {
+		if ((s[2])!=-1){
+			if ((s[5])==(s[0]) && (s[6])==(s[1])){
+				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+4] = 1;
+				next_state[2]=-1;
+			}
+			else if ((s[7])==(s[0]) && (s[8])==(s[1])){
+				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+3] = 1;
+				next_state[2]=-1;
+			}
+		}
+	}
+	if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
+		if ((s[4]) != (s[10]) || (s[3]) != (s[9])){
+			next_state[4] = (s[10]);
+			next_state[3] = (s[9]);
+		}
+	}
+	if (action==actions["LOOK_RED_BOX"]){
+		next_state[4] = (s[6]);
+		next_state[3] = (s[5]);
+	}
+	if (action==actions["LOOK_BLUE_BOX"]){
+		next_state[4] = (s[8]);
+		next_state[3] = (s[7]);
+	}
+	if (action>numactions-nbBlueBlocks-nbRedBlocks-1
+			&& action<numactions){
+		int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
+		if (s[2]!=num_block && s[5*num_block+state_dim_base+2*WITH_TUTOR+3]==0
+				&& s[5*num_block+state_dim_base+2*WITH_TUTOR+4]==0) {
+			next_state[4] = s[5*num_block+state_dim_base+2*WITH_TUTOR+1];
+			next_state[3] = s[5*num_block+state_dim_base+2*WITH_TUTOR];
+		}
+	}
+	return next_state;
+}
+
+
+
+
 float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){
 	float diff = 0.;
 	for (int action = 0;action<numactions;action++){
 		std::vector<float> next_state = s;
-		std::map< std::vector<float> , float> trueTransitionProbs;
+		//std::map< std::vector<float> , float> trueTransitionProbs;
+
 		if (action==actions["GO_TO_EYE"]) {
 			next_state[0] = s[3];
 			next_state[1] = s[4];
 			if (s[2]>=0){
-				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR]=s[3];
-				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+1]=s[4];
+				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR]=s[3];
+				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+1]=s[4];
 			}
 			trueTransitionProbs[next_state] = 1.;
 		}
@@ -407,14 +488,18 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 			if ((s[2])==-1 && s[3]==s[0] && s[4]==s[1]) {
 				std::vector<int> blocks_under = find_block_under(s[0],s[1]);
 				if (!blocks_under.empty()) {
-					int nb_blocks = blocks_under.size();
-					for (auto block:blocks_under){
-						next_state[2]=block;
-						next_state[6*block+state_dim_base+2*WITH_TUTOR + 3] = 1;
-						next_state[6*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
-						next_state[6*block+state_dim_base+2*WITH_TUTOR + 5] = 0;
-						trueTransitionProbs[next_state] = 1./nb_blocks;
-					}
+					int block = blocks_under.back();
+					next_state[2] = block;
+					next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 0;
+					next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
+//					int nb_blocks = blocks_under.size();
+//					for (auto block:blocks_under){
+//						next_state[2]=block;
+//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 1;
+//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
+//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 5] = 0;
+//						trueTransitionProbs[next_state] = 1./nb_blocks;
+//					}
 				}
 				else {
 					trueTransitionProbs[next_state] = 1.;
@@ -430,7 +515,6 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 					&& find_block_under(s[0],s[1]).empty()
 					&& ((s[5])!=(s[0]) || (s[6])!=(s[1]))
 					&& ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
-				next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
 				next_state[2]=-1;
 				trueTransitionProbs[next_state] = 1.;
 			}
@@ -441,14 +525,12 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 		if (action==actions["PUT_IN"]) {
 			if ((s[2])!=-1){
 				if ((s[5])==(s[0]) && (s[6])==(s[1])){
-					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
-					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+5] = 1;
+					next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+4] = 1;
 					next_state[2]=-1;
 					trueTransitionProbs[next_state]=1.;
 				}
 				else if ((s[7])==(s[0]) && (s[8])==(s[1])){
-					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+3] = 0;
-					next_state[6*s[2]+state_dim_base+2*WITH_TUTOR+4] = 1;
+					next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+3] = 1;
 					next_state[2]=-1;
 					trueTransitionProbs[next_state]=1.;
 				}
@@ -483,31 +565,31 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 		if (action>numactions-nbBlueBlocks-nbRedBlocks-1
 				&& action<numactions){
 			int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
-			if (s[6*num_block+state_dim_base+2*WITH_TUTOR+3]==0
-					&& s[6*num_block+state_dim_base+2*WITH_TUTOR+4]==0
-					&& s[6*num_block+state_dim_base+2*WITH_TUTOR+5]==0) {
-				next_state[4] = s[6*num_block+state_dim_base+2*WITH_TUTOR+1];
-				next_state[3] = s[6*num_block+state_dim_base+2*WITH_TUTOR];
+			if (s[2]!=num_block && s[5*num_block+state_dim_base+2*WITH_TUTOR+3]==0
+					&& s[5*num_block+state_dim_base+2*WITH_TUTOR+4]==0) {
+				next_state[4] = s[5*num_block+state_dim_base+2*WITH_TUTOR+1];
+				next_state[3] = s[5*num_block+state_dim_base+2*WITH_TUTOR];
 				trueTransitionProbs[next_state]=1.;
 			}
 			else{
 				trueTransitionProbs[next_state] = 1;
 			}
 		}
-		for (auto elem:trueTransitionProbs){
-			auto insert_pair = preds[action].transitionProbs.insert(elem);
-			if (insert_pair.second){
-				diff += pow(insert_pair.first->second,2);
-			}
-			else {
-				diff += pow(insert_pair.first->second-elem.second,2);
-			}
-		}
-		for (auto elem:preds[action].transitionProbs){
-			if (trueTransitionProbs.find(elem.first) == trueTransitionProbs.end()){
-				diff += pow(elem.second,2);
-			}
-		}
+//		for (auto elem:trueTransitionProbs){
+//			auto insert_pair = preds[action].transitionProbs.insert(elem);
+//			if (insert_pair.second){
+//				diff += pow(insert_pair.first->second,2);
+//			}
+//			else {
+//				diff += pow(insert_pair.first->second-elem.second,2);
+//			}
+//		}
+//		for (auto elem:preds[action].transitionProbs){
+//			if (trueTransitionProbs.find(elem.first) == trueTransitionProbs.end()){
+//				diff += pow(elem.second,2);
+//			}
+//		}
+
 	}
 
 	return diff;
@@ -560,7 +642,7 @@ occ_info_t BlockRoom::apply(int action){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> blocks_under = find_block_under(*agent_ns,*agent_ew);
 			if (!blocks_under.empty()) {
-				std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
+				//std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
 				int idx = blocks_under.back();
 				if (rng.bernoulli(stoch_param)){
 					(*block_hold) = idx;
