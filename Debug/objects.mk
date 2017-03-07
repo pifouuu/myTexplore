@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lpthread -lboost_serialization -lboost_filesystem -lboost_iostreams -lboost_system -lopencv_core -lopencv_imgproc -lopencv_imgcodecs -lopencv_highgui
+LIBS := -lpthread -lboost_serialization -lboost_filesystem -lboost_iostreams -lboost_system -lopencv_core -lopencv_imgproc -lopencv_highgui
 
