@@ -27,7 +27,7 @@ ExplorationModel::ExplorationModel(MDPModel* innermodel, int modelType, int expl
 
 	model = innermodel;
 
-	MODEL_DEBUG = true; //true;
+	MODEL_DEBUG = false; //true;
 
 	cout << "Exploration Model " << exploreType << ", v: " << v << ", n: " << n << endl;
 

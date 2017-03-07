@@ -295,22 +295,19 @@ void BlockRoom::reset(){
 
 	std::shuffle(x.begin(), x.end(), engine);
 
-	for (std::vector<int>::iterator it = x.begin();
-			it != x.begin()+nbRedBlocks;++it){
-		int i = it-x.begin();
+	for (int i = 0; i<nbRedBlocks; i++){
 		*(blocks[i].color) = RED;
-		*(blocks[i].ew) = (*it % width);
-		*(blocks[i].ns) = (*it / width);
+		*(blocks[i].ew) = (x[i] % width);
+		*(blocks[i].ns) = (x[i] / width);
 		*(blocks[i].is_in_blue_box) = false;
 		*(blocks[i].is_in_red_box) = false;
 	}
 
-	for (std::vector<int>::iterator it = x.begin()+nbRedBlocks;
-			it != x.begin()+nbRedBlocks+nbBlueBlocks;++it){
-		int i = it-(x.begin()+nbRedBlocks);
+	for (int i = nbRedBlocks;
+			i < nbRedBlocks+nbBlueBlocks;i++){
 		*(blocks[i].color) = BLUE;
-		*(blocks[i].ew) = (*it % width);
-		*(blocks[i].ns) = (*it / width);
+		*(blocks[i].ew) = (x[i] % width);
+		*(blocks[i].ns) = (x[i] / width);
 		*(blocks[i].is_in_blue_box) = false;
 		*(blocks[i].is_in_red_box) = false;
 	}
@@ -470,7 +467,7 @@ std::vector<float> BlockRoom::getMostProbNextState(std::vector<float> s, int act
 
 
 float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){
-	float diff = 0.;
+	/*float diff = 0.;
 	for (int action = 0;action<numactions;action++){
 		std::vector<float> next_state = s;
 		//std::map< std::vector<float> , float> trueTransitionProbs;
@@ -592,7 +589,7 @@ float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<State
 
 	}
 
-	return diff;
+	return diff;*/
 }
 
 occ_info_t BlockRoom::apply(int action){
@@ -721,7 +718,7 @@ occ_info_t BlockRoom::apply(int action){
 					reward += 10;
 				}
 				else {
-					reward += 1;
+					// reward += 1;
 				}
 
 			}
@@ -743,7 +740,7 @@ occ_info_t BlockRoom::apply(int action){
 					reward += 10;
 				}
 				else {
-					reward += 1;
+					// reward += 1;
 				}
 			}
 		}

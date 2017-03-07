@@ -31,8 +31,9 @@ public:
 	void reset();
 	int getNumActions();
 	int getNumTutorActions();
-
+	float getEuclidiantDistance(std::vector<float> & s1, std::vector<float> & s2);
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
+	std::vector<float> getMostProbNextState(std::vector<float> s, int action);
 
 	void getMinMaxReward(float* minR, float* maxR);
 	bool isEpisodic(){ return true;}

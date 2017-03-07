@@ -105,7 +105,7 @@ void ModelBasedAgent::initParams(){
 
   TIMEDEBUG = false; //true;
   AGENTDEBUG = false;
-  ACTDEBUG = false;//true;
+  ACTDEBUG = true;//true;
   SIMPLEDEBUG = false; //true; //false; //true;
 
   // check
@@ -159,10 +159,14 @@ int ModelBasedAgent::first_action(const std::vector<float> &s) {
   // save curr state/action for next time
   saveStateAndAction(s, act);
 
-  if (ACTDEBUG)
-    cout << "Took action " << act << " from state " 
-	 << s[0] << "," << s[1] 
-	 << endl;
+  if (ACTDEBUG){
+      cout << "Took action " << act << " from state "
+  	 << (s)[0];
+      for (unsigned i = 1; i < s.size(); i++){
+        cout << "," << (s)[i];
+      }
+      cout << endl;
+    }
 
   // return that action
   return act;

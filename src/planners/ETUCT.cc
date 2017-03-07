@@ -141,9 +141,9 @@ void ETUCT::initNewState(state_t s) {
 
 }
 
-std::vector<float> ETUCT::eval2(){
+/*std::vector<float> ETUCT::eval2(){
 
-}
+}*/
 
 std::map<std::vector<float>, std::vector<StateActionInfo>> ETUCT::eval(int ns){
 	std::map<std::vector<float>, std::vector<StateActionInfo>> samples;
