@@ -1221,21 +1221,33 @@ int main(int argc, char **argv) {
 						ofs.close();
 						ofs.clear();
 
-//						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
-//						float model_error = 0.;
-//						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
-//								it!=samples.end();++it){
-//							float error = e->getStateActionInfoError(it->first, it->second);
-//							model_error += error;
-//
-//						}
-//						model_error /= samples.size();
-//						plot_model_acc.push_back(std::make_pair(steps, model_error));
-//						ofs.open(name+"_model_acc.ser");
-//						boost::archive::text_oarchive oa_model_acc(ofs);
-//						oa_model_acc & plot_model_acc;
-//						ofs.close();
-//						ofs.clear();
+						/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+						float model_error = 0.;
+						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
+								it!=samples.end();++it){
+							for (std::vector<StateActionInfo>::iterator it2 = it->second.begin();
+									it2!=it->second.end(); ++it2){
+								auto pr = std::max_element
+								(
+								    std::begin(it2->transitionProbs), std::end(it2->transitionProbs),
+								    [] (const std::pair<std::vector<float> , float> & p1,
+								    		const std::pair<std::vector<float> , float> & p2) {
+								        return p1.second < p2.second;
+								    }
+								);
+								std::vector<float> predNextState = pr->first;
+								std::vector<float> mostProbNextState = e->getMostProbNextState(it->first,it2-it->second.begin());
+								float error = e->getEuclidianDistance(predNextState, mostProbNextState);
+								model_error += error;
+							}
+						}
+						model_error /= (samples.size()*numactions);
+						plot_model_acc.push_back(std::make_pair(steps, model_error));
+						ofs.open(name+"_model_acc.ser");
+						boost::archive::text_oarchive oa_model_acc(ofs);
+						oa_model_acc & plot_model_acc;
+						ofs.close();
+						ofs.clear();*/
 
 						ofs.open(name+"_accumulated_rewards.ser");
 						boost::archive::text_oarchive oa_reward(ofs);

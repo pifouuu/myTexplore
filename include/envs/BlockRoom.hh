@@ -31,9 +31,9 @@ public:
 	void reset();
 	int getNumActions();
 	int getNumTutorActions();
-	float getEuclidiantDistance(std::vector<float> & s1, std::vector<float> & s2);
-	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
+	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2);
 	std::vector<float> getMostProbNextState(std::vector<float> s, int action);
+	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
 	bool isEpisodic(){ return true;}
@@ -117,7 +117,8 @@ public:
 	bool eye_hand_sync();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
+	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
 

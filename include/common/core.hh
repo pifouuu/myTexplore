@@ -245,6 +245,9 @@ public:
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 
+	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2) = 0;
+	virtual std::vector<float> getMostProbNextState(std::vector<float> s, int action) = 0;
+
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.
 		\return The immediate one-step reward caused by the action. */
