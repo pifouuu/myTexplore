@@ -137,8 +137,8 @@ ModelBasedAgent::~ModelBasedAgent() {
   prevstate.clear();
 }
 
-std::map<std::vector<float>, std::vector<StateActionInfo>> ModelBasedAgent::eval_model(int ns){
-	return planner->eval(ns);
+std::vector<float> ModelBasedAgent::eval(std::vector<float> & s, int a){
+	return planner->eval(s, a);
 }
 
 int ModelBasedAgent::first_action(const std::vector<float> &s) {
@@ -297,11 +297,11 @@ void ModelBasedAgent::initPlanner(){
   int max_path = 500; //500;
 
   // init planner based on typ
-
+  /*
   if (plannerType == VALUE_ITERATION){
     planner = new ValueIteration(numactions, gamma, 10, 1, modelType, featmax, featmin, statesPerDim, rng);
   }
-  /*
+
   if (plannerType == MBS_VI){
     planner = new MBS(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, history, rng);
   }
@@ -314,7 +314,7 @@ void ModelBasedAgent::initPlanner(){
   else if (plannerType == MOD_PRI_SWEEPING){
     planner = new PrioritizedSweeping(numactions, gamma, 10.0, false, modelType, featmax, featmin, rng);
   }*/
-  else if (plannerType == ET_UCT){
+  if (plannerType == ET_UCT){
     planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
   }
  /* else if (plannerType == POMDP_ETUCT){
@@ -417,6 +417,10 @@ int ModelBasedAgent::chooseAction(const std::vector<float> &s){
     //if (true) cout << "Random action" << endl;
     act = rng.uniformDiscrete(0, numactions-1);
   }
+
+ /* if (tutorType == BONUS && rng.bernoulli(tutorBonus)){
+	  act = LOOK_TUTOR;
+  }*/
 
   if (SIMPLEDEBUG){
     cout << endl << "Action " << nactions

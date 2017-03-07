@@ -61,8 +61,8 @@ public:
                                          float reward, bool term);
   virtual void planOnNewModel();
   virtual int getBestAction(const std::vector<float> &s);
-  std::map<std::vector<float>, std::vector<StateActionInfo>> eval(int nstates);
-
+  std::vector<float> eval(std::vector<float> & s, int act);
+  //std::vector<float> eval2(std::vector<float> & s, int act);
   virtual void setSeeding(bool seed);
   virtual void setFirst();
 

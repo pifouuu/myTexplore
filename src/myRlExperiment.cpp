@@ -643,6 +643,7 @@ int main(int argc, char **argv) {
 	cout << "planner :" << plannerType << endl;
 	cout << "model : " << modelType << endl;
 	cout << "prediction " << predType << endl;
+	cout << "tutor" << tutorType << endl;
 	// default back to greedy if no coefficients
 	if (exploreType == DIFF_AND_NOVEL_BONUS && v == 0 && n == 0)
 		exploreType = GREEDY;
@@ -1082,7 +1083,7 @@ int main(int argc, char **argv) {
 					ofs.close();
 					ofs.clear();
 
-					std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+					/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
 					float model_error = 0.;
 					for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
 							it!=samples.end();++it){
@@ -1094,7 +1095,7 @@ int main(int argc, char **argv) {
 					plot_model_acc.push_back(std::make_pair(steps, model_error));
 					ofs.open(name+"_model_acc.ser");
 					boost::archive::text_oarchive oa_model_acc(ofs);
-					oa_model_acc & plot_model_acc;
+					oa_model_acc & plot_model_acc;*/
 				}
 
 				std::cerr << info.reward << endl;
@@ -1221,8 +1222,18 @@ int main(int argc, char **argv) {
 						ofs.close();
 						ofs.clear();
 
-						/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
 						float model_error = 0.;
+						for (int k=0;k<100;k++){
+							std::vector<float> sample_state = e->generate_state();
+							int sample_act = rng.uniformDiscrete(0, numactions);
+							std::vector<float> predNextState = agent->eval(sample_state, sample_act);
+							std::vector<float> mostProbNextState = e->getMostProbNextState(sample_state,sample_act);
+							float error = e->getEuclidianDistance(predNextState, mostProbNextState);
+							model_error += error;
+						}
+						model_error /= 100;
+
+						/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
 						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
 								it!=samples.end();++it){
 							for (std::vector<StateActionInfo>::iterator it2 = it->second.begin();
@@ -1241,13 +1252,13 @@ int main(int argc, char **argv) {
 								model_error += error;
 							}
 						}
-						model_error /= (samples.size()*numactions);
+						model_error /= (samples.size()*numactions);*/
 						plot_model_acc.push_back(std::make_pair(steps, model_error));
 						ofs.open(name+"_model_acc.ser");
 						boost::archive::text_oarchive oa_model_acc(ofs);
 						oa_model_acc & plot_model_acc;
 						ofs.close();
-						ofs.clear();*/
+						ofs.clear();
 
 						ofs.open(name+"_accumulated_rewards.ser");
 						boost::archive::text_oarchive oa_reward(ofs);
