@@ -47,7 +47,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 	/*actions[std::string("PICK_BLUE")] = cnt_actions++;
 	actions[std::string("PICK_RED")] = cnt_actions++;*/
 	actions[std::string("PICK")] = cnt_actions++;
-	actions[std::string("PUT_DOWN")] = cnt_actions++;
+	//actions[std::string("PUT_DOWN")] = cnt_actions++;
 	actions[std::string("PUT_IN")] = cnt_actions++;
 
 
@@ -273,6 +273,39 @@ void BlockRoom::print_map() const{
 	waitKey(1);
 }
 
+/*std::vector<float> BlockRoom::generate_exp(){
+	std::vector<float>	g(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*WITH_TUTOR);
+	g[6] = rng.uniformDiscrete(0, width-1);
+	g[5] = rng.uniformDiscrete(0, height-1);
+	do {
+		g[8] = rng.uniformDiscrete(0, width-1);
+		g[7] = rng.uniformDiscrete(0, height-1);
+	} while ((*red_box_ew)==(*blue_box_ew) && (*blue_box_ns)==(*blue_box_ns));
+
+	for (int i = 0; i<nbRedBlocks; i++){
+		int blue = rng.bernoulli(0.5);
+		int red = rng.bernoulli(0.5);
+		if ((red && blue) || (!red && !blue)){
+			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
+			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = rng.uniformDiscrete(0, width-1);
+		}
+		else if (red) {
+			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[5];
+			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[6];
+		}
+		else if (blue) {
+			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[7];
+			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[8];
+		}
+		*(blocks[i].is_in_blue_box) = rng.bernoulli(0.5);
+		*(blocks[i].is_in_red_box) = false;
+		*(blocks[i].color) = RED;
+		*(blocks[i].ew) = (x[i] % width);
+		*(blocks[i].ns) = (x[i] / width);
+
+	}
+}*/
+
 void BlockRoom::reset(){
 	(*block_hold) = -1;
 	(*agent_ew) = rng.uniformDiscrete(0, width-1);
@@ -322,7 +355,9 @@ std::vector<int> BlockRoom::find_block_under(int ns, int ew) {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
 		if (*(it->ns)==(ns) && *(it->ew)==(ew)){
-			l.push_back(it-blocks.begin());
+			if (!NOPICKBACK || (*(it->is_in_blue_box)==0 && *(it->is_in_red_box)==0)){
+				l.push_back(it-blocks.begin());
+			}
 		}
 	}
 	return(l);
@@ -386,7 +421,9 @@ std::vector<std::pair<int,int>> BlockRoom::get_nearby_pos(int ns, int ew){
 	return nearby_pos;
 }
 
-float BlockRoom::getEuclidiantDistance(std::vector<float> & s1, std::vector<float> & s2){
+
+
+float BlockRoom::getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2){
 	float res = 0.;
 	if (s1.size()!=s2.size()){return -1;}
 	for (int i=0; i<s1.size(); i++){
@@ -674,7 +711,7 @@ occ_info_t BlockRoom::apply(int action){
 			}
 		}
 	}*/
-	if (action==actions["PUT_DOWN"]) {
+	/*if (action==actions["PUT_DOWN"]) {
 		std::vector<int> red_blocks_under = find_red_block_under_hand();
 		std::vector<int> blue_blocks_under = find_blue_block_under_hand();
 		if (((*block_hold)!=-1)
@@ -697,7 +734,7 @@ occ_info_t BlockRoom::apply(int action){
 			(*block_hold) = -1;
 			success = true;
 		}
-	}
+	}*/
 	if (action==actions["PUT_IN"]) {
 		if ((*block_hold)!=-1){
 			if ((*red_box_ns)==(*agent_ns) && (*red_box_ew)==(*agent_ew)){
@@ -715,10 +752,10 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 10;
+					reward += 1000;
 				}
 				else {
-					// reward += 1;
+					if (NOPICKBACK) reward += 100;
 				}
 
 			}
@@ -737,10 +774,10 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 10;
+					reward += 1000;
 				}
 				else {
-					// reward += 1;
+					if (NOPICKBACK) reward += 100;
 				}
 			}
 		}

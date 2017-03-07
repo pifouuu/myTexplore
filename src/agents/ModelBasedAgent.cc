@@ -294,14 +294,14 @@ void ModelBasedAgent::initModel(int nfactors){
 void ModelBasedAgent::initPlanner(){
   if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-  int max_path = 10; //500;
+  int max_path = 500; //500;
 
   // init planner based on typ
-  /*
-  if (plannerType == VALUE_ITERATION){
-    planner = new ValueIteration(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, rng);
-  }
 
+  if (plannerType == VALUE_ITERATION){
+    planner = new ValueIteration(numactions, gamma, 10, 1, modelType, featmax, featmin, statesPerDim, rng);
+  }
+  /*
   if (plannerType == MBS_VI){
     planner = new MBS(numactions, gamma, 500000, 10.0, modelType, featmax, featmin, statesPerDim, history, rng);
   }
@@ -314,7 +314,7 @@ void ModelBasedAgent::initPlanner(){
   else if (plannerType == MOD_PRI_SWEEPING){
     planner = new PrioritizedSweeping(numactions, gamma, 10.0, false, modelType, featmax, featmin, rng);
   }*/
-  if (plannerType == ET_UCT){
+  else if (plannerType == ET_UCT){
     planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
   }
  /* else if (plannerType == POMDP_ETUCT){

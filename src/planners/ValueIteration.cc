@@ -99,6 +99,7 @@ void ValueIteration::fillInState(std::vector<float>s, int depth){
 // Functional functions :) //
 /////////////////////////////
 
+std::map<std::vector<float>, std::vector<StateActionInfo>> ValueIteration::eval(int ns){}
 
 void ValueIteration::initNewState(state_t s){
   if (PLANNERDEBUG) cout << "initNewState(s = " << s
@@ -283,7 +284,7 @@ void ValueIteration::createPolicy(){
   int statesUpdated = 0;
 
   // until convergence (always at least MIN_LOOPS)
-  while (maxError > MIN_ERROR){ // && nloops < MAX_LOOPS){
+  while (maxError > MIN_ERROR && nloops < MAX_LOOPS){
 
     //if ((getSeconds() - initTime) > MAX_TIME)
     // break;

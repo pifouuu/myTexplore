@@ -48,6 +48,7 @@ public:
   virtual void planOnNewModel();
   virtual int getBestAction(const std::vector<float> &s);
   virtual void savePolicy(const char* filename);
+  std::map<std::vector<float>, std::vector<StateActionInfo>> eval(int ns);
 
   /** Initialize the states for this domain (based on featmin and featmax) */
   void initStates();
