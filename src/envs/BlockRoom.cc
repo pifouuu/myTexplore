@@ -14,8 +14,8 @@
 using namespace cv;
 
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
-	height(10),
-	width(10),
+	height(4),
+	width(4),
 	nbRedBlocks(2),
 	nbBlueBlocks(2),
 	stochastic(stochastic),
@@ -273,38 +273,92 @@ void BlockRoom::print_map() const{
 	waitKey(1);
 }
 
-/*std::vector<float> BlockRoom::generate_exp(){
-	std::vector<float>	g(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*WITH_TUTOR);
+std::vector<float> BlockRoom::generate_state(){
+	std::vector<float> g(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*WITH_TUTOR);
 	g[6] = rng.uniformDiscrete(0, width-1);
 	g[5] = rng.uniformDiscrete(0, height-1);
 	do {
 		g[8] = rng.uniformDiscrete(0, width-1);
 		g[7] = rng.uniformDiscrete(0, height-1);
 	} while ((*red_box_ew)==(*blue_box_ew) && (*blue_box_ns)==(*blue_box_ns));
+	g[0] = rng.uniformDiscrete(0, height-1);
+	g[1] = rng.uniformDiscrete(0, width-1);
+	g[4] = rng.uniformDiscrete(0, width-1);
+	g[3] = rng.uniformDiscrete(0, height-1);
 
+	bool hand_full = false;
 	for (int i = 0; i<nbRedBlocks; i++){
-		int blue = rng.bernoulli(0.5);
-		int red = rng.bernoulli(0.5);
-		if ((red && blue) || (!red && !blue)){
-			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
-			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = rng.uniformDiscrete(0, width-1);
-		}
-		else if (red) {
+		g[5*i+state_dim_base+2*WITH_TUTOR+2] = RED;
+		g[5*i+state_dim_base+2*WITH_TUTOR+3] = 0;
+		g[5*i+state_dim_base+2*WITH_TUTOR+4] = 0;
+		float randProb = rng.uniform();
+		float prob = 0.1;
+		if (randProb < prob) {
+			// Red block
 			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[5];
 			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[6];
+			g[5*i+state_dim_base+2*WITH_TUTOR+4] = 1;
 		}
-		else if (blue) {
-			g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[7];
-			g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[8];
+		else {
+			prob += 0.1;
+			if (randProb<prob){
+				// blue block
+				g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[7];
+				g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[8];
+				g[5*i+state_dim_base+2*WITH_TUTOR+3] = 1;
+			}
+			else {
+				prob += 0.2;
+				if (randProb<prob && !hand_full){
+					// hand
+					g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[0];
+					g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[1];
+					g[2] = i;
+				}
+				else {
+					g[5*i+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
+					g[5*i+state_dim_base+2*WITH_TUTOR + 1] = rng.uniformDiscrete(0, width-1);
+				}
+			}
 		}
-		*(blocks[i].is_in_blue_box) = rng.bernoulli(0.5);
-		*(blocks[i].is_in_red_box) = false;
-		*(blocks[i].color) = RED;
-		*(blocks[i].ew) = (x[i] % width);
-		*(blocks[i].ns) = (x[i] / width);
-
 	}
-}*/
+	for (int i = 0; i<nbBlueBlocks; i++){
+		g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR+2] = BLUE;
+		g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR+3] = 0;
+		g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR+4] = 0;
+		float randProb = rng.uniform();
+		float prob = 0.1;
+		if (randProb < prob) {
+			// Red block
+			g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = g[5];
+			g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 1] = g[6];
+			g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR+4] = 1;
+		}
+		else {
+			prob += 0.1;
+			if (randProb<prob){
+				// blue block
+				g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = g[7];
+				g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 1] = g[8];
+				g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR+3] = 1;
+			}
+			else {
+				prob += 0.2;
+				if (randProb<prob && !hand_full){
+					// hand
+					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = g[0];
+					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 1] = g[1];
+					g[2] = i;
+				}
+				else {
+					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
+					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 1] = rng.uniformDiscrete(0, width-1);
+				}
+			}
+		}
+	}
+	return g;
+}
 
 void BlockRoom::reset(){
 	(*block_hold) = -1;
@@ -323,7 +377,7 @@ void BlockRoom::reset(){
 		(*blue_box_ns) = rng.uniformDiscrete(0, height-1);
 	} while ((*red_box_ew)==(*blue_box_ew) && (*blue_box_ns)==(*blue_box_ns));
 
-	std::vector<int> x(height*width-1);
+	/*std::vector<int> x(height*width-1);
 	std::iota(x.begin(), x.end(), 0);
 
 	std::shuffle(x.begin(), x.end(), engine);
@@ -343,8 +397,24 @@ void BlockRoom::reset(){
 		*(blocks[i].ns) = (x[i] / width);
 		*(blocks[i].is_in_blue_box) = false;
 		*(blocks[i].is_in_red_box) = false;
+	}*/
+
+	for (int i = 0; i<nbRedBlocks; i++){
+		*(blocks[i].color) = RED;
+		*(blocks[i].ew) = rng.uniformDiscrete(0, width-1);
+		*(blocks[i].ns) = rng.uniformDiscrete(0, height-1);
+		*(blocks[i].is_in_blue_box) = false;
+		*(blocks[i].is_in_red_box) = false;
 	}
 
+	for (int i = nbRedBlocks;
+			i < nbRedBlocks+nbBlueBlocks;i++){
+		*(blocks[i].color) = BLUE;
+		*(blocks[i].ew) = rng.uniformDiscrete(0, width-1);
+		*(blocks[i].ns) = rng.uniformDiscrete(0, height-1);
+		*(blocks[i].is_in_blue_box) = false;
+		*(blocks[i].is_in_red_box) = false;
+	}
 }
 
 int BlockRoom::applyNoise(int action){

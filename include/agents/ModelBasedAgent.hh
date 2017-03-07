@@ -103,7 +103,7 @@ public:
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
-  std::map<std::vector<float>, std::vector<StateActionInfo>> eval_model(int nstates);
+  std::vector<float> eval(std::vector<float> & s, int a);
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);
@@ -184,6 +184,7 @@ private:
   const int predType;
   const int nModels;
   const int plannerType;
+  //const int tutorType;
 
   const float epsilon;
   const float lambda;

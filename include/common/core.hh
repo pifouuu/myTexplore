@@ -245,6 +245,7 @@ public:
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 
+	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2) = 0;
 	virtual std::vector<float> getMostProbNextState(std::vector<float> s, int action) = 0;
 
@@ -307,7 +308,7 @@ public:
 class Agent {
 public:
 	/** Evaluate the model used by the agent **/
-	virtual std::map<std::vector<float>, std::vector<StateActionInfo>> eval_model(int nstates) = 0;
+	virtual std::vector<float> eval(std::vector<float> & s, int act) = 0;
 	/** Determines the first action that an agent takes in an
       environment.  This method implies that the environment is
       currently in an initial state.
@@ -439,7 +440,7 @@ public:
 			const std::vector<float>& curr,
 			float reward, bool terminal) = 0;
 
-	virtual std::map<std::vector<float>, std::vector<StateActionInfo>> eval(int nstates) = 0;
+	virtual std::vector<float> eval(std::vector<float> & s, int act) = 0;
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;
