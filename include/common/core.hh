@@ -179,7 +179,6 @@ struct classPair {
 /** To store information about occurrences of actions **/
 struct occ_info_t{
 		float reward;
-		float virtual_reward;
 		bool success;
 		int blocks_in;
 		int blocks_right;
@@ -246,8 +245,9 @@ public:
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 
 	virtual std::vector<float> generate_state() = 0;
-	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2) = 0;
-	virtual std::vector<float> getMostProbNextState(std::vector<float> s, int action) = 0;
+	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
+			std::vector<float> minValues, std::vector<float>maxValues) = 0;
+	virtual std::pair<std::vector<float>,float> getMostProbNextState(std::vector<float> s, int action) = 0;
 
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.
@@ -307,8 +307,14 @@ public:
     rewards. */
 class Agent {
 public:
-	/** Evaluate the model used by the agent **/
-	virtual std::vector<float> eval(std::vector<float> & s, int act) = 0;
+	virtual void updateWithNewExperience(const std::vector<float> &last,
+	                                              const std::vector<float> &curr,
+	                                              int lastact, float reward,
+	                                              bool terminal){
+		// nothing
+	};
+	/** Predict a state for a pari action state **/
+	virtual std::vector<float> pred(std::vector<float> & s, int act) = 0;
 	/** Determines the first action that an agent takes in an
       environment.  This method implies that the environment is
       currently in an initial state.
@@ -439,8 +445,6 @@ public:
 			int act,
 			const std::vector<float>& curr,
 			float reward, bool terminal) = 0;
-
-	virtual std::vector<float> eval(std::vector<float> & s, int act) = 0;
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;

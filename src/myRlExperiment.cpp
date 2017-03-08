@@ -978,7 +978,36 @@ int main(int argc, char **argv) {
 		if (v != 0) {name += "_v_"+std::to_string(v);}
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 
-		// STEP BY STEP DOMAIN
+
+		for (int trainStep=0;trainStep<1000;trainStep++){
+
+			std::vector<float> sample_last = e->generate_state();
+			int sample_act = rng.uniformDiscrete(0, numactions);
+			std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
+			agent->updateWithNewExperience(sample_last, sample_next.first, sample_act, sample_next.second, false);
+			float model_error = 0.;
+
+			for (int testStep=0;testStep<50;testStep++){
+				std::vector<float> sample_test = e->generate_state();
+				int sample_act_test = rng.uniformDiscrete(0, numactions);
+				std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
+				std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
+				float error = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+				model_error += error;
+			}
+
+			model_error /= 50;
+			cout << "step " << trainStep << ", model error : " << model_error << endl;
+			plot_model_acc.push_back(std::make_pair(trainStep, model_error));
+		}
+		std::ofstream ofs(name+"_model_acc_only.ser");
+		boost::archive::text_oarchive oa_model_acc(ofs);
+		oa_model_acc & plot_model_acc;
+		ofs.close();
+		ofs.clear();
+
+
+		/*// STEP BY STEP DOMAIN
 		if (!episodic){
 
 			// performance tracking
@@ -1050,13 +1079,13 @@ int main(int argc, char **argv) {
 				if (steps % 50 == 0){
 					// agent->evaluate_model();
 					std::string name = std::string(tutorType)+ "_v_"+std::to_string(v) + "_n_"+ std::to_string(n);
-					/*for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 							it != plot_act_succes.end(); ++it){
 						// serialize vector
 						std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 						boost::archive::text_oarchive oa(ofs);
 						oa & it->second;
-					}*/
+					}
 					for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 							it != plot_act_try.end(); ++it){
 						// serialize vector
@@ -1083,7 +1112,7 @@ int main(int argc, char **argv) {
 					ofs.close();
 					ofs.clear();
 
-					/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+					std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
 					float model_error = 0.;
 					for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
 							it!=samples.end();++it){
@@ -1095,7 +1124,7 @@ int main(int argc, char **argv) {
 					plot_model_acc.push_back(std::make_pair(steps, model_error));
 					ofs.open(name+"_model_acc.ser");
 					boost::archive::text_oarchive oa_model_acc(ofs);
-					oa_model_acc & plot_model_acc;*/
+					oa_model_acc & plot_model_acc;
 				}
 
 				std::cerr << info.reward << endl;
@@ -1189,13 +1218,13 @@ int main(int argc, char **argv) {
 					}
 					if (steps % 50 == 0){
 
-						/*for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
+						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_succes.begin();
 								it != plot_act_succes.end(); ++it){
 							// serialize vector
 							std::ofstream ofs(name+"_act_succes_"+action_names[it->first]+".ser");
 							boost::archive::text_oarchive oa(ofs);
 							oa & it->second;
-						}*/
+						}
 						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
 								it != plot_act_try.end(); ++it){
 							// serialize vector
@@ -1228,32 +1257,32 @@ int main(int argc, char **argv) {
 							int sample_act = rng.uniformDiscrete(0, numactions);
 							std::vector<float> predNextState = agent->eval(sample_state, sample_act);
 							std::vector<float> mostProbNextState = e->getMostProbNextState(sample_state,sample_act);
-							float error = e->getEuclidianDistance(predNextState, mostProbNextState);
+							float error = e->getEuclidianDistance(predNextState, mostProbNextState, minValues, maxValues);
 							model_error += error;
 						}
 						model_error /= 100;
 
-						/*std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
-						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
-								it!=samples.end();++it){
-							for (std::vector<StateActionInfo>::iterator it2 = it->second.begin();
-									it2!=it->second.end(); ++it2){
-								auto pr = std::max_element
-								(
-								    std::begin(it2->transitionProbs), std::end(it2->transitionProbs),
-								    [] (const std::pair<std::vector<float> , float> & p1,
-								    		const std::pair<std::vector<float> , float> & p2) {
-								        return p1.second < p2.second;
-								    }
-								);
-								std::vector<float> predNextState = pr->first;
-								std::vector<float> mostProbNextState = e->getMostProbNextState(it->first,it2-it->second.begin());
-								float error = e->getEuclidianDistance(predNextState, mostProbNextState);
-								model_error += error;
-							}
-						}
-						model_error /= (samples.size()*numactions);*/
-						plot_model_acc.push_back(std::make_pair(steps, model_error));
+//						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
+//						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
+//								it!=samples.end();++it){
+//							for (std::vector<StateActionInfo>::iterator it2 = it->second.begin();
+//									it2!=it->second.end(); ++it2){
+//								auto pr = std::max_element
+//								(
+//								    std::begin(it2->transitionProbs), std::end(it2->transitionProbs),
+//								    [] (const std::pair<std::vector<float> , float> & p1,
+//								    		const std::pair<std::vector<float> , float> & p2) {
+//								        return p1.second < p2.second;
+//								    }
+//								);
+//								std::vector<float> predNextState = pr->first;
+//								std::vector<float> mostProbNextState = e->getMostProbNextState(it->first,it2-it->second.begin());
+//								float error = e->getEuclidianDistance(predNextState, mostProbNextState);
+//								model_error += error;
+//							}
+//						}
+//						model_error /= (samples.size()*numactions);
+						plot_model_acc.push_back(std::make_pair(tot_steps+steps, model_error));
 						ofs.open(name+"_model_acc.ser");
 						boost::archive::text_oarchive oa_model_acc(ofs);
 						oa_model_acc & plot_model_acc;
@@ -1295,7 +1324,7 @@ int main(int argc, char **argv) {
 
 		}
 
-		if (NUMTRIALS > 1) delete agent;
+		if (NUMTRIALS > 1) delete agent;*/
 
 	}
 

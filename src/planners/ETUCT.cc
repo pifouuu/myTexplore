@@ -141,21 +141,6 @@ void ETUCT::initNewState(state_t s) {
 
 }
 
-std::vector<float> ETUCT::eval(std::vector<float> & s, int act){
-	StateActionInfo sa_info;
-	float conf = model->getStateActionInfo(s, act, &sa_info);
-	std::map<std::vector<float>, float> preds = sa_info.transitionProbs;
-	auto pr = std::max_element
-	(
-		std::begin(preds), std::end(preds),
-		[] (const std::pair<std::vector<float> , float> & p1,
-				const std::pair<std::vector<float> , float> & p2) {
-			return p1.second < p2.second;
-		}
-	);
-	return pr->first;
-}
-
 /*std::map<std::vector<float>, std::vector<StateActionInfo>> ETUCT::eval(int ns){
 	std::map<std::vector<float>, std::vector<StateActionInfo>> samples;
 	int tot_states = statespace.size();
