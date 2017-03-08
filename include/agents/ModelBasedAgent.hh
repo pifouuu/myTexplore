@@ -103,7 +103,7 @@ public:
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
-  std::vector<float> eval(std::vector<float> & s, int a);
+  std::vector<float> pred(std::vector<float> & s, int act);
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);

@@ -137,8 +137,21 @@ ModelBasedAgent::~ModelBasedAgent() {
   prevstate.clear();
 }
 
-std::vector<float> ModelBasedAgent::eval(std::vector<float> & s, int a){
-	return planner->eval(s, a);
+
+
+std::vector<float> ModelBasedAgent::pred(std::vector<float> & s, int act){
+	StateActionInfo sa_info;
+	float conf = model->getStateActionInfo(s, act, &sa_info);
+	std::map<std::vector<float>, float> preds = sa_info.transitionProbs;
+	auto pr = std::max_element
+	(
+		std::begin(preds), std::end(preds),
+		[] (const std::pair<std::vector<float> , float> & p1,
+				const std::pair<std::vector<float> , float> & p2) {
+			return p1.second < p2.second;
+		}
+	);
+	return pr->first;
 }
 
 int ModelBasedAgent::first_action(const std::vector<float> &s) {

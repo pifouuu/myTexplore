@@ -34,7 +34,7 @@ public:
 	std::vector<float> generate_state();
 	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues);
-	std::vector<float> getMostProbNextState(std::vector<float> s, int action);
+	std::pair<std::vector<float>,float> getMostProbNextState(std::vector<float> s, int action);
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
@@ -60,8 +60,8 @@ public:
 		BLUE
 	};
 
-	int get_blocks_in() const;
-	int get_blocks_right() const;
+	int get_blocks_in(std::vector<float> state) const;
+	int get_blocks_right(std::vector<float> state) const;
 
 	std::default_random_engine engine;
 
