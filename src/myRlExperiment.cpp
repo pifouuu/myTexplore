@@ -56,6 +56,7 @@ unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000; // per episode
 bool PRINTS = false;
+bool PRETRAIN = false;
 
 
 void displayHelp(){
@@ -98,6 +99,7 @@ void displayHelp(){
 	cout << "\n--prints (turn on debug printing of actions/rewards)\n";
 	cout << "--nepisodes value (# of episodes to run (1000 default)\n";
 	cout << "--seed value (integer seed for random number generator)\n";
+	cout << "--pretrain pre train the model\n";
 
 	cout << "\n For more info, see: http://www.ros.org/wiki/rl_experiment\n";
 
@@ -245,8 +247,9 @@ int main(int argc, char **argv) {
 			{"nolag", 0, 0, 8},
 			{"highvar", 0, 0, 11},
 			{"nepisodes", 1, 0, 12},
-			{"tutor", 1, 0, 13}
-
+			{"tutor", 1, 0, 13},
+			{"pretrain", 0, 0, 14},
+			{0, 0, 0, 0}
 	};
 
 	bool epsilonChanged = false;
@@ -632,6 +635,8 @@ int main(int argc, char **argv) {
 			cout << "tutor: " << tutorType << endl;
 			if (strcmp(tutorType,"no_tutor") == 0) {with_tutor = false;}
 			break;
+		case 14:
+			PRETRAIN = true;
 
 		case 'h':
 		case '?':
@@ -982,60 +987,64 @@ int main(int argc, char **argv) {
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 		if (!reltrans) {name += "_abstrans";}
 		name += "_splitmargin_0.05";
+		name += "_mingainratio_0.0004";
 
-		std::vector<std::tuple<std::vector<float>, int, std::vector<float>>> training_samples;
-		for (int trainStep=0;trainStep<3000;trainStep++){
+		if (PRETRAIN){
+			std::vector<std::tuple<std::vector<float>, int, std::vector<float>>> training_samples;
+			for (int trainStep=0;trainStep<3000;trainStep++){
 
-			std::vector<float> sample_last = e->generate_state();
-			int sample_act = rng.uniformDiscrete(0, numactions);
-			std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
-			training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first));
+				std::vector<float> sample_last = e->generate_state();
+				int sample_act = rng.uniformDiscrete(0, numactions);
+				std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
+				training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first));
 
-			experience exp;
-			exp.s = sample_last;
-			exp.next = sample_next.first;
-			exp.act = sample_act;
-			exp.reward = sample_next.second;
-			exp.terminal = false;
+				experience exp;
+				exp.s = sample_last;
+				exp.next = sample_next.first;
+				exp.act = sample_act;
+				exp.reward = sample_next.second;
+				exp.terminal = false;
 
-			bool modelChanged = agent->train_only(exp);
+				bool modelChanged = agent->train_only(exp);
 
-			if (trainStep % 10 == 0){
+				if (trainStep % 10 == 0){
 
-				float model_error_test = 0.;
-				float model_error_train = 0.;
+					float model_error_test = 0.;
+					float model_error_train = 0.;
 
-				int numsamples = training_samples.size();
+					int numsamples = training_samples.size();
 
-				for (int step=0;step<50;step++){
-					double r = rand() % numsamples;
-					auto it = training_samples.begin();
-					std::advance(it, r);
-					std::vector<float> sample_train = std::get<0>(*it);
-					int sample_act_train = std::get<1>(*it);
-					std::vector<float> predNextState = agent->pred(sample_train, sample_act_train);
-					std::vector<float> trueVal = std::get<2>(*it);
-					float error_train = e->getEuclidianDistance(predNextState, trueVal, minValues, maxValues);
-					model_error_train += error_train;
+					for (int step=0;step<50;step++){
+						double r = rand() % numsamples;
+						auto it = training_samples.begin();
+						std::advance(it, r);
+						std::vector<float> sample_train = std::get<0>(*it);
+						int sample_act_train = std::get<1>(*it);
+						std::vector<float> predNextState = agent->pred(sample_train, sample_act_train);
+						std::vector<float> trueVal = std::get<2>(*it);
+						float error_train = e->getEuclidianDistance(predNextState, trueVal, minValues, maxValues);
+						model_error_train += error_train;
+					}
+
+					for (int testStep=0;testStep<50;testStep++){
+						std::vector<float> sample_test = e->generate_state();
+						int sample_act_test = rng.uniformDiscrete(0, numactions);
+						std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
+						std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
+						float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+						model_error_test += error_test;
+					}
+					model_error_train /= 50;
+					model_error_test /= 50;
+
+					cout << "step " << trainStep << ", model error on train set : " << model_error_train << endl;
+					cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
+					plot_model_acc_test.push_back(std::make_pair(trainStep, model_error_test));
+					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
 				}
-
-				for (int testStep=0;testStep<50;testStep++){
-					std::vector<float> sample_test = e->generate_state();
-					int sample_act_test = rng.uniformDiscrete(0, numactions);
-					std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
-					std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
-					float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
-					model_error_test += error_test;
-				}
-				model_error_train /= 50;
-				model_error_test /= 50;
-
-				cout << "step " << trainStep << ", model error on train set : " << model_error_train << endl;
-				cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
-				plot_model_acc_test.push_back(std::make_pair(trainStep, model_error_test));
-				plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
 			}
 		}
+
 
 		std::ofstream ofs(name+"_model_acc_test_only.ser");
 		boost::archive::text_oarchive oa_model_acc_test(ofs);
