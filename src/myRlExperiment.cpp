@@ -52,9 +52,9 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100; //10; //200; //500; //200;
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 10000; // per episode
+unsigned MAXSTEPS = 1000; // per episode
 bool PRINTS = false;
 
 

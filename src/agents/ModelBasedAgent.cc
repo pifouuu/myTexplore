@@ -294,7 +294,7 @@ void ModelBasedAgent::initModel(int nfactors){
 void ModelBasedAgent::initPlanner(){
   if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-  int max_path = 500; //500;
+  int max_path = 100; //500;
 
   // init planner based on typ
   /*
