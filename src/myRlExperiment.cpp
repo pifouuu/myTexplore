@@ -370,6 +370,8 @@ int main(int argc, char **argv) {
 				else if (strcmp(optarg, "texplore") == 0) modelType = C45TREE;
 				else if (strcmp(optarg, "c45tree") == 0) modelType = C45TREE;
 				else if (strcmp(optarg, "m5tree") == 0) modelType = M5ALLMULTI;
+				else if (strcmp(optarg, "stump") == 0) modelType = STUMP;
+				else if (strcmp(optarg, "lst") == 0) modelType = LSTMULTI;
 				if (strcmp(agentType, "rmax") == 0 && modelType != RMAX){
 					cout << "R-Max should use tabular model" << endl;
 					exit(-1);
@@ -968,7 +970,8 @@ int main(int argc, char **argv) {
 		std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
 		std::list<std::pair<int,int>> plot_blocks_in;
 		std::list<std::pair<int,int>> plot_blocks_right;
-		std::list<std::pair<int,float>> plot_model_acc;
+		std::list<std::pair<int,float>> plot_model_acc_test;
+		std::list<std::pair<int,float>> plot_model_acc_train;
 		std::list<std::pair<int,float>> accu_rewards;
 		std::list<std::pair<int,float>> accu_tutor_rewards;
 
@@ -977,13 +980,16 @@ int main(int argc, char **argv) {
 				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
 		if (v != 0) {name += "_v_"+std::to_string(v);}
 		if (n != 0) {name += "_n_"+std::to_string(n);}
+		if (!reltrans) {name += "_abstrans";}
+		name += "_splitmargin_0.05";
 
-
-		for (int trainStep=0;trainStep<2000;trainStep++){
+		std::vector<std::tuple<std::vector<float>, int, std::vector<float>>> training_samples;
+		for (int trainStep=0;trainStep<3000;trainStep++){
 
 			std::vector<float> sample_last = e->generate_state();
 			int sample_act = rng.uniformDiscrete(0, numactions);
 			std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
+			training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first));
 
 			experience exp;
 			exp.s = sample_last;
@@ -996,26 +1002,50 @@ int main(int argc, char **argv) {
 
 			if (trainStep % 10 == 0){
 
-				float model_error = 0.;
+				float model_error_test = 0.;
+				float model_error_train = 0.;
+
+				int numsamples = training_samples.size();
+
+				for (int step=0;step<50;step++){
+					double r = rand() % numsamples;
+					auto it = training_samples.begin();
+					std::advance(it, r);
+					std::vector<float> sample_train = std::get<0>(*it);
+					int sample_act_train = std::get<1>(*it);
+					std::vector<float> predNextState = agent->pred(sample_train, sample_act_train);
+					std::vector<float> trueVal = std::get<2>(*it);
+					float error_train = e->getEuclidianDistance(predNextState, trueVal, minValues, maxValues);
+					model_error_train += error_train;
+				}
 
 				for (int testStep=0;testStep<50;testStep++){
 					std::vector<float> sample_test = e->generate_state();
 					int sample_act_test = rng.uniformDiscrete(0, numactions);
 					std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
 					std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
-					float error = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
-					model_error += error;
-
-
+					float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+					model_error_test += error_test;
 				}
-				model_error /= 50;
-				cout << "step " << trainStep << ", model error : " << model_error << endl;
-				plot_model_acc.push_back(std::make_pair(trainStep, model_error));
+				model_error_train /= 50;
+				model_error_test /= 50;
+
+				cout << "step " << trainStep << ", model error on train set : " << model_error_train << endl;
+				cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
+				plot_model_acc_test.push_back(std::make_pair(trainStep, model_error_test));
+				plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
 			}
 		}
-		std::ofstream ofs(name+"_model_acc_only.ser");
-		boost::archive::text_oarchive oa_model_acc(ofs);
-		oa_model_acc & plot_model_acc;
+
+		std::ofstream ofs(name+"_model_acc_test_only.ser");
+		boost::archive::text_oarchive oa_model_acc_test(ofs);
+		oa_model_acc_test & plot_model_acc_test;
+		ofs.close();
+		ofs.clear();
+
+		ofs.open(name+"_model_acc_train_only.ser");
+		boost::archive::text_oarchive oa_model_acc_train(ofs);
+		oa_model_acc_train & plot_model_acc_train;
 		ofs.close();
 		ofs.clear();
 

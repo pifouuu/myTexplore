@@ -24,7 +24,7 @@ C45Tree::C45Tree(int id, int trainMode, int trainFreq, int m,
   totalnodes = 0;
 
   // how close a split has to be to be randomly selected
-  SPLIT_MARGIN = 0.0; //0.02; //5; //01; //0.05; //0.2; //0.05;
+  SPLIT_MARGIN = 0.05; //0.02; //5; //01; //0.05; //0.2; //0.05;
 
   MIN_GAIN_RATIO = 0.0001; //0.0004; //0.001; //0.0002; //0.001;
 
