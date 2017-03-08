@@ -104,6 +104,7 @@ public:
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
   std::vector<float> pred(std::vector<float> & s, int act);
+  bool train_only(experience e);
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);

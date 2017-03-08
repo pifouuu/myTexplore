@@ -979,26 +979,39 @@ int main(int argc, char **argv) {
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 
 
-		for (int trainStep=0;trainStep<1000;trainStep++){
+		for (int trainStep=0;trainStep<2000;trainStep++){
 
 			std::vector<float> sample_last = e->generate_state();
 			int sample_act = rng.uniformDiscrete(0, numactions);
 			std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
-			agent->updateWithNewExperience(sample_last, sample_next.first, sample_act, sample_next.second, false);
-			float model_error = 0.;
 
-			for (int testStep=0;testStep<50;testStep++){
-				std::vector<float> sample_test = e->generate_state();
-				int sample_act_test = rng.uniformDiscrete(0, numactions);
-				std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
-				std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
-				float error = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
-				model_error += error;
+			experience exp;
+			exp.s = sample_last;
+			exp.next = sample_next.first;
+			exp.act = sample_act;
+			exp.reward = sample_next.second;
+			exp.terminal = false;
+
+			bool modelChanged = agent->train_only(exp);
+
+			if (trainStep % 10 == 0){
+
+				float model_error = 0.;
+
+				for (int testStep=0;testStep<50;testStep++){
+					std::vector<float> sample_test = e->generate_state();
+					int sample_act_test = rng.uniformDiscrete(0, numactions);
+					std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
+					std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
+					float error = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+					model_error += error;
+
+
+				}
+				model_error /= 50;
+				cout << "step " << trainStep << ", model error : " << model_error << endl;
+				plot_model_acc.push_back(std::make_pair(trainStep, model_error));
 			}
-
-			model_error /= 50;
-			cout << "step " << trainStep << ", model error : " << model_error << endl;
-			plot_model_acc.push_back(std::make_pair(trainStep, model_error));
 		}
 		std::ofstream ofs(name+"_model_acc_only.ser");
 		boost::archive::text_oarchive oa_model_acc(ofs);
