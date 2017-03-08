@@ -137,7 +137,11 @@ ModelBasedAgent::~ModelBasedAgent() {
   prevstate.clear();
 }
 
-
+bool ModelBasedAgent::train_only(experience e){
+	if (model == NULL)
+	    initModel(e.s.size());
+	return (model->updateWithExperience(e));
+}
 
 std::vector<float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 	StateActionInfo sa_info;
