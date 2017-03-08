@@ -14,25 +14,25 @@
 using namespace cv;
 
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
-	height(4),
-	width(4),
-	nbRedBlocks(2),
-	nbBlueBlocks(2),
-	stochastic(stochastic),
-	rng(rand),
-	WITH_TUTOR(with_tutor),
-	state_dim_base(9),
-	s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
-	agent_ns(&(s[0])),
-	agent_ew(&(s[1])),
-	block_hold(&(s[2])),
-	agent_eye_ns(&(s[3])),
-	agent_eye_ew(&(s[4])),
-	red_box_ns(&(s[5])),
-	red_box_ew(&(s[6])),
-	blue_box_ns(&(s[7])),
-	blue_box_ew(&(s[8])),
-	numstep(0)
+			height(4),
+			width(4),
+			nbRedBlocks(2),
+			nbBlueBlocks(2),
+			stochastic(stochastic),
+			rng(rand),
+			WITH_TUTOR(with_tutor),
+			state_dim_base(9),
+			s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
+			agent_ns(&(s[0])),
+			agent_ew(&(s[1])),
+			block_hold(&(s[2])),
+			agent_eye_ns(&(s[3])),
+			agent_eye_ew(&(s[4])),
+			red_box_ns(&(s[5])),
+			red_box_ew(&(s[6])),
+			blue_box_ns(&(s[7])),
+			blue_box_ew(&(s[8])),
+			numstep(0)
 {
 	int cnt_actions = 0;
 	int cnt_tutor_actions = 0;
@@ -114,7 +114,7 @@ BlockRoom::~BlockRoom() {}
 
 const std::vector<float> &BlockRoom::sensation() const {
 	if (BRDEBUG) print_map();
-	  return s;
+	return s;
 }
 
 bool BlockRoom::terminal() const {
@@ -143,31 +143,47 @@ int BlockRoom::get_blocks_right() const {
 
 
 int BlockRoom::getNumActions() {
-  if (BRDEBUG) cout << "Return number of actions: " << numactions << endl;
-  return numactions; //num_actions;
+	if (BRDEBUG) cout << "Return number of actions: " << numactions << endl;
+	return numactions; //num_actions;
 }
 
 int BlockRoom::getNumTutorActions() {
-  if (BRDEBUG) cout << "Return number of tutor actions: " << num_tutor_actions << endl;
-  return num_tutor_actions; //num_actions;
+	if (BRDEBUG) cout << "Return number of tutor actions: " << num_tutor_actions << endl;
+	return num_tutor_actions; //num_actions;
 }
 
 void BlockRoom::getMinMaxFeatures(std::vector<float> *minFeat,
-                                   std::vector<float> *maxFeat){
+		std::vector<float> *maxFeat){
 
-  minFeat->resize(s.size(), 0.0);
-  float maxSize = height > width ? height : width;
-  maxFeat->resize(s.size(), maxSize);
+	minFeat->resize(s.size(), 0.0);
+	float maxSize = height > width ? height : width;
+	maxFeat->resize(s.size(), maxSize-1);
 
-  (*minFeat)[2] = -1;
-  (*maxFeat)[2] = nbRedBlocks+nbBlueBlocks-1;
+	(*maxFeat)[0] = height-1;
+	(*maxFeat)[1] = width-1;
+	(*maxFeat)[2] = nbRedBlocks+nbBlueBlocks-1;
+	(*maxFeat)[3] = height-1;
+	(*maxFeat)[4] = width-1;
+	(*maxFeat)[5] = height-1;
+	(*maxFeat)[6] = width-1;
+	(*maxFeat)[7] = height-1;
+	(*maxFeat)[8] = width-1;
+	for (int i = 0; i<nbRedBlocks+nbBlueBlocks; i++){
+		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i] = height-1;
+		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+1] = width-1;
+		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+2] = 1;
+		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+3] = 1;
+		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+4] = 1;
+	}
+
+	(*minFeat)[2] = -1;
 }
 
 void BlockRoom::getMinMaxReward(float *minR,
-                                 float *maxR){
+		float *maxR){
 
-  *minR = 0.0;
-  *maxR = 1.0;
+	*minR = 0.0;
+	*maxR = 1000.0;
 
 }
 
@@ -245,9 +261,9 @@ void BlockRoom::print_map() const{
 				int x_decal = i % 2;
 				int y_decal = i/2;
 				elem.second.front().copyTo(chessBoard(cv::Rect(elem.first.first+x_decal*blockSize/2,
-								elem.first.second+y_decal*blockSize/2,
-								elem.second.front().cols,
-								elem.second.front().rows)));
+						elem.first.second+y_decal*blockSize/2,
+						elem.second.front().cols,
+						elem.second.front().rows)));
 				elem.second.pop_front();
 				i++;
 			}
@@ -260,9 +276,9 @@ void BlockRoom::print_map() const{
 				int x_decal = i % 4;
 				int y_decal = i/4;
 				elem.second.front().copyTo(chessBoard(cv::Rect(elem.first.first+x_decal*blockSize/4,
-								elem.first.second+y_decal*blockSize/4,
-								elem.second.front().cols,
-								elem.second.front().rows)));
+						elem.first.second+y_decal*blockSize/4,
+						elem.second.front().cols,
+						elem.second.front().rows)));
 				elem.second.pop_front();
 				i++;
 			}
@@ -383,20 +399,20 @@ void BlockRoom::reset(){
 	std::shuffle(x.begin(), x.end(), engine);
 
 	for (int i = 0; i<nbRedBlocks; i++){
-		*(blocks[i].color) = RED;
-		*(blocks[i].ew) = (x[i] % width);
-		*(blocks[i].ns) = (x[i] / width);
-		*(blocks[i].is_in_blue_box) = false;
-		*(blocks[i].is_in_red_box) = false;
+	 *(blocks[i].color) = RED;
+	 *(blocks[i].ew) = (x[i] % width);
+	 *(blocks[i].ns) = (x[i] / width);
+	 *(blocks[i].is_in_blue_box) = false;
+	 *(blocks[i].is_in_red_box) = false;
 	}
 
 	for (int i = nbRedBlocks;
 			i < nbRedBlocks+nbBlueBlocks;i++){
-		*(blocks[i].color) = BLUE;
-		*(blocks[i].ew) = (x[i] % width);
-		*(blocks[i].ns) = (x[i] / width);
-		*(blocks[i].is_in_blue_box) = false;
-		*(blocks[i].is_in_red_box) = false;
+	 *(blocks[i].color) = BLUE;
+	 *(blocks[i].ew) = (x[i] % width);
+	 *(blocks[i].ns) = (x[i] / width);
+	 *(blocks[i].is_in_blue_box) = false;
+	 *(blocks[i].is_in_red_box) = false;
 	}*/
 
 	for (int i = 0; i<nbRedBlocks; i++){
@@ -493,13 +509,19 @@ std::vector<std::pair<int,int>> BlockRoom::get_nearby_pos(int ns, int ew){
 
 
 
-float BlockRoom::getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2){
+float BlockRoom::getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
+		std::vector<float> minValues, std::vector<float>maxValues){
 	float res = 0.;
+	unsigned nfeats = s1.size();
+	std::vector<float> featRange(nfeats, 0);
+	for (unsigned i = 0; i < nfeats; i++){
+		featRange[i] = minValues[i] - maxValues[i];
+	}
 	if (s1.size()!=s2.size()){return -1;}
 	for (int i=0; i<s1.size(); i++){
-		res+=pow((s1[i]-s2[i]),2);
+		res+=pow((s1[i]-s2[i])/featRange[i],2);
 	}
-	return sqrt(res);
+	return sqrt(res/nfeats);
 }
 
 std::vector<float> BlockRoom::getMostProbNextState(std::vector<float> s, int action){
@@ -526,9 +548,9 @@ std::vector<float> BlockRoom::getMostProbNextState(std::vector<float> s, int act
 	if (action==actions["PUT_DOWN"]) {
 		if (s[2]!=-1
 				&& s[3]==s[0] && s[4]==s[1]
-				&& find_block_under(s[0],s[1]).empty()
-				&& ((s[5])!=(s[0]) || (s[6])!=(s[1]))
-				&& ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
+										 && find_block_under(s[0],s[1]).empty()
+										 && ((s[5])!=(s[0]) || (s[6])!=(s[1]))
+										 && ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
 			next_state[2]=-1;
 		}
 	}
@@ -763,7 +785,7 @@ occ_info_t BlockRoom::apply(int action){
 			if (!blue_blocks_under.empty()) {
 				std::shuffle(blue_blocks_under.begin(), blue_blocks_under.end(), engine);
 				int idx = blue_blocks_under.back();
-				*(blocks[idx].is_in_robot_hand) = true;
+	 *(blocks[idx].is_in_robot_hand) = true;
 				(*block_hold) = idx;
 				success = true;
 			}
@@ -775,7 +797,7 @@ occ_info_t BlockRoom::apply(int action){
 			if (!red_blocks_under.empty()) {
 				std::shuffle(red_blocks_under.begin(), red_blocks_under.end(), engine);
 				int idx = red_blocks_under.back();
-				*(blocks[idx].is_in_robot_hand) = true;
+	 *(blocks[idx].is_in_robot_hand) = true;
 				(*block_hold) = idx;
 				success = true;
 			}
@@ -791,14 +813,14 @@ occ_info_t BlockRoom::apply(int action){
 				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
 				&& ((*blue_box_ns)!=(*agent_ns) || (*blue_box_ew)!=(*agent_ew))){
 			if (rng.bernoulli(stoch_param)){
-				*(blocks[(*block_hold)].ns) = (*agent_ns);
-				*(blocks[(*block_hold)].ew) = (*agent_ew);
+	 *(blocks[(*block_hold)].ns) = (*agent_ns);
+	 *(blocks[(*block_hold)].ew) = (*agent_ew);
 			}
 			else{
 				std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_ns,*agent_ew);
 				std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
-				*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
-				*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
+	 *(blocks[(*block_hold)].ns) = nearby_pos.front().first;
+	 *(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 			}
 
 			(*block_hold) = -1;
@@ -856,7 +878,7 @@ occ_info_t BlockRoom::apply(int action){
 		if ((*agent_eye_ew) != (*tutor_eye_ew) || (*agent_eye_ns) != (*tutor_eye_ns)){
 			(*agent_eye_ew) = (*tutor_eye_ew);
 			(*agent_eye_ns) = (*tutor_eye_ns),
-			reward=+1;
+					reward=+1;
 			success = true;
 		}
 	}

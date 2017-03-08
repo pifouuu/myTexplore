@@ -32,7 +32,8 @@ public:
 	int getNumActions();
 	int getNumTutorActions();
 	std::vector<float> generate_state();
-	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2);
+	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
+			std::vector<float> minValues, std::vector<float>maxValues);
 	std::vector<float> getMostProbNextState(std::vector<float> s, int action);
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 

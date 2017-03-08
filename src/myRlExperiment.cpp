@@ -54,7 +54,7 @@
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 10000; // per episode
+unsigned MAXSTEPS = 1000; // per episode
 bool PRINTS = false;
 
 
@@ -1228,7 +1228,7 @@ int main(int argc, char **argv) {
 							int sample_act = rng.uniformDiscrete(0, numactions);
 							std::vector<float> predNextState = agent->eval(sample_state, sample_act);
 							std::vector<float> mostProbNextState = e->getMostProbNextState(sample_state,sample_act);
-							float error = e->getEuclidianDistance(predNextState, mostProbNextState);
+							float error = e->getEuclidianDistance(predNextState, mostProbNextState, minValues, maxValues);
 							model_error += error;
 						}
 						model_error /= 100;
@@ -1253,7 +1253,7 @@ int main(int argc, char **argv) {
 							}
 						}
 						model_error /= (samples.size()*numactions);*/
-						plot_model_acc.push_back(std::make_pair(steps, model_error));
+						plot_model_acc.push_back(std::make_pair(tot_steps+steps, model_error));
 						ofs.open(name+"_model_acc.ser");
 						boost::archive::text_oarchive oa_model_acc(ofs);
 						oa_model_acc & plot_model_acc;
