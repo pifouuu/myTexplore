@@ -143,7 +143,7 @@ bool ModelBasedAgent::train_only(experience e){
 	return (model->updateWithExperience(e));
 }
 
-std::vector<float> ModelBasedAgent::pred(std::vector<float> & s, int act){
+std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 	StateActionInfo sa_info;
 	float conf = model->getStateActionInfo(s, act, &sa_info);
 	std::map<std::vector<float>, float> preds = sa_info.transitionProbs;
@@ -155,7 +155,7 @@ std::vector<float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 			return p1.second < p2.second;
 		}
 	);
-	return pr->first;
+	return std::make_tuple(pr->first, sa_info.reward,sa_info.termProb);
 }
 
 int ModelBasedAgent::first_action(const std::vector<float> &s) {

@@ -792,6 +792,7 @@ std::vector<float> ETUCT::simulateNextState(
 	if (modelInfo->transitionProbs.size() == 0)
 		nextstate = actualState;
 
+
 	for (std::map<std::vector<float>, float>::iterator outIt =
 			modelInfo->transitionProbs.begin();
 			outIt != modelInfo->transitionProbs.end(); outIt++) {
@@ -808,6 +809,12 @@ std::vector<float> ETUCT::simulateNextState(
 						<< prob << endl;
 			break;
 		}
+	}
+
+	// In rare cases where randProb is too close too one and numerical precision is a pain
+	if (randProb>probSum && modelInfo->transitionProbs.size() != 0)
+	{
+		nextstate = modelInfo->transitionProbs.rbegin()->first;
 	}
 
 	if (trackActual) {

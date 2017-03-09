@@ -116,10 +116,10 @@ int main(int argc, char **argv) {
 	char* tutorType = NULL;
 	float discountfactor = 0.99;
 	float epsilon = 0.1;
-	float alpha = 0.3;
+	float alpha = 0.1;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
-	float lambda = 0.1;
+	float lambda = 0.;
 	int M = 5;
 	int modelType = C45TREE;
 	int exploreType = GREEDY;
@@ -980,6 +980,8 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,int>> plot_blocks_right;
 		std::list<std::pair<int,float>> plot_model_acc_test;
 		std::list<std::pair<int,float>> plot_model_acc_train;
+		std::list<std::pair<int,float>> plot_model_acc_test_r;
+		std::list<std::pair<int,float>> plot_model_acc_train_r;
 		std::list<std::pair<int,float>> accu_rewards;
 		std::list<std::pair<int,float>> accu_tutor_rewards;
 
@@ -994,13 +996,14 @@ int main(int argc, char **argv) {
 		name += "_mingainratio_0.0004";
 
 		if (PRETRAIN){
-			//std::vector<std::tuple<std::vector<float>, int, std::vector<float>>> training_samples;
+			std::vector<std::tuple<std::vector<float>, int, std::vector<float>, float>> training_samples;
+			int count_r = 0;
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 
 				std::vector<float> sample_last = e->generate_state();
 				int sample_act = rng.uniformDiscrete(0, numactions);
 				std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
-				//training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first));
+				training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first, sample_next.second));
 
 				experience exp;
 				exp.s = sample_last;
@@ -1008,66 +1011,102 @@ int main(int argc, char **argv) {
 				exp.act = sample_act;
 				exp.reward = sample_next.second;
 				exp.terminal = false;
+				count_r += exp.reward;
 
 				bool modelChanged = agent->train_only(exp);
 				if (trainStep % 100 == 0){
-					cout << "step " << trainStep << endl;
+					cout << "step " << trainStep << ", received reward : "<< count_r << endl;
 				}
 
-//				if (trainStep % 10 == 0){
-//
-//					float model_error_test = 0.;
-//					float model_error_train = 0.;
-//
-//					int numsamples = training_samples.size();
-//
-//					for (int step=0;step<50;step++){
-//						double r = rand() % numsamples;
-//						auto it = training_samples.begin();
-//						std::advance(it, r);
-//						std::vector<float> sample_train = std::get<0>(*it);
-//						int sample_act_train = std::get<1>(*it);
-//						std::vector<float> predNextState = agent->pred(sample_train, sample_act_train);
-//						std::vector<float> trueVal = std::get<2>(*it);
-//						float error_train = e->getEuclidianDistance(predNextState, trueVal, minValues, maxValues);
-//						model_error_train += error_train;
-//					}
-//
-//					for (int testStep=0;testStep<50;testStep++){
-//						std::vector<float> sample_test = e->generate_state();
-//						int sample_act_test = rng.uniformDiscrete(0, numactions);
-//						std::vector<float> predNextState = agent->pred(sample_test, sample_act_test);
-//						std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
-//						float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
-//						model_error_test += error_test;
-//					}
-//					model_error_train /= 50;
-//					model_error_test /= 50;
-//
-//					cout << "step " << trainStep << ", model error on train set : " << model_error_train << endl;
-//					cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
-//					plot_model_acc_test.push_back(std::make_pair(trainStep, model_error_test));
-//					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
-//				}
+				if (trainStep % 20 == 0){
+
+					float model_error_test = 0.;
+					float model_error_train = 0.;
+					float model_error_test_reward = 0;
+					float model_error_train_reward = 0;
+
+					int numsamples = training_samples.size();
+
+					for (int step=0;step<50;step++){
+						double r = rand() % numsamples;
+						auto it = training_samples.begin();
+						std::advance(it, r);
+						std::vector<float> sample_train = std::get<0>(*it);
+						int sample_act_train = std::get<1>(*it);
+
+						std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_train, sample_act_train);
+						std::vector<float> predNextState = std::get<0>(prediction);
+						float predReward = std::get<1>(prediction);
+						//float predTermProb = std::get<2>(prediction);
+
+						std::vector<float> trueNextState = std::get<2>(*it);
+						float error_train = e->getEuclidianDistance(predNextState, trueNextState, minValues, maxValues);
+						model_error_train += error_train;
+
+						float trueReward = std::get<3>(*it);
+						float error_train_r = fabs(predReward-trueReward);
+						model_error_train_reward += error_train_r;
+					}
+
+					for (int testStep=0;testStep<50;testStep++){
+						std::vector<float> sample_test = e->generate_state();
+						int sample_act_test = rng.uniformDiscrete(0, numactions);
+
+						std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
+						std::vector<float> predNextState = std::get<0>(prediction);
+						float predReward = std::get<1>(prediction);
+
+						std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
+						float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+						model_error_test += error_test;
+
+						float trueReward = mostProbNextState.second;
+						float error_test_r = fabs(predReward-trueReward);
+						model_error_test_reward += error_test_r;
+					}
+					model_error_train /= 50;
+					model_error_test /= 50;
+					model_error_train_reward /= 50;
+					model_error_test_reward /= 50;
+
+					//cout << "step " << trainStep << ", reward error on test set : " << model_error_test_reward << endl;
+					//cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
+					plot_model_acc_test.push_back(std::make_pair(trainStep, model_error_test));
+					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
+					plot_model_acc_test_r.push_back(std::make_pair(trainStep, model_error_test_reward));
+					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
+				}
 			}
-//
-//			std::ofstream ofs(name+"_model_acc_test_only.ser");
-//			boost::archive::text_oarchive oa_model_acc_test(ofs);
-//			oa_model_acc_test & plot_model_acc_test;
-//			ofs.close();
-//			ofs.clear();
-//
-//			ofs.open(name+"_model_acc_train_only.ser");
-//			boost::archive::text_oarchive oa_model_acc_train(ofs);
-//			oa_model_acc_train & plot_model_acc_train;
-//			ofs.close();
-//			ofs.clear();
+
+			std::ofstream ofs(name+"_model_acc_test.ser");
+			boost::archive::text_oarchive oa_model_acc_test(ofs);
+			oa_model_acc_test & plot_model_acc_test;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(name+"_model_acc_train.ser");
+			boost::archive::text_oarchive oa_model_acc_train(ofs);
+			oa_model_acc_train & plot_model_acc_train;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(name+"_model_acc_train_r.ser");
+			boost::archive::text_oarchive oa_model_acc_train_r(ofs);
+			oa_model_acc_train_r & plot_model_acc_train_r;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(name+"_model_acc_test_r.ser");
+			boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+			oa_model_acc_test_r & plot_model_acc_test_r;
+			ofs.close();
+			ofs.clear();
 		}
 
 
 
 
-
+		/*
 		// STEP BY STEP DOMAIN
 		if (!episodic){
 
@@ -1324,7 +1363,7 @@ int main(int argc, char **argv) {
 			}
 
 		}
-
+		*/
 		if (NUMTRIALS > 1) delete agent;
 
 	}
