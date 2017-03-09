@@ -293,6 +293,7 @@ std::vector<float> BlockRoom::generate_state(){
 	std::vector<float> g(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*WITH_TUTOR);
 	g[6] = rng.uniformDiscrete(0, width-1);
 	g[5] = rng.uniformDiscrete(0, height-1);
+	g[2] = -1;
 	do {
 		g[8] = rng.uniformDiscrete(0, width-1);
 		g[7] = rng.uniformDiscrete(0, height-1);
@@ -330,6 +331,7 @@ std::vector<float> BlockRoom::generate_state(){
 					g[5*i+state_dim_base+2*WITH_TUTOR + 0] = g[0];
 					g[5*i+state_dim_base+2*WITH_TUTOR + 1] = g[1];
 					g[2] = i;
+					hand_full = true;
 				}
 				else {
 					g[5*i+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
@@ -365,6 +367,8 @@ std::vector<float> BlockRoom::generate_state(){
 					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = g[0];
 					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 1] = g[1];
 					g[2] = i;
+					g[2] = i;
+					hand_full = true;
 				}
 				else {
 					g[5*(i+nbRedBlocks)+state_dim_base+2*WITH_TUTOR + 0] = rng.uniformDiscrete(0, height-1);
@@ -537,16 +541,24 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 	}
 	if (action == actions["PICK"]){
 		if ((state[2])==-1 && state[3]==state[0] && state[4]==state[1]) {
-			std::vector<int> blocks_under = find_block_under(state[0],state[1]);
+			std::vector<int> blocks_under;
+			for (int i=0; i<nbRedBlocks+nbBlueBlocks; i++){
+				if ((state[5*i+state_dim_base+2*WITH_TUTOR] == state[0] &&
+						state[5*i+state_dim_base+2*WITH_TUTOR+1] == state[1]))
+				{
+					blocks_under.push_back(i);
+				}
+			}
 			if (!blocks_under.empty()) {
 				int block = blocks_under.back();
 				next_state[2] = block;
 				next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 0;
 				next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
+				reward += 10;
 			}
 		}
 	}
-	if (action==actions["PUT_DOWN"]) {
+	/*if (action==actions["PUT_DOWN"]) {
 		if (state[2]!=-1
 				&& state[3]==state[0] && state[4]==state[1]
 										 && find_block_under(state[0],state[1]).empty()
@@ -554,7 +566,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 										 && ((state[7])!=(state[0]) || (state[8])!=(state[1]))){
 			next_state[2]=-1;
 		}
-	}
+	}*/
 	if (action==actions["PUT_IN"]) {
 		if ((state[2])!=-1){
 			if ((state[5])==(state[0]) && (state[6])==(state[1])){
@@ -789,6 +801,7 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[idx].is_in_red_box) = false;
 				}
 				success = true;
+				reward += 10;
 			}
 		}
 	}

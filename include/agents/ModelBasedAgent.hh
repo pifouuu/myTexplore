@@ -103,7 +103,7 @@ public:
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
   virtual void savePolicy(const char* filename);
-  std::vector<float> pred(std::vector<float> & s, int act);
+  std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act);
   bool train_only(experience e);
 
   /** Output value function to a file */
