@@ -96,7 +96,7 @@ public:
 
   virtual ~ModelBasedAgent();
 
-
+  virtual void setTrueEnv(Environment* trueEnv);
   virtual int first_action(const std::vector<float> &s);
   virtual int next_action(float r, const std::vector<float> &s);
   virtual void last_action(float r);
@@ -123,6 +123,9 @@ public:
   /** Planner that we're using */
   Planner* planner;
 
+  /** True environment */
+  Environment* trueEnv;
+
   float planningTime;
   float modelUpdateTime;
   float actionTime;
@@ -139,6 +142,8 @@ protected:
 
   /** Saves state and action to use for update on next action */
   void saveStateAndAction(const std::vector<float> &s, int act);
+
+
 
   /** Select action from the given state */
   int chooseAction(const std::vector<float> &s);

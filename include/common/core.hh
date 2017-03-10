@@ -309,6 +309,7 @@ class Agent {
 public:
 	/** Predict a state for a pari action state **/
 	virtual std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act) = 0;
+	virtual void setTrueEnv(Environment* e) = 0;
 	virtual bool train_only(experience e) = 0;
 	/** Determines the first action that an agent takes in an
       environment.  This method implies that the environment is
@@ -434,6 +435,7 @@ class Planner {
 public:
 	/** Give the planner the model being used with the agent */
 	virtual void setModel(MDPModel* model) = 0;
+	virtual void setTrueEnv(Environment* e) = 0;
 
 	/** Update the given model with an experience <s,a,s',r>. */
 	virtual bool updateModelWithExperience(const std::vector<float>& last,

@@ -305,6 +305,13 @@ void ModelBasedAgent::initModel(int nfactors){
  
   initPlanner();
   planner->setModel(model);
+  planner->setTrueEnv(trueEnv);
+
+}
+
+void ModelBasedAgent::setTrueEnv(Environment* e){
+
+	trueEnv = e;
 
 }
 

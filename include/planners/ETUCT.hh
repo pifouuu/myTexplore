@@ -55,6 +55,7 @@ public:
   virtual ~ETUCT();
 
   virtual void setModel(MDPModel* model);
+  virtual void setTrueEnv(Environment* e);
   virtual bool updateModelWithExperience(const std::vector<float> &last, 
                                          int act, 
                                          const std::vector<float> &curr, 
@@ -85,9 +86,13 @@ public:
   bool REALSTATEDEBUG;
   bool HISTORYDEBUG;
   bool QDEBUG;
+  bool USETRUEENV;
 
   /** MDPModel that we're using with planning */
   MDPModel* model;
+
+  /** True environment */
+  Environment* trueEnv;
 
   /** The implementation maps all sensations to a set of canonical
       pointers, which serve as the internal representation of

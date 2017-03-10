@@ -34,6 +34,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	timingType = true;
 
 	model = NULL;
+	trueEnv = NULL;
 	planTime = getSeconds();
 
 	PLANNERDEBUG = false; //true;
@@ -43,6 +44,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	REALSTATEDEBUG = false;
 	HISTORYDEBUG = false; //true; //false;
 	QDEBUG = true;
+	USETRUEENV = true;
 
 	featmax = fmax;
 	featmin = fmin;
@@ -98,6 +100,12 @@ ETUCT::~ETUCT() {
 void ETUCT::setModel(MDPModel* m) {
 
 	model = m;
+
+}
+
+void ETUCT::setTrueEnv(Environment* e){
+
+	trueEnv = e;
 
 }
 
@@ -729,7 +737,7 @@ int ETUCT::selectUCTAction(state_info* info) {
 
 		// this actions value is Q + rMax * 2 sqrt (log N(s) / N(s,a))
 		uctQ[i] = Q[i]
-				+ rewardBound * 2.0
+				+ rewardBound * 2
 						* sqrt(
 								log((float) info->uctVisits)
 										/ (float) info->uctActions[i]);
@@ -756,83 +764,93 @@ std::vector<float> ETUCT::simulateNextState(
 		state_info* info, const std::deque<float> &history, int action,
 		float* reward, bool* term) {
 
-	StateActionInfo* modelInfo = &(info->historyModel[action][history]);
-	bool upToDate = modelInfo->frameUpdated >= lastUpdate;
-
-	// Can happen when planOnNewModel is not called after each modelUpdateWithExperience
-	if (!upToDate) {
-		// must put in appropriate history
-		if (HISTORY_SIZE > 0) {
-			std::vector<float> modState = *discState;
-			for (int i = 0; i < HISTORY_FL_SIZE; i++) {
-				modState.push_back(history[i]);
-			}
-			updateStateActionHistoryFromModel(modState, action, modelInfo);
-		} else {
-			updateStateActionHistoryFromModel(*discState, action, modelInfo);
-		}
-	}
-
-	*reward = modelInfo->reward;
-	*term = (rng.uniform() < modelInfo->termProb);
-
-	if (*term) {
-		return actualState;
-	}
-
-	float randProb = rng.uniform();
-
-	float probSum = 0.0;
 	std::vector<float> nextstate;
 
-	if (REALSTATEDEBUG)
-		cout << "randProb: " << randProb << " numNext: "
-				<< modelInfo->transitionProbs.size() << endl;
+	if (!USETRUEENV){
+		StateActionInfo* modelInfo = &(info->historyModel[action][history]);
+		bool upToDate = modelInfo->frameUpdated >= lastUpdate;
 
-	if (modelInfo->transitionProbs.size() == 0)
-		nextstate = actualState;
-
-
-	for (std::map<std::vector<float>, float>::iterator outIt =
-			modelInfo->transitionProbs.begin();
-			outIt != modelInfo->transitionProbs.end(); outIt++) {
-
-		float prob = (*outIt).second;
-		probSum += prob;
-		if (REALSTATEDEBUG)
-			cout << randProb << ", " << probSum << ", " << prob << endl;
-
-		if (randProb <= probSum) {
-			nextstate = (*outIt).first;
-			if (REALSTATEDEBUG)
-				cout << "selected state " << randProb << ", " << probSum << ", "
-						<< prob << endl;
-			break;
+		// Can happen when planOnNewModel is not called after each modelUpdateWithExperience
+		if (!upToDate) {
+			// must put in appropriate history
+			if (HISTORY_SIZE > 0) {
+				std::vector<float> modState = *discState;
+				for (int i = 0; i < HISTORY_FL_SIZE; i++) {
+					modState.push_back(history[i]);
+				}
+				updateStateActionHistoryFromModel(modState, action, modelInfo);
+			} else {
+				updateStateActionHistoryFromModel(*discState, action, modelInfo);
+			}
 		}
-	}
 
-	// In rare cases where randProb is too close too one and numerical precision is a pain
-	if (randProb>probSum && modelInfo->transitionProbs.size() != 0)
-	{
-		nextstate = modelInfo->transitionProbs.rbegin()->first;
-	}
+		*reward = modelInfo->reward;
+		*term = (rng.uniform() < modelInfo->termProb);
 
-	if (trackActual) {
-
-		// find the relative change from discrete center
-		std::vector<float> relChange = subVec(nextstate, *discState);
-
-		// add that on to actual current state value
-		nextstate = addVec(actualState, relChange);
-
-	}
-
-	// check that next state is valid
-	for (unsigned j = 0; j < nextstate.size(); j++) {
-		if (nextstate[j] < (featmin[j] - EPSILON)
-				|| nextstate[j] > (featmax[j] + EPSILON)) {
+		if (*term) {
 			return actualState;
 		}
+
+		float randProb = rng.uniform();
+
+		float probSum = 0.0;
+
+
+		if (REALSTATEDEBUG)
+			cout << "randProb: " << randProb << " numNext: "
+					<< modelInfo->transitionProbs.size() << endl;
+
+		if (modelInfo->transitionProbs.size() == 0)
+			nextstate = actualState;
+
+
+		for (std::map<std::vector<float>, float>::iterator outIt =
+				modelInfo->transitionProbs.begin();
+				outIt != modelInfo->transitionProbs.end(); outIt++) {
+
+			float prob = (*outIt).second;
+			probSum += prob;
+			if (REALSTATEDEBUG)
+				cout << randProb << ", " << probSum << ", " << prob << endl;
+
+			if (randProb <= probSum) {
+				nextstate = (*outIt).first;
+				if (REALSTATEDEBUG)
+					cout << "selected state " << randProb << ", " << probSum << ", "
+							<< prob << endl;
+				break;
+			}
+		}
+
+		// In rare cases where randProb is too close too one and numerical precision is a pain
+		if (randProb>probSum && modelInfo->transitionProbs.size() != 0)
+		{
+			nextstate = modelInfo->transitionProbs.rbegin()->first;
+		}
+
+		if (trackActual) {
+
+			// find the relative change from discrete center
+			std::vector<float> relChange = subVec(nextstate, *discState);
+
+			// add that on to actual current state value
+			nextstate = addVec(actualState, relChange);
+
+		}
+
+		// check that next state is valid
+		for (unsigned j = 0; j < nextstate.size(); j++) {
+			if (nextstate[j] < (featmin[j] - EPSILON)
+					|| nextstate[j] > (featmax[j] + EPSILON)) {
+				return actualState;
+			}
+		}
+	}
+	else {
+		std::pair<std::vector<float>, float> truePred = trueEnv->getMostProbNextState(actualState, action);
+		nextstate = truePred.first;
+		*reward = truePred.second;
+		*term = false;
 	}
 
 	if (UCTDEBUG)

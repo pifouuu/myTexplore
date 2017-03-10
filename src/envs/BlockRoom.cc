@@ -14,10 +14,10 @@
 using namespace cv;
 
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
-			height(4),
-			width(4),
-			nbRedBlocks(1),
-			nbBlueBlocks(0),
+			height(10),
+			width(10),
+			nbRedBlocks(3),
+			nbBlueBlocks(2),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
@@ -554,7 +554,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 				next_state[2] = block;
 				next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 0;
 				next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
-				reward += 10;
+				//reward += 10;
 			}
 		}
 	}
@@ -621,129 +621,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 
 
 float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){
-	/*float diff = 0.;
-	for (int action = 0;action<numactions;action++){
-		std::vector<float> next_state = s;
-		//std::map< std::vector<float> , float> trueTransitionProbs;
 
-		if (action==actions["GO_TO_EYE"]) {
-			next_state[0] = s[3];
-			next_state[1] = s[4];
-			if (s[2]>=0){
-				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR]=s[3];
-				next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+1]=s[4];
-			}
-			trueTransitionProbs[next_state] = 1.;
-		}
-		if (action == actions["PICK"]){
-			if ((s[2])==-1 && s[3]==s[0] && s[4]==s[1]) {
-				std::vector<int> blocks_under = find_block_under(s[0],s[1]);
-				if (!blocks_under.empty()) {
-					int block = blocks_under.back();
-					next_state[2] = block;
-					next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 0;
-					next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
-//					int nb_blocks = blocks_under.size();
-//					for (auto block:blocks_under){
-//						next_state[2]=block;
-//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 3] = 1;
-//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 4] = 0;
-//						next_state[5*block+state_dim_base+2*WITH_TUTOR + 5] = 0;
-//						trueTransitionProbs[next_state] = 1./nb_blocks;
-//					}
-				}
-				else {
-					trueTransitionProbs[next_state] = 1.;
-				}
-			}
-			else {
-				trueTransitionProbs[next_state] = 1.;
-			}
-		}
-		if (action==actions["PUT_DOWN"]) {
-			if (s[2]!=-1
-					&& s[3]==s[0] && s[4]==s[1]
-					&& find_block_under(s[0],s[1]).empty()
-					&& ((s[5])!=(s[0]) || (s[6])!=(s[1]))
-					&& ((s[7])!=(s[0]) || (s[8])!=(s[1]))){
-				next_state[2]=-1;
-				trueTransitionProbs[next_state] = 1.;
-			}
-			else {
-				trueTransitionProbs[next_state] = 1.;
-			}
-		}
-		if (action==actions["PUT_IN"]) {
-			if ((s[2])!=-1){
-				if ((s[5])==(s[0]) && (s[6])==(s[1])){
-					next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+4] = 1;
-					next_state[2]=-1;
-					trueTransitionProbs[next_state]=1.;
-				}
-				else if ((s[7])==(s[0]) && (s[8])==(s[1])){
-					next_state[5*s[2]+state_dim_base+2*WITH_TUTOR+3] = 1;
-					next_state[2]=-1;
-					trueTransitionProbs[next_state]=1.;
-				}
-				else {
-					trueTransitionProbs[next_state] = 1.;
-				}
-			}
-			else {
-				trueTransitionProbs[next_state] = 1.;
-			}
-		}
-		if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
-			if ((s[4]) != (s[10]) || (s[3]) != (s[9])){
-				next_state[4] = (s[10]);
-				next_state[3] = (s[9]);
-				trueTransitionProbs[next_state] = 1.;
-			}
-			else {
-				trueTransitionProbs[next_state]=1.;
-			}
-		}
-		if (action==actions["LOOK_RED_BOX"]){
-			next_state[4] = (s[6]);
-			next_state[3] = (s[5]);
-			trueTransitionProbs[next_state] = 1.;
-		}
-		if (action==actions["LOOK_BLUE_BOX"]){
-			next_state[4] = (s[8]);
-			next_state[3] = (s[7]);
-			trueTransitionProbs[next_state] = 1.;
-		}
-		if (action>numactions-nbBlueBlocks-nbRedBlocks-1
-				&& action<numactions){
-			int num_block = action-(numactions-nbBlueBlocks-nbRedBlocks);
-			if (s[2]!=num_block && s[5*num_block+state_dim_base+2*WITH_TUTOR+3]==0
-					&& s[5*num_block+state_dim_base+2*WITH_TUTOR+4]==0) {
-				next_state[4] = s[5*num_block+state_dim_base+2*WITH_TUTOR+1];
-				next_state[3] = s[5*num_block+state_dim_base+2*WITH_TUTOR];
-				trueTransitionProbs[next_state]=1.;
-			}
-			else{
-				trueTransitionProbs[next_state] = 1;
-			}
-		}
-//		for (auto elem:trueTransitionProbs){
-//			auto insert_pair = preds[action].transitionProbs.insert(elem);
-//			if (insert_pair.second){
-//				diff += pow(insert_pair.first->second,2);
-//			}
-//			else {
-//				diff += pow(insert_pair.first->second-elem.second,2);
-//			}
-//		}
-//		for (auto elem:preds[action].transitionProbs){
-//			if (trueTransitionProbs.find(elem.first) == trueTransitionProbs.end()){
-//				diff += pow(elem.second,2);
-//			}
-//		}
-
-	}
-
-	return diff;*/
 }
 
 occ_info_t BlockRoom::apply(int action){
@@ -801,7 +679,7 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[idx].is_in_red_box) = false;
 				}
 				success = true;
-				reward += 10;
+				//reward += 10;
 			}
 		}
 	}

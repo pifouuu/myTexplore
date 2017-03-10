@@ -52,7 +52,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 1000; // per episode
 bool PRINTS = false;
@@ -114,12 +114,12 @@ int main(int argc, char **argv) {
 	char* agentType = NULL;
 	char* envType = NULL;
 	char* tutorType = NULL;
-	float discountfactor = 0.99;
+	float discountfactor = 0.9;
 	float epsilon = 0.1;
-	float alpha = 0.1;
+	float alpha = 0.5;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
-	float lambda = 0.;
+	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
 	int exploreType = GREEDY;
@@ -931,6 +931,7 @@ int main(int argc, char **argv) {
 					history, v, n,
 					deptrans, reltrans, featPct, stochastic, episodic,
 					rng);
+			agent->setTrueEnv(e);
 		}
 
 		/*else if (strcmp(agentType, "savedpolicy") == 0){
@@ -1134,12 +1135,6 @@ int main(int argc, char **argv) {
 			ofs.clear();
 		}
 
-
-
-
-
-
-
 		// STEP BY STEP DOMAIN
 		if (!episodic){
 
@@ -1252,16 +1247,13 @@ int main(int argc, char **argv) {
 				act_count[a].first++;
 				if (info.success){
 					act_count[a].second++;
-					//plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
 				}
-				//plot_act_try[a].push_back(std::make_pair(tot_steps+steps, act_count[a].first));
-				//plot_act_acc[a].push_back(std::make_pair(tot_steps+steps,
-				//		act_count[a].second/act_count[a].first));
+
 				// update performance
 				sum += info.reward;
 				tutor_sum += t_feedback.virtual_reward;
-				accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
-				accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
+				accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
+				accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
@@ -1276,106 +1268,21 @@ int main(int argc, char **argv) {
 						e->apply_tutor(t_feedback.action);
 					}
 
-					//plot_blocks_in.push_back(std::make_pair(tot_steps+steps, info.blocks_in));
-					//plot_blocks_right.push_back(std::make_pair(tot_steps+steps, info.blocks_right));
 					act_count[a].first++;
 					if (info.success){
 						act_count[a].second++;
-						//plot_act_succes[a].push_back(std::make_pair(tot_steps+steps,act_count[a].second));
 					}
-//					plot_act_try[a].push_back(std::make_pair(tot_steps+steps, act_count[a].first));
-//					plot_act_acc[a].push_back(std::make_pair(tot_steps+steps,
-//							act_count[a].second/act_count[a].first));
+
 
 					// update performance
 					sum += info.reward;
 					tutor_sum += t_feedback.virtual_reward;
-					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
-					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
+					accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
+					accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
 					}
-					if (steps % 50 == 0){
-
-//						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_try.begin();
-//								it != plot_act_try.end(); ++it){
-//							// serialize vector
-//							std::ofstream ofs(name+"_act_try_"+action_names[it->first]+".ser");
-//							boost::archive::text_oarchive oa(ofs);
-//							oa & it->second;
-//						}
-//						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_act_acc.begin();
-//								it != plot_act_acc.end(); ++it){
-//							// serialize vector
-//							std::ofstream ofs(name+"_act_acc_"+action_names[it->first]+".ser");
-//							boost::archive::text_oarchive oa(ofs);
-//							oa & it->second;
-//						}
-//						std::ofstream ofs(name+"_blocks_in.ser");
-//						boost::archive::text_oarchive oa_in(ofs);
-//						oa_in & plot_blocks_in;
-//						ofs.close();
-//						ofs.clear();
-//
-//						ofs.open(name+"_blocks_right.ser");
-//						boost::archive::text_oarchive oa_right(ofs);
-//						oa_right & plot_blocks_right;
-//						ofs.close();
-//						ofs.clear();
-
-						float model_error = 0.;
-						for (int k=0;k<100;k++){
-							std::vector<float> sample_state = e->generate_state();
-							int sample_act = rng.uniformDiscrete(0, numactions);
-							std::vector<float> predNextState = agent->pred(sample_state, sample_act);
-							std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_state,sample_act);
-							float error = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
-							model_error += error;
-						}
-						model_error /= 100;
-
-//						std::map<std::vector<float>, std::vector<StateActionInfo>> samples = agent->eval_model(50);
-//						for (std::map<std::vector<float>, std::vector<StateActionInfo>>::iterator it = samples.begin();
-//								it!=samples.end();++it){
-//							for (std::vector<StateActionInfo>::iterator it2 = it->second.begin();
-//									it2!=it->second.end(); ++it2){
-//								auto pr = std::max_element
-//								(
-//								    std::begin(it2->transitionProbs), std::end(it2->transitionProbs),
-//								    [] (const std::pair<std::vector<float> , float> & p1,
-//								    		const std::pair<std::vector<float> , float> & p2) {
-//								        return p1.second < p2.second;
-//								    }
-//								);
-//								std::vector<float> predNextState = pr->first;
-//								std::vector<float> mostProbNextState = e->getMostProbNextState(it->first,it2-it->second.begin());
-//								float error = e->getEuclidianDistance(predNextState, mostProbNextState);
-//								model_error += error;
-//							}
-//						}
-//						model_error /= (samples.size()*numactions);
-						plot_model_acc_test.push_back(std::make_pair(tot_steps+steps, model_error));
-						std::ofstream ofs(name+"_model_acc_test.ser");
-						boost::archive::text_oarchive oa_model_acc_test(ofs);
-						oa_model_acc_test & plot_model_acc_test;
-						ofs.close();
-						ofs.clear();
-
-						ofs.open(name+"_accumulated_rewards.ser");
-						boost::archive::text_oarchive oa_reward(ofs);
-						oa_reward & accu_rewards;
-						ofs.close();
-						ofs.clear();
-
-						ofs.open(name+"_accu_tutor_rewards.ser");
-						boost::archive::text_oarchive oa_tutor_r(ofs);
-						oa_tutor_r & accu_tutor_rewards;
-						ofs.close();
-						ofs.clear();
-					}
-
-
 				}
 
 				// terminal/last state
@@ -1384,6 +1291,57 @@ int main(int argc, char **argv) {
 				}else{
 					agent->next_action(info.reward, e->sensation());
 				}
+
+				int K = 50;
+				float model_error_test_r;
+				for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
+					float model_error_test = 0.;
+					for (int testStep=0;testStep<K;testStep++){
+						std::vector<float> sample_test = e->generate_state();
+
+						std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
+						std::vector<float> predNextState = std::get<0>(prediction);
+						float predReward = std::get<1>(prediction);
+
+						std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
+						float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+						model_error_test += error_test;
+
+						float trueReward = mostProbNextState.second;
+						float error_test_r = fabs(predReward-trueReward);
+						model_error_test_r += error_test_r;
+					}
+					model_error_test /= K;
+					plot_model_acc_test[sample_act_test].push_back(std::make_pair(pretrain_steps*numactions+steps+tot_steps, model_error_test));
+				}
+				model_error_test_r /= (K*numactions);
+				plot_model_acc_test_r.push_back(std::make_pair(pretrain_steps*numactions+steps+tot_steps, model_error_test_r));
+
+				for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
+						it != plot_model_acc_test.end(); ++it){
+					// serialize vector
+					std::ofstream ofs(name+"_model_acc_"+action_names[it->first]+".ser");
+					boost::archive::text_oarchive oa(ofs);
+					oa & it->second;
+				}
+
+				std::ofstream ofs(name+"_model_acc_test_r.ser");
+				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+				oa_model_acc_test_r & plot_model_acc_test_r;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(name+"_accumulated_rewards.ser");
+				boost::archive::text_oarchive oa_reward(ofs);
+				oa_reward & accu_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(name+"_accu_tutor_rewards.ser");
+				boost::archive::text_oarchive oa_tutor_r(ofs);
+				oa_tutor_r & accu_tutor_rewards;
+				ofs.close();
+				ofs.clear();
 
 
 				e->reset();
