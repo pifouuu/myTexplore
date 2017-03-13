@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 	char* tutorType = NULL;
 	float discountfactor = 0.99;
 	float epsilon = 0.1;
-	float alpha = 0.3;
+	float alpha = 0.5;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
 	float lambda = 0.1;
@@ -1019,7 +1019,7 @@ int main(int argc, char **argv) {
 
 				if (trainStep % 10 == 0){
 					cout << "step " << trainStep << ", received reward : "<< count_r << endl;
-					int inputvec = 0;
+					/*int inputvec = 0;
 					cout << "test ? Enter number for ok." << endl;
 					while ((cin >> inputvec) && inputvec != 9999){
 						cout << "Input vector ? :"<<endl;
@@ -1041,7 +1041,7 @@ int main(int argc, char **argv) {
 						cout << endl;
 						cout << "expected reward :" << std::get<1>(prediction) << endl;
 					}
-					cin.clear();
+					cin.clear();*/
 				}
 
 				if (trainStep % 20 == 0){
