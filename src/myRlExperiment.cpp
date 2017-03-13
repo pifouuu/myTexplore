@@ -997,16 +997,44 @@ int main(int argc, char **argv) {
 //		name += "_mingainratio_0.0004";
 
 		if (PRETRAIN){
-			std::vector<std::tuple<std::vector<float>, int, std::vector<float>, float>> training_samples;
-			int count_r = 0;
+			int virtualSeed = 12;
+			Random virtualRng(virtualSeed);
+			Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic);
+			//std::vector<std::tuple<std::vector<float>, int, std::vector<float>, float>> training_samples;
+			float count_r = 0;
+			float virtualReward;
+			int virtualAct;
+			std::vector<float> virtualState;
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
-
-				std::vector<float> sample_last = e->generate_state();
-				// 20 < nb d'actions nécessaires pour terminer la tache ?
-				int nb_act = rng.uniformDiscrete(0,20);
+				// 23 = nb blocks * 6 étapes par bloc -1
+				int nb_act = rng.uniformDiscrete(0,23);
 				for (int i=0; i<nb_act; i++){
-					std::pair<std::vector<float>, float> next_state =
+					virtualState = virtualBlockRoom->sensation();
+					if (!virtualBlockRoom->terminal()){
+						virtualAct = virtualBlockRoom->trueBestAction();
+						virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+					}
+					else{
+						virtualBlockRoom->reset();
+					}
 				}
+
+				experience exp;
+				exp.s = virtualBlockRoom->sensation();
+
+				virtualAct = rng.uniformDiscrete(0, virtualBlockRoom->getNumActions());
+				exp.act = virtualAct;
+
+				virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+				exp.next = virtualBlockRoom->sensation();
+				exp.reward = virtualReward;
+
+				exp.terminal = virtualBlockRoom->terminal();
+				count_r += exp.reward;
+
+				bool modelChanged = agent->train_only(exp);
+				virtualBlockRoom->reset();
+
 //				for (int sample_act = 0; sample_act<numactions; sample_act++){
 //					std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
 //					training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first, sample_next.second));
@@ -1022,7 +1050,7 @@ int main(int argc, char **argv) {
 //					bool modelChanged = agent->train_only(exp);
 //				}
 
-				if (trainStep % 10 == 0){
+				if (trainStep % 20 == 0){
 					cout << "step " << trainStep << ", received reward : "<< count_r << endl;
 					/*int inputvec = 0;
 					cout << "test ? Enter number for ok." << endl;
@@ -1057,7 +1085,7 @@ int main(int argc, char **argv) {
 					float model_error_test_reward = 0;
 //					float model_error_train_reward = 0;
 
-					int numsamples = training_samples.size();
+					//int numsamples = training_samples.size();
 
 //					for (int step=0;step<50;step++){
 //						double r = rand() % numsamples;
@@ -1083,19 +1111,21 @@ int main(int argc, char **argv) {
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
-							std::vector<float> sample_test = e->generate_state();
+							std::vector<float> sample_test = virtualBlockRoom->sensation();
 
 							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 							std::vector<float> predNextState = std::get<0>(prediction);
 							float predReward = std::get<1>(prediction);
 
-							std::pair<std::vector<float>,float> mostProbNextState = e->getMostProbNextState(sample_test,sample_act_test);
-							float error_test = e->getEuclidianDistance(predNextState, mostProbNextState.first, minValues, maxValues);
+							float reward = virtualBlockRoom->apply(sample_act_test).reward;
+							std::vector<float> new_state = virtualBlockRoom->sensation();
+
+							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 							model_error_test += error_test;
 
-							float trueReward = mostProbNextState.second;
-							float error_test_r = fabs(predReward-trueReward);
+							float error_test_r = fabs(predReward-reward);
 							model_error_test_reward += error_test_r;
+							virtualBlockRoom->reset();
 						}
 						model_error_test /= K;
 						plot_model_acc_test[sample_act_test].push_back(std::make_pair(trainStep*numactions, model_error_test));

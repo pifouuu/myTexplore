@@ -243,7 +243,7 @@ public:
 	 *  prediction.
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
-
+	virtual int trueBestAction() = 0;
 	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues) = 0;

@@ -632,7 +632,7 @@ public:
    {                                     // inclusive i to j
       assert( i < j );
 
-      return i + int( ( j - i + 1 ) * _u() );
+      return i + int( ( j - i + 1 ) * _u());
    }
 
 // Empirical and Data-Driven Distributions

@@ -30,6 +30,7 @@ public:
 	bool terminal() const;
 	void reset();
 	int getNumActions();
+	int trueBestAction();
 	int getNumTutorActions();
 	std::vector<float> generate_state();
 	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
@@ -60,8 +61,8 @@ public:
 		BLUE
 	};
 
-	int get_blocks_in(std::vector<float> state) const;
-	int get_blocks_right(std::vector<float> state) const;
+	int get_blocks_in() const;
+	int get_blocks_right() const;
 
 	std::default_random_engine engine;
 
@@ -115,11 +116,11 @@ public:
 	std::vector<std::pair<int,int>> get_nearby_pos(int, int);
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
-	std::vector<int> find_block_under(int ns ,int ew);
+	std::vector<int> find_block_under_eye();
 	bool eye_hand_sync();
 
 
-	bool BRDEBUG = true;
+	bool BRDEBUG = false;
 	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;

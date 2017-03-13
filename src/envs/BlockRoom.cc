@@ -118,25 +118,25 @@ const std::vector<float> &BlockRoom::sensation() const {
 }
 
 bool BlockRoom::terminal() const {
-	return get_blocks_in(s)==nbBlueBlocks+nbRedBlocks;
+	return get_blocks_in()==nbBlueBlocks+nbRedBlocks;
 }
 
 std::map<int, std::string> BlockRoom::get_action_names(){
 	return action_names;
 }
 
-int BlockRoom::get_blocks_in(std::vector<float> state) const {
+int BlockRoom::get_blocks_in() const {
 	int nb_blocks_in = 0;
-	for (int i = state_dim_base + 2*WITH_TUTOR + 3; i<state.size();i+=5){
-		nb_blocks_in += (state[i]==1 || state[i+1]==1);
+	for (auto block: blocks){
+		nb_blocks_in += (*block.is_in_blue_box || *block.is_in_red_box);
 	}
 	return nb_blocks_in;
 }
 
-int BlockRoom::get_blocks_right(std::vector<float> state) const {
+int BlockRoom::get_blocks_right() const {
 	int nb_blocks_right = 0;
-	for (int i = state_dim_base + 2*WITH_TUTOR; i<state.size();i+=5){
-		nb_blocks_right += ((state[i+2]==0 && state[i+4]==1) || (state[i+2]==1 && state[i+3]==1));
+	for (auto block: blocks){
+		nb_blocks_right += (*block.is_in_blue_box && *block.color==1 || *block.is_in_red_box && *block.color==0);
 	}
 	return nb_blocks_right;
 }
@@ -441,14 +441,16 @@ int BlockRoom::applyNoise(int action){
 	return action;
 }
 
-std::vector<int> BlockRoom::find_block_under(int ns, int ew) {
+std::vector<int> BlockRoom::find_block_under_eye() {
 	std::vector<int> l;
-	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(ns) && *(it->ew)==(ew)){
-			if (!NOPICKBACK || (*(it->is_in_blue_box)==0 && *(it->is_in_red_box)==0)){
-				l.push_back(it-blocks.begin());
+	int cnt = 0;
+	for (auto block: blocks){
+		if (*(block.ns)==*agent_eye_ns && *(block.ew)==*agent_eye_ew){
+			if (!NOPICKBACK || (!(*(block.is_in_blue_box))&& !(*(block.is_in_red_box)))){
+				l.push_back(cnt);
 			}
 		}
+		cnt++;
 	}
 	return(l);
 }
@@ -529,7 +531,7 @@ float BlockRoom::getEuclidianDistance(std::vector<float> & s1, std::vector<float
 }
 
 std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<float> state, int action){
-	std::vector<float> next_state = state;
+	/*std::vector<float> next_state = state;
 	float reward = 0.;
 	if (action==actions["GO_TO_EYE"]) {
 		next_state[0] = state[3];
@@ -561,7 +563,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 			}
 		}
 	}
-	/*if (action==actions["PUT_DOWN"]) {
+	if (action==actions["PUT_DOWN"]) {
 		if (state[2]!=-1
 				&& state[3]==state[0] && state[4]==state[1]
 										 && find_block_under(state[0],state[1]).empty()
@@ -569,7 +571,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 										 && ((state[7])!=(state[0]) || (state[8])!=(state[1]))){
 			next_state[2]=-1;
 		}
-	}*/
+	}
 	if (action==actions["PUT_IN"]) {
 		if ((state[2])!=-1){
 			if ((state[5])==(state[0]) && (state[6])==(state[1])){
@@ -617,7 +619,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 			next_state[3] = state[5*num_block+state_dim_base+2*WITH_TUTOR];
 		}
 	}
-	return std::make_pair(next_state,reward);
+	return std::make_pair(next_state,reward);*/
 }
 
 
@@ -672,7 +674,7 @@ occ_info_t BlockRoom::apply(int action){
 	}
 	if (action == actions["PICK"]){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
-			std::vector<int> blocks_under = find_block_under(*agent_ns,*agent_ew);
+			std::vector<int> blocks_under = find_block_under_eye();
 			if (!blocks_under.empty()) {
 				//std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
 				int idx = blocks_under.back();
@@ -817,12 +819,83 @@ occ_info_t BlockRoom::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, get_blocks_in(s), get_blocks_right(s));
+	return occ_info_t(reward, success, get_blocks_in(), get_blocks_right());
 }
 
-int BlockRoom::trueBestAct(std::vector<float> &state){
+/*int BlockRoom::trueBestAction(std::vector<float> &state){
+	int res = -1;
+	if (state[2] != -1) {
+		if (((state[0]==state[5] && state[1]==state[6])||
+				(state[0]==state[7] && state[1]==state[8])) && (state[0]==state[3] && state[1]==state[4])){
+			res = 4;
+		}
+		else if ((state[3] != state[5] || state[4]!=state[6]) && (state[3]!=state[7]||state[4]!=state[8])){
+			res = (rng.bernoulli(0.5) ? 1 : 2);
+		}
+	}
+	else if (state[2]==-1){
+		std::vector<int> blocks_under;
+		for (int i=0; i<nbRedBlocks+nbBlueBlocks; i++){
+			if ((state[5*i+state_dim_base+2*WITH_TUTOR] == state[0] &&
+					state[5*i+state_dim_base+2*WITH_TUTOR+1] == state[1]))
+			{
+				if (!NOPICKBACK || (state[5*i+state_dim_base+2*WITH_TUTOR+3]==0 &&
+						state[5*i+state_dim_base+2*WITH_TUTOR+4]==0)){
+					blocks_under.push_back(i);
+				}
+			}
+		}
+		if (blocks_under.empty()) {
+			int b = rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks);
+			res = (5+b);
+		}
+		else{
+			if (state[0]==state[3] && state[1]==state[4]) {
+				res = 3;
+			}
+		}
+	}
+	if (res==-1){
+		res = 0;
+	}
+	return res;
+}*/
 
+int BlockRoom::trueBestAction(){
+	int res = -1;
+	if ((*block_hold) != -1) {
+		if (((*agent_ns==*red_box_ns && *agent_ew==*red_box_ew)||
+				(*agent_ns==*blue_box_ns && *agent_ew==*blue_box_ew)) && (*agent_ns==*agent_eye_ns && *agent_ew==*agent_eye_ew)){
+			res = actions["PUT_IN"];
+		}
+		else if ((*agent_eye_ns != *red_box_ns || *agent_eye_ew!=*red_box_ew) && (*agent_eye_ns!=*blue_box_ns||*agent_eye_ew!=*blue_box_ew)){
+			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BOX"] : actions["LOOK_BLUE_BOX"]);
+		}
+	}
+	else if (*block_hold==-1){
+		std::vector<int> blocks_under = find_block_under_eye();
+		if (blocks_under.empty()) {
+			int b;
+			do {
+				b = min(rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks-1),nbRedBlocks+nbBlueBlocks-1);
+			}
+			while(*(blocks[b].is_in_blue_box)||*(blocks[b].is_in_red_box));
+			if (b<nbRedBlocks){
+				res = actions["LOOK_RED_BLOCK_"+to_string(b)];
+			}
+			else{
+				res = actions["LOOK_BLUE_BLOCK_"+to_string(b-nbRedBlocks)];
+			}
+		}
+		else{
+			if (*agent_ns==*agent_eye_ns && *agent_ew==*agent_eye_ew) {
+				res = actions["PICK"];
+			}
+		}
+	}
+	if (res==-1){
+		res = actions["GO_TO_EYE"];
+	}
+	return res;
 }
-
-
 
