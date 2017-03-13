@@ -748,7 +748,7 @@ int ETUCT::selectUCTAction(state_info* info) {
 	}
 
 	// max element of uctQ
-	std::vector<float>::iterator maxAct = max_element(uctQ.begin(), uctQ.end());
+	std::vector<float>::iterator maxAct = random_max_element(uctQ.begin(), uctQ.end());
 	float maxval = *maxAct;
 	int act = maxAct - uctQ.begin();
 
@@ -765,31 +765,32 @@ std::vector<float> ETUCT::simulateNextState(
 		float* reward, bool* term) {
 
 	std::vector<float> nextstate;
+	StateActionInfo* modelInfo = &(info->historyModel[action][history]);
+	bool upToDate = modelInfo->frameUpdated >= lastUpdate;
+
+	// Can happen when planOnNewModel is not called after each modelUpdateWithExperience
+	if (!upToDate) {
+		// must put in appropriate history
+		if (HISTORY_SIZE > 0) {
+			std::vector<float> modState = *discState;
+			for (int i = 0; i < HISTORY_FL_SIZE; i++) {
+				modState.push_back(history[i]);
+			}
+			updateStateActionHistoryFromModel(modState, action, modelInfo);
+		} else {
+			updateStateActionHistoryFromModel(*discState, action, modelInfo);
+		}
+	}
+
+	*reward = modelInfo->reward;
+	*term = (rng.uniform() < modelInfo->termProb);
+
+	if (*term) {
+		return actualState;
+	}
 
 	if (!USETRUEENV){
-		StateActionInfo* modelInfo = &(info->historyModel[action][history]);
-		bool upToDate = modelInfo->frameUpdated >= lastUpdate;
 
-		// Can happen when planOnNewModel is not called after each modelUpdateWithExperience
-		if (!upToDate) {
-			// must put in appropriate history
-			if (HISTORY_SIZE > 0) {
-				std::vector<float> modState = *discState;
-				for (int i = 0; i < HISTORY_FL_SIZE; i++) {
-					modState.push_back(history[i]);
-				}
-				updateStateActionHistoryFromModel(modState, action, modelInfo);
-			} else {
-				updateStateActionHistoryFromModel(*discState, action, modelInfo);
-			}
-		}
-
-		*reward = modelInfo->reward;
-		*term = (rng.uniform() < modelInfo->termProb);
-
-		if (*term) {
-			return actualState;
-		}
 
 		float randProb = rng.uniform();
 

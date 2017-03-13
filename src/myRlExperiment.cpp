@@ -114,9 +114,9 @@ int main(int argc, char **argv) {
 	char* agentType = NULL;
 	char* envType = NULL;
 	char* tutorType = NULL;
-	float discountfactor = 0.9;
+	float discountfactor = 0.99;
 	float epsilon = 0.1;
-	float alpha = 0.5;
+	float alpha = 0.3;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
 	float lambda = 0.1;

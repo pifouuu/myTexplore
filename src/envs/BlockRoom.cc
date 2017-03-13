@@ -14,9 +14,9 @@
 using namespace cv;
 
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
-			height(10),
-			width(10),
-			nbRedBlocks(3),
+			height(6),
+			width(6),
+			nbRedBlocks(2),
 			nbBlueBlocks(2),
 			stochastic(stochastic),
 			rng(rand),
@@ -546,7 +546,10 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 				if ((state[5*i+state_dim_base+2*WITH_TUTOR] == state[0] &&
 						state[5*i+state_dim_base+2*WITH_TUTOR+1] == state[1]))
 				{
-					blocks_under.push_back(i);
+					if (!NOPICKBACK || (state[5*i+state_dim_base+2*WITH_TUTOR+3]==0 &&
+							state[5*i+state_dim_base+2*WITH_TUTOR+4]==0)){
+						blocks_under.push_back(i);
+					}
 				}
 			}
 			if (!blocks_under.empty()) {
