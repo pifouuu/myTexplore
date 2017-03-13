@@ -820,5 +820,9 @@ occ_info_t BlockRoom::apply(int action){
 	return occ_info_t(reward, success, get_blocks_in(s), get_blocks_right(s));
 }
 
+int BlockRoom::trueBestAct(std::vector<float> &state){
+
+}
+
 
 

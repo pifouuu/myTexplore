@@ -44,7 +44,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	REALSTATEDEBUG = false;
 	HISTORYDEBUG = false; //true; //false;
 	QDEBUG = true;
-	USETRUEENV = true;
+	USETRUEENV = false;
 
 	featmax = fmax;
 	featmin = fmin;

@@ -1002,46 +1002,51 @@ int main(int argc, char **argv) {
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 
 				std::vector<float> sample_last = e->generate_state();
-				for (int sample_act = 0; sample_act<numactions; sample_act++){
-					std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
-					training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first, sample_next.second));
-
-					experience exp;
-					exp.s = sample_last;
-					exp.next = sample_next.first;
-					exp.act = sample_act;
-					exp.reward = sample_next.second;
-					exp.terminal = false;
-					count_r += exp.reward;
-
-					bool modelChanged = agent->train_only(exp);
+				// 20 < nb d'actions nécessaires pour terminer la tache ?
+				int nb_act = rng.uniformDiscrete(0,20);
+				for (int i=0; i<nb_act; i++){
+					std::pair<std::vector<float>, float> next_state =
 				}
+//				for (int sample_act = 0; sample_act<numactions; sample_act++){
+//					std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
+//					training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first, sample_next.second));
+//
+//					experience exp;
+//					exp.s = sample_last;
+//					exp.next = sample_next.first;
+//					exp.act = sample_act;
+//					exp.reward = sample_next.second;
+//					exp.terminal = false;
+//					count_r += exp.reward;
+//
+//					bool modelChanged = agent->train_only(exp);
+//				}
 
 				if (trainStep % 10 == 0){
 					cout << "step " << trainStep << ", received reward : "<< count_r << endl;
-					int inputvec = 0;
-					cout << "test ? Enter number for ok." << endl;
-					while ((cin >> inputvec) && inputvec != 9999){
-						cout << "Input vector ? :"<<endl;
-						int val;
-						std::vector<float> testvec(14);
-						int i = 0;
-						while ((cin >> val) && val != 9999)
-							testvec[i] = val;
-						i++;
-						cin.clear();
-						int act_input;
-						cout << "Input action ?"<<endl;
-						cin >> act_input;
-						std::tuple<std::vector<float>,float,float> prediction = agent->pred(testvec, act_input);
-						cout << "most probable state :";
-						for (int i=0; i<testvec.size();i++){
-							cout << std::get<0>(prediction)[i] <<", ";
-						}
-						cout << endl;
-						cout << "expected reward :" << std::get<1>(prediction) << endl;
-					}
-					cin.clear();
+//					int inputvec = 0;
+//					cout << "test ? Enter number for ok." << endl;
+//					while ((cin >> inputvec) && inputvec != 9999){
+//						cout << "Input vector ? :"<<endl;
+//						int val;
+//						std::vector<float> testvec(14);
+//						int i = 0;
+//						while ((cin >> val) && val != 9999)
+//							testvec[i] = val;
+//						i++;
+//						cin.clear();
+//						int act_input;
+//						cout << "Input action ?"<<endl;
+//						cin >> act_input;
+//						std::tuple<std::vector<float>,float,float> prediction = agent->pred(testvec, act_input);
+//						cout << "most probable state :";
+//						for (int i=0; i<testvec.size();i++){
+//							cout << std::get<0>(prediction)[i] <<", ";
+//						}
+//						cout << endl;
+//						cout << "expected reward :" << std::get<1>(prediction) << endl;
+//					}
+//					cin.clear();
 				}
 
 				if (trainStep % 20 == 0){
