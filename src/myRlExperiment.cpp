@@ -994,7 +994,6 @@ int main(int argc, char **argv) {
 		name += "_lambda_"+std::to_string(lambda);
 		name += "_alpha_"+std::to_string(alpha);
 		name += "_df_"+std::to_string(discountfactor);
-		name += "_pretrain_"+std::to_string(pretrain_steps);
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";

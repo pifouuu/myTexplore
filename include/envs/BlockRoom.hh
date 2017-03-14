@@ -97,9 +97,11 @@ public:
 	float* red_box_ew;
 	float* blue_box_ns;
 	float* blue_box_ew;
-	float* tutor_eye_ns;
-	float* tutor_eye_ew;
 	std::vector<block_t> blocks;
+
+	float* tutor_eye_ns = NULL;
+	float* tutor_eye_ew = NULL;
+
 
 	std::map<std::string, int> tutor_actions;
 	std::map<std::string, int> actions;

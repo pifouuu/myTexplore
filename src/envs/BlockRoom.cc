@@ -22,7 +22,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 			rng(rand),
 			WITH_TUTOR(with_tutor),
 			state_dim_base(9),
-			s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*with_tutor),
+			s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
 			block_hold(&(s[2])),
@@ -52,10 +52,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 
 	if (WITH_TUTOR){
-		tutor_eye_ns = &(s[state_dim_base]);
-		tutor_eye_ew = &(s[state_dim_base+1]);
 		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
-
 
 		tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
 		tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
@@ -66,11 +63,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 	for (int i = 0; i<nbRedBlocks; i++){
 		block_t block(
-				&(s[5*i+state_dim_base+2*with_tutor + 0]),
-				&(s[5*i+state_dim_base+2*with_tutor + 1]),
-				&(s[5*i+state_dim_base+2*with_tutor + 2]),
-				&(s[5*i+state_dim_base+2*with_tutor + 3]),
-				&(s[5*i+state_dim_base+2*with_tutor + 4]));
+				&(s[5*i+state_dim_base + 0]),
+				&(s[5*i+state_dim_base + 1]),
+				&(s[5*i+state_dim_base + 2]),
+				&(s[5*i+state_dim_base + 3]),
+				&(s[5*i+state_dim_base + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_RED_BLOCK_";
@@ -84,11 +81,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 	for (int i = 0; i<nbBlueBlocks; i++){
 		block_t block(
-				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 0]),
-				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 1]),
-				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 2]),
-				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 3]),
-				&(s[5*(i+nbRedBlocks)+state_dim_base+2*with_tutor + 4]));
+				&(s[5*(i+nbRedBlocks)+state_dim_base + 0]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base + 1]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base + 2]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base + 3]),
+				&(s[5*(i+nbRedBlocks)+state_dim_base + 4]));
 		blocks.push_back(block);
 
 		std::string name = "LOOK_BLUE_BLOCK_";
@@ -136,7 +133,7 @@ int BlockRoom::get_blocks_in() const {
 int BlockRoom::get_blocks_right() const {
 	int nb_blocks_right = 0;
 	for (auto block: blocks){
-		nb_blocks_right += (*block.is_in_blue_box && *block.color==1 || *block.is_in_red_box && *block.color==0);
+		nb_blocks_right += (*block.is_in_blue_box && *block.color==1) || (*block.is_in_red_box && *block.color==0);
 	}
 	return nb_blocks_right;
 }
@@ -168,12 +165,13 @@ void BlockRoom::getMinMaxFeatures(std::vector<float> *minFeat,
 	(*maxFeat)[6] = width-1;
 	(*maxFeat)[7] = height-1;
 	(*maxFeat)[8] = width-1;
+
 	for (int i = 0; i<nbRedBlocks+nbBlueBlocks; i++){
-		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i] = height-1;
-		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+1] = width-1;
-		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+2] = 1;
-		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+3] = 1;
-		(*maxFeat)[state_dim_base+2*WITH_TUTOR+5*i+4] = 1;
+		(*maxFeat)[state_dim_base+5*i] = height-1;
+		(*maxFeat)[state_dim_base+5*i+1] = width-1;
+		(*maxFeat)[state_dim_base+5*i+2] = 1;
+		(*maxFeat)[state_dim_base+5*i+3] = 1;
+		(*maxFeat)[state_dim_base+5*i+4] = 1;
 	}
 
 	(*minFeat)[2] = -1;
@@ -183,7 +181,7 @@ void BlockRoom::getMinMaxReward(float *minR,
 		float *maxR){
 
 	*minR = 0.0;
-	*maxR = 1000.0;
+	*maxR = 100.0;
 
 }
 
@@ -290,6 +288,7 @@ void BlockRoom::print_map() const{
 }
 
 std::vector<float> BlockRoom::generate_state(){
+	/* Beware, not working because of with_tutor
 	std::vector<float> g(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)+2*WITH_TUTOR);
 	g[6] = rng.uniformDiscrete(0, width-1);
 	g[5] = rng.uniformDiscrete(0, height-1);
@@ -377,7 +376,7 @@ std::vector<float> BlockRoom::generate_state(){
 			}
 		}
 	}
-	return g;
+	return g;*/
 }
 
 void BlockRoom::reset(){
@@ -757,7 +756,7 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 1000;
+					reward += 100;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;
@@ -779,7 +778,7 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 1000;
+					reward += 100;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;
@@ -788,12 +787,9 @@ occ_info_t BlockRoom::apply(int action){
 		}
 	}
 	if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
-		if ((*agent_eye_ew) != (*tutor_eye_ew) || (*agent_eye_ns) != (*tutor_eye_ns)){
-			(*agent_eye_ew) = (*tutor_eye_ew);
-			(*agent_eye_ns) = (*tutor_eye_ns),
-					reward=+1;
-			success = true;
-		}
+		(*agent_eye_ew) = (*tutor_eye_ew);
+		(*agent_eye_ns) = (*tutor_eye_ns);
+		success = true;
 	}
 	if (action==actions["LOOK_RED_BOX"])	{
 		(*agent_eye_ew) = (*red_box_ew);
