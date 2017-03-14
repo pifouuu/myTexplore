@@ -143,6 +143,7 @@ int main(int argc, char **argv) {
 	int history = 0;
 	int seed = 1;
 	int pretrain_steps = 0;
+	float tutorBonus = 10.;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -250,6 +251,7 @@ int main(int argc, char **argv) {
 			{"nepisodes", 1, 0, 12},
 			{"tutor", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
+			{"tutorBonus",1,0,15},
 			{0, 0, 0, 0}
 	};
 
@@ -396,6 +398,7 @@ int main(int argc, char **argv) {
 			else if (strcmp(optarg, "unvisitedstates") == 0) exploreType = UNVISITED_BONUS;
 			else if (strcmp(optarg, "unvisitedactions") == 0) exploreType = UNVISITED_ACT_BONUS;
 			else if (strcmp(optarg, "variancenovelty") == 0) exploreType = DIFF_AND_NOVEL_BONUS;
+			else if (strcmp(optarg, "noveltytutor") == 0) exploreType = NOVEL_AND_TUTOR;
 			if (strcmp(agentType, "rmax") == 0 && exploreType != EXPLORE_UNKNOWN){
 				cout << "R-Max should use \"--explore unknown\" exploration" << endl;
 				exit(-1);
@@ -639,6 +642,9 @@ int main(int argc, char **argv) {
 		case 14:
 			PRETRAIN = true;
 			pretrain_steps = std::atof(optarg);
+			break;
+		case 15:
+			tutorBonus = std::atof(optarg);
 			break;
 
 		case 'h':
@@ -928,7 +934,7 @@ int main(int argc, char **argv) {
 					M,
 					minValues, maxValues,
 					statesPerDim,//0,
-					history, v, n,
+					history, v, n, tutorBonus,
 					deptrans, reltrans, featPct, stochastic, episodic,
 					rng);
 			agent->setTrueEnv(e);

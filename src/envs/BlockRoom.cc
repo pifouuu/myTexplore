@@ -52,6 +52,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 
 	if (WITH_TUTOR){
+		float tutor_eye_ns_val = 0.;
+		float tutor_eye_ew_val = 0.;
+		tutor_eye_ns = &tutor_eye_ns_val;
+		tutor_eye_ew = &tutor_eye_ew_val;
+
 		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
 
 		tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
@@ -122,6 +127,9 @@ std::map<int, std::string> BlockRoom::get_action_names(){
 	return action_names;
 }
 
+bool BlockRoom::isSyncTutor(std::vector<float> state) const {
+	return (state[0]==*tutor_eye_ns && state[1]==*tutor_eye_ew);
+}
 int BlockRoom::get_blocks_in() const {
 	int nb_blocks_in = 0;
 	for (auto block: blocks){

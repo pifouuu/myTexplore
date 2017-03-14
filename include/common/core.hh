@@ -80,6 +80,7 @@ const std::string comboNames[] = {
 #define DIFF_AND_VISIT_BONUS 16
 #define NOVEL_STATE_BONUS    18
 #define DIFF_AND_NOVEL_BONUS 19
+#define NOVEL_AND_TUTOR 20
 
 const std::string exploreNames[] = {
 		"Explore Unknowns",
@@ -101,7 +102,8 @@ const std::string exploreNames[] = {
 		"Model Diff & Visit Bonus",
 		"Type 17",
 		"FeatDist Bonus",
-		"Model Diff & FeatDist Bonus"
+		"Model Diff & FeatDist Bonus",
+		"Novel states & tutor guidance"
 };
 
 // types of planners
@@ -243,6 +245,7 @@ public:
 	 *  prediction.
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
+	virtual bool isSyncTutor(std::vector<float> state) const = 0;
 	virtual int trueBestAction() = 0;
 	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
@@ -427,6 +430,7 @@ public:
 
 	/** Get a copy of the MDP Model */
 	virtual MDPModel* getCopy() = 0;
+	virtual void setTrueEnv(Environment*) {};
 	virtual ~MDPModel() {};
 };
 

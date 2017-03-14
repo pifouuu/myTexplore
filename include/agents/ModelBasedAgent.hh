@@ -48,7 +48,7 @@ public:
                   float epsilon, float lambda, float MAX_TIME,
                   float m, const std::vector<float> &featmin, 
                   const std::vector<float> &featmax,
-                  int statesPerDim, int history, float v, float n,
+                  int statesPerDim, int history, float v, float n, float tutorBonus,
                   bool depTrans, bool relTrans, float featPct,
                   bool stoch, bool episodic, Random rng = Random());
 
@@ -83,7 +83,7 @@ public:
                   float epsilon, float lambda, float MAX_TIME,
                   float m, const std::vector<float> &featmin, 
                   const std::vector<float> &featmax,
-                  std::vector<int> statesPerDim, int history, float v, float n,
+                  std::vector<int> statesPerDim, int history, float v, float n, float tutorBonus,
                   bool depTrans, bool relTrans, float featPct,
                   bool stoch, bool episodic, Random rng = Random());
   
@@ -201,6 +201,7 @@ private:
   const int history;
   const float v;
   const float n;
+  const float tutorBonus;
   const bool depTrans;
   const bool relTrans;
   const float featPct;

@@ -43,14 +43,14 @@ public:
   ExplorationModel(MDPModel * model, int modelType, 
                    int exploreType, int predType, int nModels,
                    float m, int numactions, float rmax, 
-                   float qmax, float rrange, int nfactors, float v, float n,
+                   float qmax, float rrange, int nfactors, float v, float n, float tutorBonus,
                    const std::vector<float> &featmax, 
                    const std::vector<float> &featmin, 
                    Random rng); 
 
   /** Copy constructor */
   ExplorationModel(const ExplorationModel&);
-
+  void setTrueEnv(Environment* e);
   virtual ~ExplorationModel();
   virtual ExplorationModel* getCopy();
   std::list<std::tuple<std::vector<float>, int, StateActionInfo>> eval(std::list<std::vector<float>> samples);
@@ -67,6 +67,7 @@ public:
   /** Find distance in feature space to nearest visited state-action */
   float getFeatDistToVisitedSA(const std::vector<float> &s);
 
+  Environment* trueEnv;
 
   bool MODEL_DEBUG;
 
@@ -95,6 +96,7 @@ private:
   int nfactors; 
   const float v;
   const float n;
+  const float tutorBonus;
 
   Random rng;
   

@@ -116,6 +116,7 @@ public:
 	const std::vector<float> &sensation() const;
 	int applyNoise(int action);
 	std::vector<std::pair<int,int>> get_nearby_pos(int, int);
+	bool isSyncTutor(std::vector<float>) const;
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
 	std::vector<int> find_block_under_eye();

@@ -32,7 +32,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  float epsilon, float lambda, float MAX_TIME,
                                  float m, const std::vector<float> &featmin,
                                  const std::vector<float> &featmax, 
-                                 std::vector<int> nstatesPerDim, int history, float v, float n,
+                                 std::vector<int> nstatesPerDim, int history, float v, float n, float tutorBonus,
                                  bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic,
                                  Random rng):
   featmin(featmin), featmax(featmax),
@@ -41,7 +41,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   modelType(modelType), exploreType(exploreType), 
   predType(predType), nModels(nModels), plannerType(plannerType),
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
-  M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n),
+  M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
   stoch(stoch), episodic(episodic), rng(rng)
 {
@@ -63,7 +63,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  float epsilon, float lambda, float MAX_TIME,
                                  float m, const std::vector<float> &featmin,
                                  const std::vector<float> &featmax, 
-                                 int nstatesPerDim, int history, float v, float n,
+                                 int nstatesPerDim, int history, float v, float n, float tutorBonus,
                                  bool depTrans, bool relTrans, float featPct,
 				 bool stoch, bool episodic, Random rng):
   featmin(featmin), featmax(featmax),
@@ -72,7 +72,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   modelType(modelType), exploreType(exploreType), 
   predType(predType), nModels(nModels), plannerType(plannerType),
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
-  M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n),
+  M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
   stoch(stoch), episodic(episodic), rng(rng)
 {
@@ -298,9 +298,11 @@ void ModelBasedAgent::initModel(int nfactors){
 
     model = new ExplorationModel(m2, modelType, exploreType,
                                  predType, nModels, M, numactions,
-                                 rmax, qmax, rrange, nfactors, v, n,
+                                 rmax, qmax, rrange, nfactors, v, n, tutorBonus,
                                  featmax, featmin, rng);
     
+    model->setTrueEnv(trueEnv);
+
   }
  
   initPlanner();

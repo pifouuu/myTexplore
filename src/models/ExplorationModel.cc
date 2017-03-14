@@ -16,13 +16,13 @@ ExplorationModel::ExplorationModel(MDPModel* innermodel, int modelType, int expl
 		int predType, int nModels,
 		float m, int numactions,
 		float rmax, float qmax, float rrange,
-		int nfactors, float v, float n,
+		int nfactors, float v, float n, float tutorBonus,
 		const std::vector<float> &fmax,
 		const std::vector<float> &fmin, Random rng):
 		  modelType(modelType), exploreType(exploreType), predType(predType),
 		  nModels(nModels),
 		  M(m), numactions(numactions), rmax(rmax), qmax(qmax), rrange(rrange),
-		  nfactors(nfactors), v(v), n(n), rng(rng)
+		  nfactors(nfactors), v(v), n(n), tutorBonus(tutorBonus), rng(rng)
 {
 
 	model = innermodel;
@@ -36,11 +36,12 @@ ExplorationModel::ExplorationModel(MDPModel* innermodel, int modelType, int expl
 
 }
 
+
 ExplorationModel::ExplorationModel(const ExplorationModel &em):
 		modelType(em.modelType), exploreType(em.exploreType), predType(em.predType),
 		nModels(em.nModels),
 		M(em.M), numactions(em.numactions), rmax(em.rmax), qmax(em.qmax), rrange(em.rrange),
-		nfactors(em.nfactors), v(em.v), n(em.n), rng(em.rng)
+		nfactors(em.nfactors), v(em.v), n(em.n), tutorBonus(em.tutorBonus), rng(em.rng)
 {
 	model = em.model->getCopy();
 	MODEL_DEBUG = em.MODEL_DEBUG;
@@ -62,6 +63,13 @@ ExplorationModel::~ExplorationModel() {
 /*std::list<std::tuple<std::vector<float>, int, StateActionInfo>> ExplorationModel::eval(std::list<std::vector<float>> samples){
 	return model->eval(samples);
 }*/
+
+void ExplorationModel::setTrueEnv(Environment* e){
+
+	trueEnv = e;
+
+}
+
 
 bool ExplorationModel::updateWithExperiences(std::vector<experience> &instances){
 	bool changed = model->updateWithExperiences(instances);
@@ -182,7 +190,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 	}
 
 	// small bonus for states far from visited states with same action
-	if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS){
+	if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == NOVEL_AND_TUTOR){
 		std::vector<float> state2 = state;
 		state2.push_back(act);
 		float featDist = getFeatDistToVisitedSA(state2);
@@ -273,6 +281,17 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			}
 			retval->reward = bonus;
 			retval->termProb = 1.0;
+		}
+	}
+
+	if (exploreType == NOVEL_AND_TUTOR){
+		bool sync = trueEnv->isSyncTutor(state);
+		float bonus = tutorBonus;
+		if (sync){
+			retval->reward += bonus;
+			if (MODEL_DEBUG){
+				cout << "   State-Action tutor bonus: " << endl;
+			}
 		}
 	}
 
