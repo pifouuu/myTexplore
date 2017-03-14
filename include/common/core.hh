@@ -237,7 +237,7 @@ public:
       \param action The action the agent wishes to apply.
       \return The immediate one-step reward caused by the action. */
 	virtual occ_info_t apply(int action) = 0;
-
+	virtual void setDebug(bool b) = 0;
 	/** Retrieve a true prediction with for a state and an action in a
 	 * given environment given its dynamics and compares it to a provided
 	 *  prediction.

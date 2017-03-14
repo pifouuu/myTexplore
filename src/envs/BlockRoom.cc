@@ -16,8 +16,8 @@ using namespace cv;
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 			height(6),
 			width(6),
-			nbRedBlocks(2),
-			nbBlueBlocks(2),
+			nbRedBlocks(0),
+			nbBlueBlocks(1),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
@@ -441,6 +441,10 @@ int BlockRoom::applyNoise(int action){
 	return action;
 }
 
+void BlockRoom::setDebug(bool b){
+	BRDEBUG = b;
+}
+
 std::vector<int> BlockRoom::find_block_under_eye() {
 	std::vector<int> l;
 	int cnt = 0;
@@ -756,7 +760,7 @@ occ_info_t BlockRoom::apply(int action){
 					reward += 1000;
 				}
 				else {
-					if (NOPICKBACK) reward += 100;
+					//if (NOPICKBACK) reward += 100;
 				}
 
 			}
@@ -778,7 +782,7 @@ occ_info_t BlockRoom::apply(int action){
 					reward += 1000;
 				}
 				else {
-					if (NOPICKBACK) reward += 100;
+					//if (NOPICKBACK) reward += 100;
 				}
 			}
 		}
@@ -877,7 +881,8 @@ int BlockRoom::trueBestAction(){
 		if (blocks_under.empty()) {
 			int b;
 			do {
-				b = min(rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks-1),nbRedBlocks+nbBlueBlocks-1);
+				//b = min(rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks-1),nbRedBlocks+nbBlueBlocks-1);
+				b = 0;
 			}
 			while(*(blocks[b].is_in_blue_box)||*(blocks[b].is_in_red_box));
 			if (b<nbRedBlocks){

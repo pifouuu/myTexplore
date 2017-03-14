@@ -118,6 +118,7 @@ public:
 	std::vector<int> find_blue_block_under_hand();
 	std::vector<int> find_block_under_eye();
 	bool eye_hand_sync();
+	void setDebug(bool b);
 
 
 	bool BRDEBUG = false;
