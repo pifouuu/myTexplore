@@ -398,7 +398,7 @@ int main(int argc, char **argv) {
 			else if (strcmp(optarg, "unvisitedstates") == 0) exploreType = UNVISITED_BONUS;
 			else if (strcmp(optarg, "unvisitedactions") == 0) exploreType = UNVISITED_ACT_BONUS;
 			else if (strcmp(optarg, "variancenovelty") == 0) exploreType = DIFF_AND_NOVEL_BONUS;
-			else if (strcmp(optarg, "noveltytutor") == 0) exploreType = NOVEL_AND_TUTOR;
+			//else if (strcmp(optarg, "noveltytutor") == 0) exploreType = DIFF_NOVEL_TUTOR;
 			if (strcmp(agentType, "rmax") == 0 && exploreType != EXPLORE_UNKNOWN){
 				cout << "R-Max should use \"--explore unknown\" exploration" << endl;
 				exit(-1);
@@ -638,6 +638,7 @@ int main(int argc, char **argv) {
 			// already processed this one
 			cout << "tutor: " << tutorType << endl;
 			if (strcmp(tutorType,"no_tutor") == 0) {with_tutor = false;}
+			else {exploreType = DIFF_NOVEL_TUTOR;}
 			break;
 		case 14:
 			PRETRAIN = true;
@@ -666,7 +667,7 @@ int main(int argc, char **argv) {
 
 	// check for conflicting options
 	// changed epsilon but not doing epsilon greedy exploration
-	if (epsilonChanged && exploreType != EPSILONGREEDY){
+	/*if (epsilonChanged && exploreType != EPSILONGREEDY){
 		cout << "No reason to change epsilon when not using epsilon-greedy exploration" << endl;
 		exit(-1);
 	}
@@ -706,7 +707,7 @@ int main(int argc, char **argv) {
 		cout << "No reason to set M if not doing R-max style Explore Unknown exploration" << endl;
 		exit(-1);
 	}
-
+*/
 	if (PRINTS){
 		if (stochastic)
 			cout << "Stohastic\n";

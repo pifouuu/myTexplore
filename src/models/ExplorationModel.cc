@@ -190,7 +190,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 	}
 
 	// small bonus for states far from visited states with same action
-	if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == NOVEL_AND_TUTOR){
+	if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
 		std::vector<float> state2 = state;
 		state2.push_back(act);
 		float featDist = getFeatDistToVisitedSA(state2);
@@ -222,7 +222,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 	}
 
 	// use some % of v if we're doing continuous bonus
-	if (exploreType == CONTINUOUS_BONUS_R || exploreType == DIFF_AND_VISIT_BONUS || exploreType == DIFF_AND_NOVEL_BONUS){
+	if (exploreType == CONTINUOUS_BONUS_R || exploreType == DIFF_AND_VISIT_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
 		if (conf < 1.0){
 			// percent of conf
 			float bonus = (1.0-conf)*v;
@@ -284,7 +284,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		}
 	}
 
-	if (exploreType == NOVEL_AND_TUTOR){
+	if (exploreType == DIFF_NOVEL_TUTOR){
 		bool sync = trueEnv->isSyncTutor(state);
 		float bonus = tutorBonus;
 		if (sync){

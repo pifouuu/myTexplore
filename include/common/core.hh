@@ -80,7 +80,7 @@ const std::string comboNames[] = {
 #define DIFF_AND_VISIT_BONUS 16
 #define NOVEL_STATE_BONUS    18
 #define DIFF_AND_NOVEL_BONUS 19
-#define NOVEL_AND_TUTOR 20
+#define DIFF_NOVEL_TUTOR 20
 
 const std::string exploreNames[] = {
 		"Explore Unknowns",
