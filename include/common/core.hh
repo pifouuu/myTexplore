@@ -256,7 +256,7 @@ public:
 		\param action The action the agent wishes to apply.
 		\return The immediate one-step reward caused by the action. */
 	virtual void apply_tutor(int action) = 0;
-
+	virtual tutor_feedback tutorAction() = 0;
 	/** Determines whether the environment has reached a terminal state.
       \return true iff the task is episodic and the present episode
       has ended.  Nonepisodic tasks should simply always
@@ -358,7 +358,6 @@ public:
       currently in an initial state.
       \param s The initial sensation from the environment.
       \return The action the agent wishes to take first. */
-	virtual tutor_feedback first_action(const std::vector<float> &s) = 0;
 
 	/** Determines the next action that an agent takes in an environment
       and gives feedback for the previous action.  This method may
@@ -367,7 +366,7 @@ public:
       \param r The one-step reward resulting from the previous action.
       \param s The current sensation from the environment.
       \return The action the agent wishes to take next. */
-	virtual tutor_feedback next_action(const std::vector<float> &s, const int agent_action) = 0;
+	virtual void setTrueEnv(Environment* e) = 0;
 
 
 	virtual ~Tutor() {};

@@ -21,10 +21,13 @@ public:
 	virtual void setDebug(bool d);
 	tutor_feedback first_action(const std::vector<float> &s);
 	tutor_feedback next_action(const std::vector<float> &s, const int a);
+	void setTrueEnv(Environment* e);
 
 	void printState(const std::vector<float> &s);
 	bool red_box_ok(const std::vector<float> &s);
 	bool blue_box_ok(const std::vector<float> &s);
+
+	Environment* trueEnv;
 
 private:
 	bool ACTDEBUG;

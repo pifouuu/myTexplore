@@ -99,8 +99,9 @@ public:
 	float* blue_box_ew;
 	std::vector<block_t> blocks;
 
-	float* tutor_eye_ns = NULL;
-	float* tutor_eye_ew = NULL;
+	std::vector<float> t_state;
+	float* tutor_eye_ns;
+	float* tutor_eye_ew;
 
 
 	std::map<std::string, int> tutor_actions;
@@ -122,9 +123,10 @@ public:
 	std::vector<int> find_block_under_eye();
 	bool eye_hand_sync();
 	void setDebug(bool b);
+	tutor_feedback tutorAction();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
 	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;

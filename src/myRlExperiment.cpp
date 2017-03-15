@@ -879,6 +879,7 @@ int main(int argc, char **argv) {
 		std::cerr << "ERROR: Invalid tutor type" << endl;
 		exit(-1);
 	}
+	tutor->setTrueEnv(e);
 
 
 
@@ -1208,7 +1209,7 @@ int main(int argc, char **argv) {
 				if (i == 0){
 
 					if (with_tutor){
-						t_feedback = tutor->first_action(es);
+						t_feedback = e->tutorAction();
 						e->apply_tutor(t_feedback.action);
 					}
 
@@ -1226,7 +1227,7 @@ int main(int argc, char **argv) {
 							act_count[a].second/act_count[a].first));
 
 				} else {
-					t_feedback = tutor->next_action(es, a);
+					t_feedback = e->tutorAction();
 					if (with_tutor){
 						e->apply_tutor(t_feedback.action);
 					}
@@ -1280,23 +1281,19 @@ int main(int argc, char **argv) {
 
 				// first action
 				std::vector<float> es = e->sensation();
-				if (with_tutor){
-					t_feedback = tutor->first_action(es);
-					e->apply_tutor(t_feedback.action);
-				}
+
 
 				int a = agent->first_action(es);
 				occ_info_t info = e->apply(a);
 
-				t_feedback = tutor->next_action(es, a);
 				if (with_tutor){
+					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
 				}
-
-				act_count[a].first++;
+			/*	act_count[a].first++;
 				if (info.success){
 					act_count[a].second++;
-				}
+				}*/
 
 				// update performance
 				sum += info.reward;
@@ -1312,7 +1309,7 @@ int main(int argc, char **argv) {
 					a = agent->next_action(info.reward, es);
 					info = e->apply(a);
 
-					t_feedback = tutor->next_action(es, a);
+					t_feedback = e->tutorAction();
 					if (with_tutor){
 						e->apply_tutor(t_feedback.action);
 					}

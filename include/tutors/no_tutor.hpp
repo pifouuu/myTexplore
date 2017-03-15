@@ -16,9 +16,11 @@ public:
 	virtual ~no_tutor();
 	tutor_feedback first_action(const std::vector<float> &s);
 	tutor_feedback next_action(const std::vector<float> &s, const int a);
+	void setTrueEnv(Environment* e);
 
 	bool red_box_ok(const std::vector<float> &s);
 	bool blue_box_ok(const std::vector<float> &s);
+	Environment* trueEnv;
 
 private:
 	bool ACTDEBUG;

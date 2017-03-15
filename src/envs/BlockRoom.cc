@@ -32,6 +32,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 			red_box_ew(&(s[6])),
 			blue_box_ns(&(s[7])),
 			blue_box_ew(&(s[8])),
+			t_state(2),
 			numstep(0)
 {
 	int cnt_actions = 0;
@@ -52,12 +53,8 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 
 
 	if (WITH_TUTOR){
-		float tutor_eye_ns_val = 0.;
-		float tutor_eye_ew_val = 0.;
-		tutor_eye_ns = &tutor_eye_ns_val;
-		tutor_eye_ew = &tutor_eye_ew_val;
-
-		actions[std::string("LOOK_TUTOR")] = cnt_actions++;
+		tutor_eye_ns = &(t_state[0]);
+		tutor_eye_ew = &(t_state[1]);
 
 		tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
 		tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
@@ -491,7 +488,7 @@ bool BlockRoom::eye_hand_sync(){
 			&& *agent_eye_ew==*agent_ew);
 }
 void BlockRoom::apply_tutor(int action){
-	if (action==actions["LOOK_TUTOR"]){
+	if (action==actions["LOOK_AGENT"]){
 		(*tutor_eye_ew) = (*agent_eye_ew);
 		(*tutor_eye_ns) = (*agent_eye_ns);
 	}
@@ -794,11 +791,6 @@ occ_info_t BlockRoom::apply(int action){
 			}
 		}
 	}
-	if (WITH_TUTOR && action==actions["LOOK_TUTOR"]){
-		(*agent_eye_ew) = (*tutor_eye_ew);
-		(*agent_eye_ns) = (*tutor_eye_ns);
-		success = true;
-	}
 	if (action==actions["LOOK_RED_BOX"])	{
 		(*agent_eye_ew) = (*red_box_ew);
 		(*agent_eye_ns) = (*red_box_ns);
@@ -906,5 +898,32 @@ int BlockRoom::trueBestAction(){
 		res = actions["GO_TO_EYE"];
 	}
 	return res;
+}
+
+tutor_feedback BlockRoom::tutorAction(){
+	float reward = 0.;
+	int tutoract;
+	if (*block_hold!=-1 && *(blocks[*block_hold].color)==RED) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+	if (*block_hold!=-1 && *(blocks[*block_hold].color)==BLUE) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+	if (*block_hold==-1){
+		bool found_block = false;
+		int test = 0;
+		while (!found_block && test<nbRedBlocks+nbBlueBlocks){
+			found_block = *(blocks[test].is_in_blue_box)==0 && *(blocks[test].is_in_red_box)==0;
+			test++;
+		}
+		if (found_block) {
+			test--;
+			std::string colorstring = *(blocks[test].color)==0 ? "RED" : "BLUE";
+			int numblock = *(blocks[test].color)==0 ? test : test-nbRedBlocks;
+			tutoract = tutor_actions["LOOK_"+colorstring+"_BLOCK_"+std::to_string(numblock)];
+		}
+		else{
+			std::cout << "All blocks in boxes !" << std::endl;
+			tutoract = tutor_actions["LOOK_AGENT"];
+		}
+
+	}
+	return tutor_feedback(reward,tutoract);
 }
 
