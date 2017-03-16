@@ -24,8 +24,7 @@ public:
 	void setTrueEnv(Environment* e);
 
 	void printState(const std::vector<float> &s);
-	bool red_box_ok(const std::vector<float> &s);
-	bool blue_box_ok(const std::vector<float> &s);
+
 
 	Environment* trueEnv;
 

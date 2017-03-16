@@ -54,7 +54,7 @@
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
-unsigned MAXSTEPS = 1000; // per episode
+unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
 
@@ -999,9 +999,8 @@ int main(int argc, char **argv) {
 				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
 		if (v != 0) {name += "_v_"+std::to_string(v);}
 		if (n != 0) {name += "_n_"+std::to_string(n);}
-		name += "_lambda_"+std::to_string(lambda);
-		name += "_alpha_"+std::to_string(alpha);
-		name += "_df_"+std::to_string(discountfactor);
+		name += "_tb_"+std::to_string(tutorBonus);
+		name += "_pretrain_"+std::to_string(pretrain_steps);
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";
