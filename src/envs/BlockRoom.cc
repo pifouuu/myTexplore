@@ -878,8 +878,7 @@ int BlockRoom::trueBestAction(){
 		if (blocks_under.empty()) {
 			int b;
 			do {
-				//b = min(rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks-1),nbRedBlocks+nbBlueBlocks-1);
-				b = 0;
+				b = min(rng.uniformDiscrete(0, nbRedBlocks+nbBlueBlocks-1),nbRedBlocks+nbBlueBlocks-1);
 			}
 			while(*(blocks[b].is_in_blue_box)||*(blocks[b].is_in_red_box));
 			if (b<nbRedBlocks){
