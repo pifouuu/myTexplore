@@ -1005,12 +1005,12 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,float>> accu_tutor_rewards;
 
 		// agent->evaluate_model();
-		std::string name = std::string(agentType)+"_"+std::string(tutorType)+"_"+
-				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
+		std::string name;
 		if (v != 0) {name += "_v_"+std::to_string(v);}
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 		name += "_tb_"+std::to_string(tutorBonus);
 		name += "_pretrain_"+std::to_string(pretrain_steps);
+		name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";
