@@ -18,7 +18,7 @@
 class BlockRoom: public Environment {
 public:
 	// Constructor
-	BlockRoom(Random &rand, bool with_tutor, bool stochastic);
+	BlockRoom(Random &rand, bool with_tutor, bool stochastic, int nbRedBlocks, int nbBlueBlocks);
 
 	/* Blockroom is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -126,7 +126,7 @@ public:
 	tutor_feedback tutorAction();
 
 
-	bool BRDEBUG = true;
+	bool BRDEBUG = false;
 	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;

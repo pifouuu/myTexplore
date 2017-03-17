@@ -144,6 +144,8 @@ int main(int argc, char **argv) {
 	int seed = 1;
 	int pretrain_steps = 0;
 	float tutorBonus = 10.;
+	int nbRedBlocks = 1;
+	int nbBlueBlocks = 1;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -252,6 +254,8 @@ int main(int argc, char **argv) {
 			{"tutor", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
+			{"nbred", 1, 0, 16},
+			{"nbblue",1 ,0, 17},
 			{0, 0, 0, 0}
 	};
 
@@ -647,6 +651,12 @@ int main(int argc, char **argv) {
 		case 15:
 			tutorBonus = std::atof(optarg);
 			break;
+		case 16:
+			nbRedBlocks = std::atof(optarg);
+			break;
+		case 17:
+			nbBlueBlocks = std::atof(optarg);
+			break;
 
 		case 'h':
 		case '?':
@@ -723,7 +733,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "blockroom") == 0){
 		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng, with_tutor, stochastic);
+		e = new BlockRoom(rng, with_tutor, stochastic, nbRedBlocks, nbBlueBlocks);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -1008,7 +1018,7 @@ int main(int argc, char **argv) {
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
-		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic);
+		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, nbRedBlocks, nbBlueBlocks);
 
 		if (PRETRAIN){
 
