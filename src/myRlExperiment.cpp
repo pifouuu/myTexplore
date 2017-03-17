@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
 	float tutorBonus = 10.;
 	int nbRedBlocks = 1;
 	int nbBlueBlocks = 1;
+	int maxsteps = 100;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -256,6 +257,7 @@ int main(int argc, char **argv) {
 			{"tutorBonus",1,0,15},
 			{"nbred", 1, 0, 16},
 			{"nbblue",1 ,0, 17},
+			{"maxsteps", 1, 0, 18},
 			{0, 0, 0, 0}
 	};
 
@@ -657,7 +659,9 @@ int main(int argc, char **argv) {
 		case 17:
 			nbBlueBlocks = std::atof(optarg);
 			break;
-
+		case 18:
+			maxsteps = std::atof(optarg);
+			break;
 		case 'h':
 		case '?':
 		case 0:
@@ -1129,7 +1133,7 @@ int main(int argc, char **argv) {
 //						float error_train_r = fabs(predReward-trueReward);
 //						model_error_train_reward += error_train_r;
 //					}
-					int K = 50;
+					int K = 200;
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
@@ -1311,7 +1315,7 @@ int main(int argc, char **argv) {
 				accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
 				++steps;
 
-				while (!e->terminal() && steps < MAXSTEPS) {
+				while (!e->terminal() && steps < maxsteps) {
 					// perform an action
 					es = e->sensation();
 
@@ -1332,8 +1336,13 @@ int main(int argc, char **argv) {
 					// update performance
 					sum += info.reward;
 					tutor_sum += t_feedback.virtual_reward;
-					accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
-					accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+					if (info.reward>0){
+						accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
+					}
+					if (t_feedback.virtual_reward>0){
+						accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+					}
+
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
@@ -1349,7 +1358,7 @@ int main(int argc, char **argv) {
 
 
 
-				int K = 50;
+				int K = 200;
 				float model_error_test_r = 0;
 				for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 					float model_error_test = 0.;
