@@ -145,6 +145,9 @@ int main(int argc, char **argv) {
 	int pretrain_steps = 0;
 	float tutorBonus = 10.;
 	float finalReward = 100.;
+	int nbRedBlocks = 1;
+	int nbBlueBlocks = 1;
+	int maxsteps = 100;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -253,7 +256,13 @@ int main(int argc, char **argv) {
 			{"tutor", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
+<<<<<<< HEAD
 			{"finalReward",1,0,16},
+=======
+			{"nbred", 1, 0, 16},
+			{"nbblue",1 ,0, 17},
+			{"maxsteps", 1, 0, 18},
+>>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
 			{0, 0, 0, 0}
 	};
 
@@ -650,9 +659,20 @@ int main(int argc, char **argv) {
 			tutorBonus = std::atof(optarg);
 			break;
 		case 16:
+<<<<<<< HEAD
 			finalReward = std::atof(optarg);
 			break;
 
+=======
+			nbRedBlocks = std::atof(optarg);
+			break;
+		case 17:
+			nbBlueBlocks = std::atof(optarg);
+			break;
+		case 18:
+			maxsteps = std::atof(optarg);
+			break;
+>>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
 		case 'h':
 		case '?':
 		case 0:
@@ -728,7 +748,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "blockroom") == 0){
 		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng, with_tutor, stochastic, finalReward);
+		e = new BlockRoom(rng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -1000,13 +1020,13 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,float>> accu_tutor_rewards;
 
 		// agent->evaluate_model();
-		std::string name = std::string(agentType)+"_"+std::string(tutorType)+"_"+
-				std::to_string(plannerType)+"_"+std::to_string(exploreType) + "_"+std::to_string(modelType);
+		std::string name;
 		if (v != 0) {name += "_v_"+std::to_string(v);}
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 		name += "_tb_"+std::to_string(tutorBonus);
 		name += "_pretrain_"+std::to_string(pretrain_steps);
 		name += "_fR_"+std::to_string(finalReward);
+		name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";
@@ -1014,7 +1034,7 @@ int main(int argc, char **argv) {
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
-		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward);
+		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
 
 		if (PRETRAIN){
 
@@ -1126,7 +1146,7 @@ int main(int argc, char **argv) {
 //						float error_train_r = fabs(predReward-trueReward);
 //						model_error_train_reward += error_train_r;
 //					}
-					int K = 50;
+					int K = 200;
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
@@ -1308,7 +1328,7 @@ int main(int argc, char **argv) {
 				accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 				++steps;
 
-				while (!e->terminal() && steps < MAXSTEPS) {
+				while (!e->terminal() && steps < maxsteps) {
 					// perform an action
 					es = e->sensation();
 
@@ -1329,8 +1349,18 @@ int main(int argc, char **argv) {
 					// update performance
 					sum += info.reward;
 					tutor_sum += t_feedback.virtual_reward;
+<<<<<<< HEAD
 					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
 					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
+=======
+					if (info.reward>0){
+						accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
+					}
+					if (t_feedback.virtual_reward>0){
+						accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+					}
+
+>>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
@@ -1346,7 +1376,7 @@ int main(int argc, char **argv) {
 
 
 
-				int K = 50;
+				int K = 200;
 				float model_error_test_r = 0;
 				for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 					float model_error_test = 0.;

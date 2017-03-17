@@ -13,11 +13,11 @@
 
 using namespace cv;
 
-BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float finalReward):
+BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float finalReward, int nbRedBlocks, int nbBlueBlocks):
 			height(6),
 			width(6),
-			nbRedBlocks(0),
-			nbBlueBlocks(1),
+			nbRedBlocks(nbRedBlocks),
+			nbBlueBlocks(nbBlueBlocks),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
