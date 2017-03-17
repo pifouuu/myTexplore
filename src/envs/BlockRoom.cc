@@ -13,7 +13,7 @@
 
 using namespace cv;
 
-BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
+BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float finalReward):
 			height(6),
 			width(6),
 			nbRedBlocks(0),
@@ -23,6 +23,7 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic):
 			WITH_TUTOR(with_tutor),
 			state_dim_base(9),
 			s(state_dim_base+5*(nbRedBlocks+nbBlueBlocks)),
+			finalReward(finalReward),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
 			block_hold(&(s[2])),
@@ -761,7 +762,7 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 100;
+					reward += finalReward;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;
@@ -783,7 +784,7 @@ occ_info_t BlockRoom::apply(int action){
 				(*block_hold) = -1;
 				success = true;
 				if (terminal()){
-					reward += 100;
+					reward += finalReward;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;

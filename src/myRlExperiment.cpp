@@ -144,6 +144,7 @@ int main(int argc, char **argv) {
 	int seed = 1;
 	int pretrain_steps = 0;
 	float tutorBonus = 10.;
+	float finalReward = 100.;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -252,6 +253,7 @@ int main(int argc, char **argv) {
 			{"tutor", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
+			{"finalReward",1,0,16},
 			{0, 0, 0, 0}
 	};
 
@@ -647,6 +649,9 @@ int main(int argc, char **argv) {
 		case 15:
 			tutorBonus = std::atof(optarg);
 			break;
+		case 16:
+			finalReward = std::atof(optarg);
+			break;
 
 		case 'h':
 		case '?':
@@ -723,7 +728,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "blockroom") == 0){
 		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng, with_tutor, stochastic);
+		e = new BlockRoom(rng, with_tutor, stochastic, finalReward);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -1001,6 +1006,7 @@ int main(int argc, char **argv) {
 		if (n != 0) {name += "_n_"+std::to_string(n);}
 		name += "_tb_"+std::to_string(tutorBonus);
 		name += "_pretrain_"+std::to_string(pretrain_steps);
+		name += "_fR_"+std::to_string(finalReward);
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";
@@ -1008,7 +1014,7 @@ int main(int argc, char **argv) {
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
-		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic);
+		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward);
 
 		if (PRETRAIN){
 
@@ -1017,9 +1023,10 @@ int main(int argc, char **argv) {
 			float virtualReward;
 			int virtualAct;
 			std::vector<float> virtualState;
+
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 				// 23 = nb blocks * 6 étapes par bloc -1
-				int nb_act = rng.uniformDiscrete(0,5);
+				int nb_act = rng.uniformDiscrete(0,6);
 				for (int i=0; i<nb_act; i++){
 					virtualState = virtualBlockRoom->sensation();
 					if (!virtualBlockRoom->terminal()){
@@ -1140,7 +1147,7 @@ int main(int argc, char **argv) {
 							virtualBlockRoom->reset();
 						}
 						model_error_test /= K;
-						plot_model_acc_test[sample_act_test].push_back(std::make_pair(trainStep, model_error_test));
+						plot_model_acc_test[sample_act_test].push_back(std::make_pair(trainStep-pretrain_steps, model_error_test));
 					}
 
 //					model_error_train /= 50;
@@ -1152,7 +1159,7 @@ int main(int argc, char **argv) {
 					//cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
 
 //					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
-					plot_model_acc_test_r.push_back(std::make_pair(trainStep, model_error_test_reward));
+					plot_model_acc_test_r.push_back(std::make_pair(trainStep-pretrain_steps, model_error_test_reward));
 //					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
 				}
 			}
@@ -1297,8 +1304,8 @@ int main(int argc, char **argv) {
 				// update performance
 				sum += info.reward;
 				tutor_sum += t_feedback.virtual_reward;
-				accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
-				accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+				accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
+				accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 				++steps;
 
 				while (!e->terminal() && steps < MAXSTEPS) {
@@ -1322,8 +1329,8 @@ int main(int argc, char **argv) {
 					// update performance
 					sum += info.reward;
 					tutor_sum += t_feedback.virtual_reward;
-					accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
-					accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
+					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
@@ -1361,11 +1368,11 @@ int main(int argc, char **argv) {
 						virtualBlockRoom->reset();
 					}
 					model_error_test /= K;
-					plot_model_acc_test[sample_act_test].push_back(std::make_pair(pretrain_steps+steps+tot_steps, model_error_test));
+					plot_model_acc_test[sample_act_test].push_back(std::make_pair(steps+tot_steps, model_error_test));
 				}
 
 				model_error_test_r /= (K*numactions);
-				plot_model_acc_test_r.push_back(std::make_pair(pretrain_steps+steps+tot_steps, model_error_test_r));
+				plot_model_acc_test_r.push_back(std::make_pair(steps+tot_steps, model_error_test_r));
 
 				for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
 						it != plot_model_acc_test.end(); ++it){
