@@ -925,6 +925,9 @@ tutor_feedback BlockRoom::tutorAction(){
 		}
 
 	}
+
+	if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {reward += finalReward;}
+
 	return tutor_feedback(reward,tutoract);
 }
 

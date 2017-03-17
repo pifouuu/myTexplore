@@ -256,13 +256,10 @@ int main(int argc, char **argv) {
 			{"tutor", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
-<<<<<<< HEAD
 			{"finalReward",1,0,16},
-=======
-			{"nbred", 1, 0, 16},
-			{"nbblue",1 ,0, 17},
-			{"maxsteps", 1, 0, 18},
->>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
+			{"nbred", 1, 0, 17},
+			{"nbblue",1 ,0, 18},
+			{"maxsteps", 1, 0, 19},
 			{0, 0, 0, 0}
 	};
 
@@ -659,20 +656,17 @@ int main(int argc, char **argv) {
 			tutorBonus = std::atof(optarg);
 			break;
 		case 16:
-<<<<<<< HEAD
 			finalReward = std::atof(optarg);
 			break;
-
-=======
+		case 17:
 			nbRedBlocks = std::atof(optarg);
 			break;
-		case 17:
+		case 18:
 			nbBlueBlocks = std::atof(optarg);
 			break;
-		case 18:
+		case 19:
 			maxsteps = std::atof(optarg);
 			break;
->>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
 		case 'h':
 		case '?':
 		case 0:
@@ -1349,10 +1343,7 @@ int main(int argc, char **argv) {
 					// update performance
 					sum += info.reward;
 					tutor_sum += t_feedback.virtual_reward;
-<<<<<<< HEAD
-					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
-					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
-=======
+
 					if (info.reward>0){
 						accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
 					}
@@ -1360,7 +1351,6 @@ int main(int argc, char **argv) {
 						accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
 					}
 
->>>>>>> 1c7bd5007ac43afacf5eba0ef70d8800f7a20850
 					++steps;
 					if (steps % 10 == 0){
 						std::cout << steps << std::endl;
