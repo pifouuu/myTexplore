@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <iomanip>
+#include <ctime>
 
 // include input and output archivers
 #include <boost/archive/text_oarchive.hpp>
@@ -52,7 +54,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 500; //10; //200; //500; //200;
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -1014,13 +1016,25 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,float>> accu_tutor_rewards;
 
 		// agent->evaluate_model();
-		std::string name;
+		auto t = std::time(nullptr);
+		auto tm = *std::localtime(&t);
+
+		std::ostringstream oss;
+		oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+		auto str = oss.str();
+
+		std::string name = str;
 		name += "_v_"+std::to_string(v);
 		name += "_n_"+std::to_string(n);
 		name += "_tb_"+std::to_string(tutorBonus);
 		name += "_pretrain_"+std::to_string(pretrain_steps);
 		name += "_fR_"+std::to_string(finalReward);
 		name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
+
+		boost::filesystem::path rootPath ( "./resultats/" + name );
+		boost::system::error_code returnedError;
+
+		boost::filesystem::create_directories( rootPath, returnedError );
 		//if (M != 0) {name += "_m_"+std::to_string(M);}
 //		if (!reltrans) {name += "_abstrans";}
 //		name += "_splitmargin_0.05";
@@ -1041,7 +1055,7 @@ int main(int argc, char **argv) {
 
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 				// 23 = nb blocks * 6 étapes par bloc -1
-				int nb_act = rng.uniformDiscrete(0,6);
+				int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
 				for (int i=0; i<nb_act; i++){
 					virtualState = virtualBlockRoom->sensation();
 					if (!virtualBlockRoom->terminal()){
@@ -1181,7 +1195,7 @@ int main(int argc, char **argv) {
 			for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
 					it != plot_model_acc_test.end(); ++it){
 				// serialize vector
-				std::ofstream ofs(name+"_model_acc_"+action_names[it->first]+".ser");
+				std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
 				boost::archive::text_oarchive oa(ofs);
 				oa & it->second;
 			}
@@ -1198,7 +1212,7 @@ int main(int argc, char **argv) {
 //			ofs.close();
 //			ofs.clear();
 
-			std::ofstream ofs(name+"_model_acc_test_r.ser");
+			std::ofstream ofs(rootPath.string()+"/model_acc_test_r.ser");
 			boost::archive::text_oarchive oa_model_acc_test_r(ofs);
 			oa_model_acc_test_r & plot_model_acc_test_r;
 			ofs.close();
@@ -1398,24 +1412,24 @@ int main(int argc, char **argv) {
 				for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
 						it != plot_model_acc_test.end(); ++it){
 					// serialize vector
-					std::ofstream ofs(name+"_model_acc_"+action_names[it->first]+".ser");
+					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
 					boost::archive::text_oarchive oa(ofs);
 					oa & it->second;
 				}
 
-				std::ofstream ofs(name+"_model_acc_test_r.ser");
+				std::ofstream ofs(rootPath.string()+"/model_acc_test_r.ser");
 				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
 				oa_model_acc_test_r & plot_model_acc_test_r;
 				ofs.close();
 				ofs.clear();
 
-				ofs.open(name+"_accumulated_rewards.ser");
+				ofs.open(rootPath.string()+"/accumulated_rewards.ser");
 				boost::archive::text_oarchive oa_reward(ofs);
 				oa_reward & accu_rewards;
 				ofs.close();
 				ofs.clear();
 
-				ofs.open(name+"_accu_tutor_rewards.ser");
+				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
 				boost::archive::text_oarchive oa_tutor_r(ofs);
 				oa_tutor_r & accu_tutor_rewards;
 				ofs.close();
