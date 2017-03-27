@@ -22,7 +22,7 @@
 /** Plotting tools **/
 #include "../include/gnuplot-iostream.h"
 
-
+#include <iomanip>
 //////////////////
 // Environments //
 //////////////////
@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
 	int nmodels = 1;
 	bool reltrans = true;
 	bool deptrans = false;
-	float v = 0;
-	float n = 0;
+	int v = 0;
+	int n = 0;
 	float featPct = 0.2;
 	int nstates = 0;
 	int k = 1000;
@@ -143,10 +143,10 @@ int main(int argc, char **argv) {
 	int history = 0;
 	int seed = 1;
 	int pretrain_steps = 0;
-	float tutorBonus = 10.;
-	float finalReward = 100.;
+	int tutorBonus = 10;
+	int finalReward = 100;
 	int nbRedBlocks = 1;
-	int nbBlueBlocks = 1;
+	int nbBlueBlocks = 0;
 	int maxsteps = 100;
 	// change some of these parameters based on command line args
 
@@ -1015,8 +1015,8 @@ int main(int argc, char **argv) {
 
 		// agent->evaluate_model();
 		std::string name;
-		if (v != 0) {name += "_v_"+std::to_string(v);}
-		if (n != 0) {name += "_n_"+std::to_string(n);}
+		name += "_v_"+std::to_string(v);
+		name += "_n_"+std::to_string(n);
 		name += "_tb_"+std::to_string(tutorBonus);
 		name += "_pretrain_"+std::to_string(pretrain_steps);
 		name += "_fR_"+std::to_string(finalReward);
@@ -1029,6 +1029,7 @@ int main(int argc, char **argv) {
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
 		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
+		virtualBlockRoom->setDebug(false);
 
 		if (PRETRAIN){
 
@@ -1345,10 +1346,10 @@ int main(int argc, char **argv) {
 					tutor_sum += t_feedback.virtual_reward;
 
 					if (info.reward>0){
-						accu_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,rsum+sum));
+						accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
 					}
 					if (t_feedback.virtual_reward>0){
-						accu_tutor_rewards.push_back(std::make_pair(pretrain_steps+tot_steps+steps,tutor_rsum+tutor_sum));
+						accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 					}
 
 					++steps;
