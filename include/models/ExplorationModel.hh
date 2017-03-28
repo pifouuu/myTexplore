@@ -58,6 +58,7 @@ public:
   virtual bool updateWithExperience(experience &e);
   virtual float getStateActionInfo(const std::vector<float> &state, int act, StateActionInfo* retval);
 
+
   /** Add state to a set of visited states */
   bool addStateToSet(const std::vector<float> &s);
 
@@ -66,6 +67,8 @@ public:
 
   /** Find distance in feature space to nearest visited state-action */
   float getFeatDistToVisitedSA(const std::vector<float> &s);
+
+  void setTesting(bool testMode);
 
   Environment* trueEnv;
 
@@ -97,6 +100,8 @@ private:
   const float v;
   const float n;
   const float tutorBonus;
+
+  bool testMode;
 
   Random rng;
   

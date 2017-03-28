@@ -430,6 +430,7 @@ public:
 	/** Get a copy of the MDP Model */
 	virtual MDPModel* getCopy() = 0;
 	virtual void setTrueEnv(Environment*) {};
+	virtual void setTesting(bool){};
 	virtual ~MDPModel() {};
 };
 

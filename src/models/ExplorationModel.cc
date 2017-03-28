@@ -70,6 +70,10 @@ void ExplorationModel::setTrueEnv(Environment* e){
 
 }
 
+void ExplorationModel::setTesting(bool mode){
+	testMode = mode;
+}
+
 
 bool ExplorationModel::updateWithExperiences(std::vector<experience> &instances){
 	bool changed = model->updateWithExperiences(instances);
@@ -135,162 +139,165 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 	if (MODEL_DEBUG)// || (conf > 0.0 && conf < 1.0))
 		cout << "reward: " << retval->reward << " conf: " << conf << endl;
 
-	// check exploration bonuses
+	if (!testMode){
 
-	// use qmax if state is unknown
-	if (exploreType == EXPLORE_UNKNOWN){
-		if (!retval->known){
-			if (MODEL_DEBUG){
-				cout << "State-Action Unknown in model: conf: " << conf << " ";
-				for (unsigned si = 0; si < state.size(); si++){
-					cout << (state)[si] << ",";
+		// check exploration bonuses
+
+		// use qmax if state is unknown
+		if (exploreType == EXPLORE_UNKNOWN){
+			if (!retval->known){
+				if (MODEL_DEBUG){
+					cout << "State-Action Unknown in model: conf: " << conf << " ";
+					for (unsigned si = 0; si < state.size(); si++){
+						cout << (state)[si] << ",";
+					}
+					cout << " Action: " << act << endl;
 				}
-				cout << " Action: " << act << endl;
-			}
-			retval->reward = qmax;
-			retval->termProb = 1.0;
-			if (MODEL_DEBUG || MODEL_DEBUG)
-				cout << "   State-Action Unknown in model, using qmax "
-				<< qmax << endl;
-		}
-	}
-
-	// small bonus for unvisited states
-	if (exploreType == UNVISITED_BONUS){
-		if (!checkForState(state)){
-			// modify reward with a bonus of n
-			float newQ =retval->reward + n;
-			if (MODEL_DEBUG){
-				cout << "   State unvisited bonus, orig R: "
-						<< retval->reward
-						<< " adding n: " << n
-						<< " new value : " << newQ
-						<< endl;
-			}
-			retval->reward = newQ;
-		}
-	}
-
-	// small bonus for unvisited state-actions
-	if (exploreType == UNVISITED_ACT_BONUS || exploreType == DIFF_AND_VISIT_BONUS){
-		std::vector<float> state2 = state;
-		state2.push_back(act);
-		if (!checkForState(state2)){
-			// modify reward with a bonus of n
-			float newQ =retval->reward + n;
-			if (MODEL_DEBUG){
-				cout << "   State-Action unvisited bonus, orig R: "
-						<< retval->reward
-						<< " adding n: " << n
-						<< " new value : " << newQ
-						<< endl;
-			}
-			retval->reward = newQ;
-		}
-	}
-
-	// small bonus for states far from visited states with same action
-	if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
-		std::vector<float> state2 = state;
-		state2.push_back(act);
-		float featDist = getFeatDistToVisitedSA(state2);
-		if (featDist > 0){
-			// modify reward with proportional bonus of n
-			float bonus = featDist * n;
-			if (MODEL_DEBUG){
-				cout << "   State-Action novel state bonus, dist: " << featDist
-						<< " n: " << n << ", bonus, " << bonus << endl;
-			}
-			retval->reward += bonus;
-		}
-	}
-
-	// use some % of v if we're doing continuous terminal bonus
-	if (exploreType == CONTINUOUS_BONUS){
-		if (conf < 1.0){
-			// percent of conf
-			float bonus = (1.0-conf)*v;
-			if (MODEL_DEBUG){
-				cout << "   State-Action continuous bonus conf: "
-						<< conf
-						<< ", using v*(1-conf): "
-						<< bonus << endl;
-			}
-			retval->reward = bonus;
-			retval->termProb = 1.0;
-		}
-	}
-
-	// use some % of v if we're doing continuous bonus
-	if (exploreType == CONTINUOUS_BONUS_R || exploreType == DIFF_AND_VISIT_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
-		if (conf < 1.0){
-			// percent of conf
-			float bonus = (1.0-conf)*v;
-			retval->reward += bonus;
-			if (MODEL_DEBUG){
-				cout << "   State-Action continuous bonus conf: "
-						<< conf
-						<< ", using v*(1-conf): "
-						<< bonus << endl;
+				retval->reward = qmax;
+				retval->termProb = 1.0;
+				if (MODEL_DEBUG || MODEL_DEBUG)
+					cout << "   State-Action Unknown in model, using qmax "
+					<< qmax << endl;
 			}
 		}
-	}
 
-	// use qmax if we're doing threshold terminal bonus and conf under threshold
-	if (exploreType == THRESHOLD_BONUS){
-		if (conf < 0.5){
-			float bonus = v;
-			if (MODEL_DEBUG){
-				cout << "   State-Action conf< thresh: "
-						<< conf
-						<< " M: " << M
-						<< ", using v "
-						<< v << endl;
-			}
-			retval->reward = bonus;
-			retval->termProb = 1.0;
-		}
-	}
-
-	// use rmax for additional thresh bonus and conf under thresh
-	if (exploreType == THRESHOLD_BONUS_R){
-		if (conf < 0.9){
-			float bonus = v;
-			retval->reward += bonus;
-			if (MODEL_DEBUG){
-				cout << "   State-Action conf< thresh: "
-						<< conf
-						<< " M: " << M
-						<< ", using v "
-						<< v << endl;
+		// small bonus for unvisited states
+		if (exploreType == UNVISITED_BONUS){
+			if (!checkForState(state)){
+				// modify reward with a bonus of n
+				float newQ =retval->reward + n;
+				if (MODEL_DEBUG){
+					cout << "   State unvisited bonus, orig R: "
+							<< retval->reward
+							<< " adding n: " << n
+							<< " new value : " << newQ
+							<< endl;
+				}
+				retval->reward = newQ;
 			}
 		}
-	}
 
-	// visits conf
-	if (exploreType == VISITS_CONF){
-		if (conf < 0.5){
-			float bonus = qmax;
-			retval->reward += bonus;
-			if (MODEL_DEBUG){
-				cout << "   State-Action conf< thresh or 0 visits: "
-						<< conf
-						<< " M: " << M
-						<< ", using qmax "
-						<< qmax << endl;
+		// small bonus for unvisited state-actions
+		if (exploreType == UNVISITED_ACT_BONUS || exploreType == DIFF_AND_VISIT_BONUS){
+			std::vector<float> state2 = state;
+			state2.push_back(act);
+			if (!checkForState(state2)){
+				// modify reward with a bonus of n
+				float newQ =retval->reward + n;
+				if (MODEL_DEBUG){
+					cout << "   State-Action unvisited bonus, orig R: "
+							<< retval->reward
+							<< " adding n: " << n
+							<< " new value : " << newQ
+							<< endl;
+				}
+				retval->reward = newQ;
 			}
-			retval->reward = bonus;
-			retval->termProb = 1.0;
 		}
-	}
 
-	if (exploreType == DIFF_NOVEL_TUTOR){
-		bool sync = trueEnv->isSyncTutor(state);
-		float bonus = tutorBonus;
-		if (sync){
-			retval->reward += bonus;
-			if (MODEL_DEBUG){
-				cout << "   State-Action tutor bonus: " << endl;
+		// small bonus for states far from visited states with same action
+		if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
+			std::vector<float> state2 = state;
+			state2.push_back(act);
+			float featDist = getFeatDistToVisitedSA(state2);
+			if (featDist > 0){
+				// modify reward with proportional bonus of n
+				float bonus = featDist * n;
+				if (MODEL_DEBUG){
+					cout << "   State-Action novel state bonus, dist: " << featDist
+							<< " n: " << n << ", bonus, " << bonus << endl;
+				}
+				retval->reward += bonus;
+			}
+		}
+
+		// use some % of v if we're doing continuous terminal bonus
+		if (exploreType == CONTINUOUS_BONUS){
+			if (conf < 1.0){
+				// percent of conf
+				float bonus = (1.0-conf)*v;
+				if (MODEL_DEBUG){
+					cout << "   State-Action continuous bonus conf: "
+							<< conf
+							<< ", using v*(1-conf): "
+							<< bonus << endl;
+				}
+				retval->reward = bonus;
+				retval->termProb = 1.0;
+			}
+		}
+
+		// use some % of v if we're doing continuous bonus
+		if (exploreType == CONTINUOUS_BONUS_R || exploreType == DIFF_AND_VISIT_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
+			if (conf < 1.0){
+				// percent of conf
+				float bonus = (1.0-conf)*v;
+				retval->reward += bonus;
+				if (MODEL_DEBUG){
+					cout << "   State-Action continuous bonus conf: "
+							<< conf
+							<< ", using v*(1-conf): "
+							<< bonus << endl;
+				}
+			}
+		}
+
+		// use qmax if we're doing threshold terminal bonus and conf under threshold
+		if (exploreType == THRESHOLD_BONUS){
+			if (conf < 0.5){
+				float bonus = v;
+				if (MODEL_DEBUG){
+					cout << "   State-Action conf< thresh: "
+							<< conf
+							<< " M: " << M
+							<< ", using v "
+							<< v << endl;
+				}
+				retval->reward = bonus;
+				retval->termProb = 1.0;
+			}
+		}
+
+		// use rmax for additional thresh bonus and conf under thresh
+		if (exploreType == THRESHOLD_BONUS_R){
+			if (conf < 0.9){
+				float bonus = v;
+				retval->reward += bonus;
+				if (MODEL_DEBUG){
+					cout << "   State-Action conf< thresh: "
+							<< conf
+							<< " M: " << M
+							<< ", using v "
+							<< v << endl;
+				}
+			}
+		}
+
+		// visits conf
+		if (exploreType == VISITS_CONF){
+			if (conf < 0.5){
+				float bonus = qmax;
+				retval->reward += bonus;
+				if (MODEL_DEBUG){
+					cout << "   State-Action conf< thresh or 0 visits: "
+							<< conf
+							<< " M: " << M
+							<< ", using qmax "
+							<< qmax << endl;
+				}
+				retval->reward = bonus;
+				retval->termProb = 1.0;
+			}
+		}
+
+		if (exploreType == DIFF_NOVEL_TUTOR){
+			bool sync = trueEnv->isSyncTutor(state);
+			float bonus = tutorBonus;
+			if (sync){
+				retval->reward += bonus;
+				if (MODEL_DEBUG){
+					cout << "   State-Action tutor bonus: " << endl;
+				}
 			}
 		}
 	}

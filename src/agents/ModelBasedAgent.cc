@@ -145,7 +145,9 @@ bool ModelBasedAgent::train_only(experience e){
 
 std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 	StateActionInfo sa_info;
+	model->setTesting(true);
 	float conf = model->getStateActionInfo(s, act, &sa_info);
+	model->setTesting(false);
 	std::map<std::vector<float>, float> preds = sa_info.transitionProbs;
 	auto pr = std::max_element
 	(
@@ -302,7 +304,7 @@ void ModelBasedAgent::initModel(int nfactors){
                                  featmax, featmin, rng);
     
     model->setTrueEnv(trueEnv);
-
+    model->setTesting(false);
   }
  
   initPlanner();
