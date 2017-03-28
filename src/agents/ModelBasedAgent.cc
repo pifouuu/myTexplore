@@ -105,7 +105,7 @@ void ModelBasedAgent::initParams(){
 
   TIMEDEBUG = false; //true;
   AGENTDEBUG = false;
-  ACTDEBUG = true;//true;
+  ACTDEBUG = false;//true;
   SIMPLEDEBUG = false; //true; //false; //true;
 
   // check

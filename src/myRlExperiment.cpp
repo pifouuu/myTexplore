@@ -1367,9 +1367,9 @@ int main(int argc, char **argv) {
 					}
 
 					++steps;
-					if (steps % 10 == 0){
-						std::cout << steps << std::endl;
-					}
+//					if (steps % 10 == 0){
+//						std::cout << steps << std::endl;
+//					}
 				}
 
 				// terminal/last state
