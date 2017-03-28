@@ -370,7 +370,9 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 		uctSearch(state, s, 0, searchHistory);
 
 		// break after some max time
-		if ((getSeconds() - planTime) > MAX_TIME) { // && i > 500){
+		float elapsed = getSeconds()-planTime;
+		if (elapsed > MAX_TIME) { // && i > 500){
+//			cout<<"stopped planning after "<<i<<" iterations and "<<elapsed<<" seconds."<<endl;
 			break;
 		}
 

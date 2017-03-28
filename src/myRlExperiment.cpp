@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.1;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 10.0;
+	float actrate = 100.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
