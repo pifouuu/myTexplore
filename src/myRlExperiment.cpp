@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -904,6 +904,7 @@ int main(int argc, char **argv) {
 
 
 
+
 	for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
 		// Construct agent here.
@@ -1014,6 +1015,7 @@ int main(int argc, char **argv) {
 		std::list<std::pair<int,float>> plot_model_acc_train_r;
 		std::list<std::pair<int,float>> accu_rewards;
 		std::list<std::pair<int,float>> accu_tutor_rewards;
+
 
 		// agent->evaluate_model();
 		auto t = std::time(nullptr);
@@ -1126,7 +1128,7 @@ int main(int argc, char **argv) {
 
 				}
 
-				if (trainStep % 20 == 0){
+				if (trainStep % 25 == 0){
 
 
 //					float model_error_train = 0.;
@@ -1155,7 +1157,7 @@ int main(int argc, char **argv) {
 //						float error_train_r = fabs(predReward-trueReward);
 //						model_error_train_reward += error_train_r;
 //					}
-					int K = 200;
+					int K = 5000;
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
@@ -1195,7 +1197,7 @@ int main(int argc, char **argv) {
 			for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
 					it != plot_model_acc_test.end(); ++it){
 				// serialize vector
-				std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
+				std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+"_"+std::to_string(j)+".ser");
 				boost::archive::text_oarchive oa(ofs);
 				oa & it->second;
 			}
@@ -1212,7 +1214,7 @@ int main(int argc, char **argv) {
 //			ofs.close();
 //			ofs.clear();
 
-			std::ofstream ofs(rootPath.string()+"/model_acc_test_r.ser");
+			std::ofstream ofs(rootPath.string()+"/model_acc_test_r"+"_"+std::to_string(j)+".ser");
 			boost::archive::text_oarchive oa_model_acc_test_r(ofs);
 			oa_model_acc_test_r & plot_model_acc_test_r;
 			ofs.close();
@@ -1370,6 +1372,62 @@ int main(int argc, char **argv) {
 						accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
 					}
 
+					if (tot_steps+steps % 25 == 0){
+						int K = 5000;
+						float model_error_test_r = 0;
+						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
+							float model_error_test = 0.;
+							for (int testStep=0;testStep<K;testStep++){
+								std::vector<float> sample_test = virtualBlockRoom->sensation();
+
+								std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
+								std::vector<float> predNextState = std::get<0>(prediction);
+								float predReward = std::get<1>(prediction);
+
+								float reward = virtualBlockRoom->apply(sample_act_test).reward;
+								std::vector<float> new_state = virtualBlockRoom->sensation();
+
+								float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
+								model_error_test += error_test;
+
+								float error_test_r = fabs(predReward-reward);
+								model_error_test_r += error_test_r;
+								virtualBlockRoom->reset();
+							}
+							model_error_test /= K;
+							plot_model_acc_test[sample_act_test].push_back(std::make_pair(steps+tot_steps, model_error_test));
+						}
+
+						model_error_test_r /= (K*numactions);
+						plot_model_acc_test_r.push_back(std::make_pair(steps+tot_steps, model_error_test_r));
+
+						for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
+								it != plot_model_acc_test.end(); ++it){
+							// serialize vector
+							std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+"_"+std::to_string(j)+".ser");
+							boost::archive::text_oarchive oa(ofs);
+							oa & it->second;
+						}
+
+						std::ofstream ofs(rootPath.string()+"/model_acc_test_r_"+std::to_string(j)+".ser");
+						boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+						oa_model_acc_test_r & plot_model_acc_test_r;
+						ofs.close();
+						ofs.clear();
+
+						ofs.open(rootPath.string()+"/accumulated_rewards_"+std::to_string(j)+".ser");
+						boost::archive::text_oarchive oa_reward(ofs);
+						oa_reward & accu_rewards;
+						ofs.close();
+						ofs.clear();
+
+						ofs.open(rootPath.string()+"/accu_tutor_rewards_"+std::to_string(j)+".ser");
+						boost::archive::text_oarchive oa_tutor_r(ofs);
+						oa_tutor_r & accu_tutor_rewards;
+						ofs.close();
+						ofs.clear();
+					}
+
 					++steps;
 //					if (steps % 10 == 0){
 //						std::cout << steps << std::endl;
@@ -1385,59 +1443,7 @@ int main(int argc, char **argv) {
 
 
 
-				int K = 200;
-				float model_error_test_r = 0;
-				for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-					float model_error_test = 0.;
-					for (int testStep=0;testStep<K;testStep++){
-						std::vector<float> sample_test = virtualBlockRoom->sensation();
 
-						std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
-						std::vector<float> predNextState = std::get<0>(prediction);
-						float predReward = std::get<1>(prediction);
-
-						float reward = virtualBlockRoom->apply(sample_act_test).reward;
-						std::vector<float> new_state = virtualBlockRoom->sensation();
-
-						float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-						model_error_test += error_test;
-
-						float error_test_r = fabs(predReward-reward);
-						model_error_test_r += error_test_r;
-						virtualBlockRoom->reset();
-					}
-					model_error_test /= K;
-					plot_model_acc_test[sample_act_test].push_back(std::make_pair(steps+tot_steps, model_error_test));
-				}
-
-				model_error_test_r /= (K*numactions);
-				plot_model_acc_test_r.push_back(std::make_pair(steps+tot_steps, model_error_test_r));
-
-				for (std::map<int, std::vector<pair<float,float>>>::iterator it = plot_model_acc_test.begin();
-						it != plot_model_acc_test.end(); ++it){
-					// serialize vector
-					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-					boost::archive::text_oarchive oa(ofs);
-					oa & it->second;
-				}
-
-				std::ofstream ofs(rootPath.string()+"/model_acc_test_r.ser");
-				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-				oa_model_acc_test_r & plot_model_acc_test_r;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/accumulated_rewards.ser");
-				boost::archive::text_oarchive oa_reward(ofs);
-				oa_reward & accu_rewards;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
-				boost::archive::text_oarchive oa_tutor_r(ofs);
-				oa_tutor_r & accu_tutor_rewards;
-				ofs.close();
-				ofs.clear();
 
 
 				e->reset();
