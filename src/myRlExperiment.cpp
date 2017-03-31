@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.1;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 100.0;
+	float actrate = 20.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -878,7 +878,7 @@ int main(int argc, char **argv) {
 
 
 	float rsum = 0;
-	float tutor_rsum;
+	float tutor_rsum = 0.;
 
 	if (statesPerDim.size() == 0){
 		cout << "set statesPerDim to " << nstates << " for all dim" << endl;
@@ -1310,7 +1310,7 @@ int main(int argc, char **argv) {
 				// performance tracking
 
 				float sum = 0;
-				float tutor_sum;
+				float tutor_sum =0.;
 				int steps = 0;
 				tutor_feedback t_feedback(0.,0);
 
@@ -1333,8 +1333,12 @@ int main(int argc, char **argv) {
 				// update performance
 				sum += info.reward;
 				tutor_sum += t_feedback.virtual_reward;
-				accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
-				accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
+				if (info.reward>0){
+					accu_rewards.push_back(std::make_pair(tot_steps+steps,rsum+sum));
+				}
+				if (t_feedback.virtual_reward>0){
+					accu_tutor_rewards.push_back(std::make_pair(tot_steps+steps,tutor_rsum+tutor_sum));
+				}
 				++steps;
 
 				while (!e->terminal() && steps < maxsteps) {
