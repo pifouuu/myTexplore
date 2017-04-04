@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 2; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 4; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 3; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -1059,6 +1059,8 @@ int main(int argc, char **argv) {
 
 		if (PRETRAIN){
 
+			std::cout << "Pretraining :" <<std::endl;
+
 			//std::vector<std::tuple<std::vector<float>, int, std::vector<float>, float>> training_samples;
 			float count_r = 0;
 			float virtualReward;
@@ -1140,7 +1142,7 @@ int main(int argc, char **argv) {
 
 				if (trainStep % eval_freq == 0){
 
-
+					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
 //					float model_error_train = 0.;
 					float model_error_test_reward = 0;
 //					float model_error_train_reward = 0;
@@ -1202,7 +1204,6 @@ int main(int argc, char **argv) {
 
 //					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
 					reward_model_acc[trainStep/eval_freq] += model_error_test_reward;
-					if (j==0) eval_steps.push_back(trainStep-pretrain_steps);
 //					plot_model_acc_test_r.push_back(std::make_pair(trainStep-pretrain_steps, model_error_test_reward));
 //					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
 				}
@@ -1325,32 +1326,11 @@ int main(int argc, char **argv) {
 				// update performance
 				episode_reward += info.reward;
 				episode_tutor_reward += t_feedback.virtual_reward;
-				++episode_step;
 
 				while (!e->terminal() && episode_step < maxsteps) {
-					// perform an action
-					es = e->sensation();
-
-					a = agent->next_action(info.reward, es);
-					info = e->apply(a);
-
-					t_feedback = e->tutorAction();
-					if (with_tutor){
-						e->apply_tutor(t_feedback.action);
-					}
-
-//					act_count[a].first++;
-//					if (info.success){
-//						act_count[a].second++;
-//					}
-
-
-					// update performance
-					episode_reward += info.reward;
-					episode_tutor_reward += t_feedback.virtual_reward;
-
-					if (trial_step+episode_step % eval_freq == 0){
-						int K = 5000;
+					if ((trial_step+episode_step) % eval_freq == 0){
+						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
+						int K = 1000;
 						float model_error_test_r = 0;
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 							float model_error_test = 0.;
@@ -1380,11 +1360,32 @@ int main(int argc, char **argv) {
 						accu_rewards[(trial_step+episode_step)/eval_freq] += trial_reward+episode_reward;
 						accu_tutor_rewards[(trial_step+episode_step)/eval_freq] += trial_tutor_reward+episode_tutor_reward;
 						step_reached[(trial_step+episode_step)/eval_freq]++;
-						if (j==0) eval_steps.push_back(trial_step+episode_step);
 
 					}
 
 					++episode_step;
+					// perform an action
+					es = e->sensation();
+
+					a = agent->next_action(info.reward, es);
+					info = e->apply(a);
+
+					t_feedback = e->tutorAction();
+					if (with_tutor){
+						e->apply_tutor(t_feedback.action);
+					}
+
+//					act_count[a].first++;
+//					if (info.success){
+//						act_count[a].second++;
+//					}
+
+
+					// update performance
+					episode_reward += info.reward;
+					episode_tutor_reward += t_feedback.virtual_reward;
+
+
 
 				}
 
