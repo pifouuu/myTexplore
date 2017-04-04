@@ -65,7 +65,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="agents|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -114,7 +114,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="agents|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

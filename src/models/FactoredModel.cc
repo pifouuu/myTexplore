@@ -418,7 +418,7 @@ float FactoredModel::getSingleSAInfo(const std::vector<float> &state, int act,
 	retval->transitionProbs.clear();
 
 	if (outputModels.size() == 0) {
-		retval->reward = -0.001;
+		retval->envReward = -0.001;
 
 		// add to transition map
 		retval->transitionProbs[state] = 1.0;
@@ -485,11 +485,11 @@ float FactoredModel::getSingleSAInfo(const std::vector<float> &state, int act,
 		rewardSum += (prob * val);
 	}
 
-	retval->reward = rewardSum / totalVisits;
+	retval->envReward = rewardSum / totalVisits;
 	if (MODEL_DEBUG)
-		cout << "Average reward was " << retval->reward << endl;
+		cout << "Average reward was " << retval->envReward << endl;
 
-	if (isnan(retval->reward))
+	if (isnan(retval->envReward))
 		cout << "FactoredModel setting model reward to NaN" << endl;
 
 	// get termination prob
@@ -549,7 +549,7 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 	retval->transitionProbs.clear();
 
 	if (outputModels.size() == 0) {
-		retval->reward = -0.001;
+		retval->envReward = -0.001;
 
 		// add to transition map
 		retval->transitionProbs[state] = 1.0;
@@ -663,11 +663,11 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 
 	}
 
-	retval->reward = rewardSum / totalVisits;
+	retval->envReward = rewardSum / totalVisits;
 	if (MODEL_DEBUG)
-		cout << "Average reward was " << retval->reward << endl;
+		cout << "Average reward was " << retval->envReward << endl;
 
-	if (isnan(retval->reward))
+	if (isnan(retval->envReward))
 		cout << "FactoredModel setting model reward to NaN" << endl;
 
 	// get termination prob

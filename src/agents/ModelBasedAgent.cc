@@ -157,7 +157,7 @@ std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<flo
 			return p1.second < p2.second;
 		}
 	);
-	return std::make_tuple(pr->first, sa_info.reward,sa_info.termProb);
+	return std::make_tuple(pr->first, sa_info.envReward,sa_info.termProb);
 }
 
 int ModelBasedAgent::first_action(const std::vector<float> &s) {
@@ -274,7 +274,7 @@ void ModelBasedAgent::initModel(int nfactors){
   
   // 0 - traditional rmax model (unknown until m visits, then ML)
   if (modelType == RMAX) {
-    model = new RMaxModel(M, numactions, rng);
+//    model = new RMaxModel(M, numactions, rng);
   }
   
   // any tree or stump will be mdptree
@@ -539,7 +539,7 @@ void ModelBasedAgent::logValues(ofstream *of, int xmin, int xmax, int ymin, int 
 
   // call planner
   if (plannerType == PARALLEL_ET_UCT){
-    ((ParallelETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);
+//    ((ParallelETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);
   }
   if (plannerType == ET_UCT){
     ((ETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);

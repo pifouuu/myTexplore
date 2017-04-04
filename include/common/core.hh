@@ -207,16 +207,27 @@ struct tutor_feedback{
  */
 struct StateActionInfo {
 	bool known;
-	float reward;
+	float syncBonus;
+	float varBonus;
+	float novBonus;
+	float envReward;
 	float termProb;
 	int frameUpdated;
+
+	float& sumReward(){
+		float res = syncBonus+envReward+novBonus+varBonus;
+		return res;
+	}
 
 	// map from outcome state to probability
 	std::map< std::vector<float> , float> transitionProbs;
 
 	StateActionInfo(){
 		known = false;
-		reward = 0.0;
+		syncBonus = 0.;
+		novBonus = 0.;
+		varBonus = 0.;
+		envReward = 0.0;
 		termProb = 0.0;
 		frameUpdated = -1;
 	};
