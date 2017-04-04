@@ -941,6 +941,11 @@ int main(int argc, char **argv) {
 	std::vector<float> accu_tutor_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 	std::vector<int> step_reached((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<int> eval_steps((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, -pretrain_steps);
+
+	std::vector<float> explo_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
+	std::vector<float> reward_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
+	std::vector<float> sync_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
+
 	for (int tmp = 1; tmp<eval_steps.size();tmp++){
 		eval_steps[tmp]+=eval_freq*tmp;
 	}
@@ -956,6 +961,10 @@ int main(int argc, char **argv) {
 		int trial_step = 0;
 		float trial_reward = 0.;
 		float trial_tutor_reward = 0.;
+
+		float avg_explo_prop = 0.;
+		float avg_reward_prop = 0.;
+		float avg_sync_prop = 0.;
 
 		// Construct agent here.
 		Agent* agent;
@@ -1311,7 +1320,7 @@ int main(int argc, char **argv) {
 				std::vector<float> es = e->sensation();
 
 
-				int a = agent->first_action(es);
+				int a = agent->first_action(es, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
 				occ_info_t info = e->apply(a);
 
 				if (with_tutor){
@@ -1361,13 +1370,21 @@ int main(int argc, char **argv) {
 						accu_tutor_rewards[(trial_step+episode_step)/eval_freq] += trial_tutor_reward+episode_tutor_reward;
 						step_reached[(trial_step+episode_step)/eval_freq]++;
 
+						explo_prop[(trial_step+episode_step)/eval_freq] += avg_explo_prop/eval_freq;
+						reward_prop[(trial_step+episode_step)/eval_freq] += avg_reward_prop/eval_freq;
+						sync_prop[(trial_step+episode_step)/eval_freq] += avg_sync_prop/eval_freq;
+
+						*avg_explo_prop = 0.;
+						*avg_reward_prop = 0.;
+						*avg_sync_prop = 0.;
+
 					}
 
 					++episode_step;
 					// perform an action
 					es = e->sensation();
 
-					a = agent->next_action(info.reward, es);
+					a = agent->next_action(info.reward, es, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
 					info = e->apply(a);
 
 					t_feedback = e->tutorAction();
@@ -1391,9 +1408,9 @@ int main(int argc, char **argv) {
 
 				// terminal/last state
 				if (e->terminal()){
-					agent->last_action(info.reward);
+					agent->last_action(info.reward, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
 				}else{
-					agent->next_action(info.reward, e->sensation());
+					agent->next_action(info.reward, e->sensation(), &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
 				}
 
 				e->reset();
@@ -1422,6 +1439,16 @@ int main(int argc, char **argv) {
 	for (int i = 0; i<accu_tutor_rewards.size(); i++){
 		if (step_reached[i]!=0) accu_tutor_rewards[i]/=step_reached[i];
 	}
+	for (int i = 0; i<explo_prop.size(); i++){
+		if (step_reached[i]!=0) explo_prop[i]/=step_reached[i];
+	}
+	for (int i = 0; i<reward_prop.size(); i++){
+		if (step_reached[i]!=0) reward_prop[i]/=step_reached[i];
+	}
+	for (int i = 0; i<sync_prop.size(); i++){
+		if (step_reached[i]!=0) sync_prop[i]/=step_reached[i];
+	}
+
 
 	for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
 			it != model_acc.end(); ++it){
