@@ -353,7 +353,7 @@ void ETUCT::canonNextStates(StateActionInfo* modelInfo) {
 	}
 }
 
-int ETUCT::getBestAction(const std::vector<float> &state) {
+int ETUCT::getBestAction(const std::vector<float> &state, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) {
 	//  if (PLANNERDEBUG) cout << "getBestAction(s = " << &state << ")" << endl;
 
 	//  resetUCTCounts();
@@ -413,6 +413,9 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 	}
 
 	// return index of action
+	*avg_explo_prop += (info->Q_novBonus[act]+info->Q_varBonus[act]);
+	*avg_reward_prop	+= info->Q_envReward[act];
+	*avg_sync_prop += info->Q_syncBonus[act];
 	return act;
 }
 

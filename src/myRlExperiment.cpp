@@ -1374,9 +1374,9 @@ int main(int argc, char **argv) {
 						reward_prop[(trial_step+episode_step)/eval_freq] += avg_reward_prop/eval_freq;
 						sync_prop[(trial_step+episode_step)/eval_freq] += avg_sync_prop/eval_freq;
 
-						*avg_explo_prop = 0.;
-						*avg_reward_prop = 0.;
-						*avg_sync_prop = 0.;
+						avg_explo_prop = 0.;
+						avg_reward_prop = 0.;
+						avg_sync_prop = 0.;
 
 					}
 
@@ -1408,7 +1408,7 @@ int main(int argc, char **argv) {
 
 				// terminal/last state
 				if (e->terminal()){
-					agent->last_action(info.reward, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
+					agent->last_action(info.reward);
 				}else{
 					agent->next_action(info.reward, e->sensation(), &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
 				}

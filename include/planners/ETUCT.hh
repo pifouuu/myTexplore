@@ -61,7 +61,7 @@ public:
                                          const std::vector<float> &curr, 
                                          float reward, bool term);
   virtual void planOnNewModel();
-  virtual int getBestAction(const std::vector<float> &s);
+  virtual int getBestAction(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop);
   std::vector<float> eval(std::vector<float> & s, int act);
   //std::vector<float> eval2(std::vector<float> & s, int act);
   virtual void setSeeding(bool seed);
