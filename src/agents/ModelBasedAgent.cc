@@ -101,7 +101,7 @@ void ModelBasedAgent::initParams(){
   modelChanged = false;
 
   
-  BATCH_FREQ = 5; //50;
+  BATCH_FREQ = 1; //50;
 
   TIMEDEBUG = false; //true;
   AGENTDEBUG = false;
@@ -160,7 +160,7 @@ std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<flo
 	return std::make_tuple(pr->first, sa_info.envReward,sa_info.termProb);
 }
 
-int ModelBasedAgent::first_action(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) {
+int ModelBasedAgent::first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) {
   if (AGENTDEBUG) cout << "first_action(s)" << endl;
 
   if (model == NULL)
@@ -173,7 +173,7 @@ int ModelBasedAgent::first_action(const std::vector<float> &s, float* avg_explo_
     planner->planOnNewModel();
 
   // choose an action
-  int act = chooseAction(s, avg_explo_prop, avg_reward_prop, avg_sync_prop);
+  int act = chooseAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
 
   // save curr state/action for next time
   saveStateAndAction(s, act);
@@ -192,7 +192,7 @@ int ModelBasedAgent::first_action(const std::vector<float> &s, float* avg_explo_
 
 }
 
-int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) {
+int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) {
   if (AGENTDEBUG) {
     cout << "next_action(r = " << r 
 	 << ", s = " << &s << ")" << endl;
@@ -205,7 +205,7 @@ int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* av
   updateWithNewExperience(prevstate, s, prevact, r, false);
 
   // choose an action
-  int act = chooseAction(s, avg_explo_prop, avg_reward_prop, avg_sync_prop);
+  int act = chooseAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
   
   // save curr state/action for next time
   saveStateAndAction(s, act);
@@ -426,7 +426,7 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
 	planner->evaluate_model();
 }*/
 
-int ModelBasedAgent::chooseAction(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop){
+int ModelBasedAgent::chooseAction(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop){
   if (AGENTDEBUG) cout << "chooseAction(s = " << &s 
 		    << ")" << endl;
 
@@ -435,7 +435,7 @@ int ModelBasedAgent::chooseAction(const std::vector<float> &s, float* avg_explo_
 
   // get action to take from planner
   if (TIMEDEBUG) initTime = getSeconds();
-  int act = planner->getBestAction(s, avg_explo_prop, avg_reward_prop, avg_sync_prop);
+  int act = planner->getBestAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
   if (TIMEDEBUG) {
     timeTwo = getSeconds();
     planningTime += (timeTwo - initTime);

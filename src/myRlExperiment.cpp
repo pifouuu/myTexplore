@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 4; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 3; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 30; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -942,7 +942,8 @@ int main(int argc, char **argv) {
 	std::vector<int> step_reached((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<int> eval_steps((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, -pretrain_steps);
 
-	std::vector<float> explo_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
+	std::vector<float> var_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
+	std::vector<float> nov_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<float> reward_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<float> sync_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 
@@ -962,7 +963,8 @@ int main(int argc, char **argv) {
 		float trial_reward = 0.;
 		float trial_tutor_reward = 0.;
 
-		float avg_explo_prop = 0.;
+		float avg_var_prop = 0.;
+		float avg_nov_prop = 0.;
 		float avg_reward_prop = 0.;
 		float avg_sync_prop = 0.;
 
@@ -1320,7 +1322,11 @@ int main(int argc, char **argv) {
 				std::vector<float> es = e->sensation();
 
 
-				int a = agent->first_action(es, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
+				int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+				std::cout << "Total variance bonus received at step 0 : " << avg_var_prop << std::endl;
+				std::cout << "Total novelty bonus received at step 0 : " << avg_nov_prop << std::endl;
+				std::cout << "Total enironment reward received at step 0 : " << avg_reward_prop << std::endl;
+				std::cout << "Total synchronisation bonus received at step 0 : " << avg_sync_prop << std::endl;
 				occ_info_t info = e->apply(a);
 
 				if (with_tutor){
@@ -1370,11 +1376,13 @@ int main(int argc, char **argv) {
 						accu_tutor_rewards[(trial_step+episode_step)/eval_freq] += trial_tutor_reward+episode_tutor_reward;
 						step_reached[(trial_step+episode_step)/eval_freq]++;
 
-						explo_prop[(trial_step+episode_step)/eval_freq] += avg_explo_prop/eval_freq;
+						var_prop[(trial_step+episode_step)/eval_freq] += avg_var_prop/eval_freq;
+						nov_prop[(trial_step+episode_step)/eval_freq] += avg_nov_prop/eval_freq;
 						reward_prop[(trial_step+episode_step)/eval_freq] += avg_reward_prop/eval_freq;
 						sync_prop[(trial_step+episode_step)/eval_freq] += avg_sync_prop/eval_freq;
 
-						avg_explo_prop = 0.;
+						avg_var_prop = 0.;
+						avg_nov_prop = 0.;
 						avg_reward_prop = 0.;
 						avg_sync_prop = 0.;
 
@@ -1384,7 +1392,12 @@ int main(int argc, char **argv) {
 					// perform an action
 					es = e->sensation();
 
-					a = agent->next_action(info.reward, es, &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
+					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					std::cout << "Total variance bonus received at step " << episode_step << " : " << avg_var_prop << std::endl;
+					std::cout << "Total novelty bonus received at step " << episode_step << " : " << avg_nov_prop << std::endl;
+
+					std::cout << "Total enironment reward received at step " << episode_step << " : " << avg_reward_prop << std::endl;
+					std::cout << "Total synchronisation bonus received at step " << episode_step << " : " << avg_sync_prop << std::endl;
 					info = e->apply(a);
 
 					t_feedback = e->tutorAction();
@@ -1410,7 +1423,7 @@ int main(int argc, char **argv) {
 				if (e->terminal()){
 					agent->last_action(info.reward);
 				}else{
-					agent->next_action(info.reward, e->sensation(), &avg_explo_prop, &avg_reward_prop, &avg_sync_prop);
+					agent->next_action(info.reward, e->sensation(), &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
 				}
 
 				e->reset();
@@ -1439,8 +1452,11 @@ int main(int argc, char **argv) {
 	for (int i = 0; i<accu_tutor_rewards.size(); i++){
 		if (step_reached[i]!=0) accu_tutor_rewards[i]/=step_reached[i];
 	}
-	for (int i = 0; i<explo_prop.size(); i++){
-		if (step_reached[i]!=0) explo_prop[i]/=step_reached[i];
+	for (int i = 0; i<var_prop.size(); i++){
+		if (step_reached[i]!=0) var_prop[i]/=step_reached[i];
+	}
+	for (int i = 0; i<nov_prop.size(); i++){
+		if (step_reached[i]!=0) nov_prop[i]/=step_reached[i];
 	}
 	for (int i = 0; i<reward_prop.size(); i++){
 		if (step_reached[i]!=0) reward_prop[i]/=step_reached[i];
@@ -1471,14 +1487,38 @@ int main(int argc, char **argv) {
 	ofs.clear();
 
 	ofs.open(rootPath.string()+"/accumulated_reward.ser");
-	boost::archive::text_oarchive oa_reward(ofs);
-	oa_reward & accu_rewards;
+	boost::archive::text_oarchive oa_accu_reward(ofs);
+	oa_accu_reward & accu_rewards;
 	ofs.close();
 	ofs.clear();
 
 	ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
 	boost::archive::text_oarchive oa_tutor_r(ofs);
 	oa_tutor_r & accu_tutor_rewards;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/var_prop.ser");
+	boost::archive::text_oarchive oa_var(ofs);
+	oa_var & var_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/nov_prop.ser");
+	boost::archive::text_oarchive oa_nov(ofs);
+	oa_nov & nov_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/sync_prop.ser");
+	boost::archive::text_oarchive oa_sync(ofs);
+	oa_sync & sync_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/reward_prop.ser");
+	boost::archive::text_oarchive oa_reward(ofs);
+	oa_reward & reward_prop;
 	ofs.close();
 	ofs.clear();
 

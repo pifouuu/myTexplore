@@ -214,9 +214,8 @@ struct StateActionInfo {
 	float termProb;
 	int frameUpdated;
 
-	float& sumReward(){
-		float res = syncBonus+envReward+novBonus+varBonus;
-		return res;
+	float sumReward(){
+		return syncBonus+envReward+novBonus+varBonus;
 	}
 
 	// map from outcome state to probability
@@ -330,7 +329,7 @@ public:
       currently in an initial state.
       \param s The initial sensation from the environment.
       \return The action the agent wishes to take first. */
-	virtual int first_action(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
+	virtual int first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
 
 	/** Determines the next action that an agent takes in an environment
       and gives feedback for the previous action.  This method may
@@ -339,7 +338,7 @@ public:
       \param r The one-step reward resulting from the previous action.
       \param s The current sensation from the environment.
       \return The action the agent wishes to take next. */
-	virtual int next_action(float r, const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
+	virtual int next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
 
 	/** Gives feedback for the last action taken.  This method may only
       be called if the last method called was first_action or
@@ -465,7 +464,7 @@ public:
 /*	virtual void evaluate_model() = 0;*/
 
 	/** Return the best action for a given state. */
-	virtual int getBestAction(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
+	virtual int getBestAction(const std::vector<float> &state, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) = 0;
 
 	/** Save the policy to a file. */
 	virtual void savePolicy(const char* filename) {};

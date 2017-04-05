@@ -61,7 +61,7 @@ public:
                                          const std::vector<float> &curr, 
                                          float reward, bool term);
   virtual void planOnNewModel();
-  virtual int getBestAction(const std::vector<float> &s, float* avg_explo_prop, float* avg_reward_prop, float* avg_sync_prop);
+  virtual int getBestAction(const std::vector<float> &state, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
   std::vector<float> eval(std::vector<float> & s, int act);
   //std::vector<float> eval2(std::vector<float> & s, int act);
   virtual void setSeeding(bool seed);
@@ -123,8 +123,9 @@ protected:
     std::vector<float> Q_novBonus;
     std::vector<float> Q_varBonus;
     std::vector<float> Q_envReward;
+    //std::vector<float> Q;
 
-    std::vector<float>& sumQ(){
+    std::vector<float> sumQ(){
     	std::vector<float> res(Q_envReward.size());
     	for (int i=0;i<res.size();i++){
     		res[i]= Q_syncBonus[i]+Q_envReward[i]+Q_varBonus[i]+Q_novBonus[i];
