@@ -61,7 +61,7 @@ public:
                                          const std::vector<float> &curr, 
                                          float reward, bool term);
   virtual void planOnNewModel();
-  virtual int getBestAction(const std::vector<float> &s);
+  virtual int getBestAction(const std::vector<float> &state, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
   std::vector<float> eval(std::vector<float> & s, int act);
   //std::vector<float> eval2(std::vector<float> & s, int act);
   virtual void setSeeding(bool seed);
@@ -119,7 +119,19 @@ protected:
     std::map< std::deque<float>, StateActionInfo>* historyModel;
 
     // q values from policy creation
-    std::vector<float> Q;
+    std::vector<float> Q_syncBonus;
+    std::vector<float> Q_novBonus;
+    std::vector<float> Q_varBonus;
+    std::vector<float> Q_envReward;
+    //std::vector<float> Q;
+
+    std::vector<float> sumQ(){
+    	std::vector<float> res(Q_envReward.size());
+    	for (int i=0;i<res.size();i++){
+    		res[i]= Q_syncBonus[i]+Q_envReward[i]+Q_varBonus[i]+Q_novBonus[i];
+    	}
+    	return res;
+    }
 
     // uct experience data
     int uctVisits;
@@ -183,11 +195,14 @@ protected:
       
       From "Bandit Based Monte Carlo Planning" by Kocsis and Szepesv´ari.
   */
-  float uctSearch(const std::vector<float> &actualS, state_t state, int depth, std::deque<float> history);
+  void uctSearch(const std::vector<float> &actualS, state_t state, int depth, std::deque<float> history,
+		  float* Q_envReward, float* Q_syncBonus, float* Q_novBonus, float* Q_varBonus);
 
   /** Return a sampled state from the next state distribution of the model. 
       Simulate the next state from the given state, action, and possibly history of past actions. */
-  std::vector<float> simulateNextState(const std::vector<float> &actualState, state_t discState, state_info* info, const std::deque<float> &searchHistory, int action, float* reward, bool* term);
+  std::vector<float> simulateNextState(const std::vector<float> &actualState, state_t discState, state_info* info,
+		  const std::deque<float> &searchHistory, int action, float* envReward, float* syncBonus, float* varBonus,
+		  float* novBonus, bool* term);
 
   /** Select UCT action based on UCB1 algorithm. */
   int selectUCTAction(state_info* info);

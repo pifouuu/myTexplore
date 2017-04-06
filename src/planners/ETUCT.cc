@@ -40,7 +40,8 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	PLANNERDEBUG = false; //true;
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
-	UCTDEBUG = false; //trueit 	QDEBUG = false;
+	UCTDEBUG = false; //trueit
+	QDEBUG = false;
 	USETRUEENV = false;
 
 	featmax = fmax;
@@ -353,7 +354,7 @@ void ETUCT::canonNextStates(StateActionInfo* modelInfo) {
 	}
 }
 
-int ETUCT::getBestAction(const std::vector<float> &state) {
+int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) {
 	//  if (PLANNERDEBUG) cout << "getBestAction(s = " << &state << ")" << endl;
 
 	//  resetUCTCounts();
@@ -364,7 +365,11 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 	for (i = 0; i < MAX_ITER; i++) {
 
 		std::deque<float> searchHistory = saHistory;
-		uctSearch(state, s, 0, searchHistory);
+		float envReward = 0;
+		float syncBonus = 0;
+		float novBonus = 0;
+		float varBonus = 0;
+		uctSearch(state, s, 0, searchHistory, &envReward, &syncBonus, &novBonus, &varBonus);
 
 		// break after some max time
 		float elapsed = getSeconds()-planTime;
@@ -384,7 +389,7 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 	state_info* info = &(statedata[s]);
 
 	// Get Q values
-	std::vector<float> &Q = info->Q;
+	std::vector<float> Q = info->sumQ();
 	if (QDEBUG){
 		cout << "Q values : ";
 		for (auto qval:Q){
@@ -409,6 +414,11 @@ int ETUCT::getBestAction(const std::vector<float> &state) {
 	}
 
 	// return index of action
+
+	*avg_var_prop += (Q[act]!=0 ? info->Q_varBonus[act]/Q[act] : 0.);
+	*avg_nov_prop += (Q[act]!=0 ? info->Q_novBonus[act]/Q[act] : 0.);
+	*avg_reward_prop	+= (Q[act]!=0 ? info->Q_envReward[act]/Q[act] : 0.);
+	*avg_sync_prop += (Q[act]!=0 ? info->Q_syncBonus[act]/Q[act] : 0.);
 	return act;
 }
 
@@ -517,7 +527,10 @@ void ETUCT::initStateInfo(state_t s, state_info* info) {
 			new std::map<std::deque<float>, StateActionInfo>[numactions];
 
 	// model q values, visit counts
-	info->Q.resize(numactions, 0);
+	info->Q_novBonus.resize(numactions, 0);
+	info->Q_syncBonus.resize(numactions, 0);
+	info->Q_varBonus.resize(numactions, 0);
+	info->Q_envReward.resize(numactions, 0);
 	info->uctActions.resize(numactions, 1);
 	info->uctVisits = 1;
 	info->visited = 0; //false;
@@ -525,7 +538,10 @@ void ETUCT::initStateInfo(state_t s, state_info* info) {
 
 	for (int i = 0; i < numactions; i++) {
 		//info->Q[i] = rng.uniform(0, 0.01);
-		info->Q[i] = 0.0;
+		info->Q_novBonus[i] = 0.0;
+		info->Q_syncBonus[i] = 0.0;
+		info->Q_varBonus[i] = 0.0;
+		info->Q_envReward[i] = 0.0;
 	}
 
 	//if (PLANNERDEBUG) cout << "done with initStateInfo()" << endl;
@@ -548,7 +564,7 @@ void ETUCT::printStates() {
 		cout << endl;
 
 		for (int act = 0; act < numactions; act++) {
-			cout << " Q: " << info->Q[act] << endl;
+			cout << " Q: " << info->sumQ()[act] << endl;
 		}
 
 	}
@@ -567,8 +583,9 @@ double ETUCT::getSeconds() {
 	return timeT.tv_sec + (timeT.tv_usec / 1000000.0);
 }
 
-float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
-		std::deque<float> searchHistory) {
+void ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
+		std::deque<float> searchHistory, float* newQ_envReward, float* newQ_syncBonus,
+		float* newQ_novBonus, float* newQ_varBonus) {
 	if (UCTDEBUG) {
 		cout << " uctSearch state ";
 		for (unsigned i = 0; i < actS.size(); i++) {
@@ -586,17 +603,23 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 	// already visited, stop here
 	if (depth > MAX_DEPTH) {
 		// return max q value here
-		std::vector<float>::iterator maxAct = std::max_element(info->Q.begin(),
-				info->Q.end());
-		float maxval = *maxAct;
+		std::vector<float> Q = info->sumQ();
+		std::vector<float>::iterator maxAct = std::max_element(Q.begin(),
+				Q.end());
+//		float maxval = *maxAct;
 
 		if (UCTDEBUG)
 			cout << "Terminated after depth: " << depth
 					//   << " prob: " << terminateProb
-					<< " Q: " << maxval << " visited: " << info->visited
+					<< " Q: " << maxAct-Q.begin() << " visited: " << info->visited
 					<< endl;
 
-		return maxval;
+		int bestAct = maxAct-Q.begin();
+		*newQ_envReward = info->Q_envReward[bestAct];
+		*newQ_syncBonus = info->Q_syncBonus[bestAct];
+		*newQ_novBonus = info->Q_novBonus[bestAct];
+		*newQ_varBonus = info->Q_varBonus[bestAct];
+		return;
 	}
 
 	// select action
@@ -604,7 +627,10 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 
 	// simulate action to get next state and reward
 	// depending on exploration, may also terminate us
-	float reward = 0;
+	float envReward = 0;
+	float syncBonus = 0.;
+	float varBonus = 0.;
+	float novBonus = 0.;
 	bool term = false;
 
 	float learnRate;
@@ -622,22 +648,29 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 
 	// simulate next state, reward, terminal
 	std::vector<float> actualNext = simulateNextState(actS, discS, info,
-			searchHistory, action, &reward, &term);
+			searchHistory, action, &envReward, &syncBonus, &varBonus, &novBonus, &term);
 
 	// simulate reward from this action
 	if (term) {
 		// this one terminated
 		if (UCTDEBUG)
 			cout << "   Terminated on exploration condition" << endl;
-		info->Q[action] += learnRate * (reward - info->Q[action]);
+		info->Q_envReward[action] += learnRate * (envReward - info->Q_envReward[action]);
+		info->Q_syncBonus[action] += learnRate * (syncBonus - info->Q_syncBonus[action]);
+		info->Q_novBonus[action] += learnRate * (novBonus -info->Q_novBonus[action]);
+		info->Q_varBonus[action] += learnRate * (varBonus - info->Q_varBonus[action]);
 		info->uctVisits++;
 		info->uctActions[action]++;
 		if (UCTDEBUG)
 			cout << " Depth: " << depth << " Selected action " << action
-					<< " r: " << reward << " StateVisits: " << info->uctVisits
+					<< " r: " << envReward+syncBonus+novBonus+varBonus << " StateVisits: " << info->uctVisits
 					<< " ActionVisits: " << info->uctActions[action] << endl;
 
-		return reward;
+		*newQ_envReward = envReward;
+		*newQ_syncBonus = syncBonus;
+		*newQ_novBonus = novBonus;
+		*newQ_varBonus = varBonus;
+		return;
 	}
 
 	// get discretized version of next
@@ -645,7 +678,7 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 
 	if (UCTDEBUG)
 		cout << " Depth: " << depth << " Selected action " << action << " r: "
-				<< reward << endl;
+				<< envReward+syncBonus+novBonus+varBonus << endl;
 
 	info->visited++; // = true;
 
@@ -676,36 +709,53 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 	}
 
 	// new q value
-	float newQ = reward
-			+ gamma * uctSearch(actualNext, discNext, depth + 1, searchHistory);
+	float next_envReward = 0;
+	float next_syncBonus = 0;
+	float next_novBonus = 0;
+	float next_varBonus = 0;
+	uctSearch(actualNext, discNext, depth + 1, searchHistory, &next_envReward,
+			&next_syncBonus, &next_novBonus, &next_varBonus);
+	*newQ_envReward = envReward + gamma * next_envReward;
+	*newQ_syncBonus = syncBonus + gamma * next_syncBonus;
+	*newQ_novBonus = novBonus + gamma * next_novBonus;
+	*newQ_varBonus = varBonus + gamma * next_varBonus;
 
 	if (info->visited == 1) {
 
 		// update q and visit counts
-		info->Q[action] += learnRate * (newQ - info->Q[action]);
+		info->Q_syncBonus[action] += learnRate * (*newQ_syncBonus - info->Q_syncBonus[action]);
+		info->Q_novBonus[action] += learnRate * (*newQ_novBonus - info->Q_novBonus[action]);
+		info->Q_varBonus[action] += learnRate * (*newQ_varBonus - info->Q_varBonus[action]);
+		info->Q_envReward[action] += learnRate * (*newQ_envReward - info->Q_envReward[action]);
+
 		info->uctVisits++;
 		info->uctActions[action]++;
 
 		if (UCTDEBUG)
-			cout << " Depth: " << depth << " newQ: " << newQ << " StateVisits: "
+			cout << " Depth: " << depth << " newQ: " << *newQ_envReward+*newQ_syncBonus+*newQ_novBonus+*newQ_varBonus << " StateVisits: "
 					<< info->uctVisits << " ActionVisits: "
 					<< info->uctActions[action] << endl;
 
 		if (lambda < 1.0) {
 
 			// new idea, return max of Q or new q
+			std::vector<float> Q = info->sumQ();
 			std::vector<float>::iterator maxAct = std::max_element(
-					info->Q.begin(), info->Q.end());
-			float maxval = *maxAct;
+					Q.begin(), Q.end());
+			//float maxval = *maxAct;
 
 			if (UCTDEBUG)
-				cout << " Replacing newQ: " << newQ;
+				cout << " Replacing newQ: " << *newQ_envReward+*newQ_syncBonus+*newQ_novBonus+*newQ_varBonus;
 
 			// replace with w avg of maxq and new val
-			newQ = (lambda * newQ) + ((1.0 - lambda) * maxval);
+			int bestAct = maxAct-Q.begin();
+			*newQ_envReward = (lambda * (*newQ_envReward)) + ((1.0 - lambda) * info->Q_envReward[bestAct]);
+			*newQ_novBonus = (lambda * (*newQ_novBonus)) + ((1.0 - lambda) * info->Q_novBonus[bestAct]);
+			*newQ_varBonus = (lambda * (*newQ_varBonus)) + ((1.0 - lambda) * info->Q_varBonus[bestAct]);
+			*newQ_syncBonus = (lambda * (*newQ_syncBonus)) + ((1.0 - lambda) * info->Q_syncBonus[bestAct]);
 
 			if (UCTDEBUG)
-				cout << " with wAvg: " << newQ << endl;
+				cout << " with wAvg: " << *newQ_envReward+*newQ_syncBonus+*newQ_novBonus+*newQ_varBonus << endl;
 		}
 
 	}
@@ -713,14 +763,14 @@ float ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 	info->visited--;
 
 	// return q
-	return newQ;
+	return;
 
 }
 
 int ETUCT::selectUCTAction(state_info* info) {
 	//  if (UCTDEBUG) cout << "  selectUCTAction" << endl;
 
-	std::vector<float> &Q = info->Q;
+	std::vector<float> Q = info->sumQ();
 
 	// loop through
 	float rewardBound = rrange;
@@ -761,7 +811,7 @@ int ETUCT::selectUCTAction(state_info* info) {
 std::vector<float> ETUCT::simulateNextState(
 		const std::vector<float> &actualState, state_t discState,
 		state_info* info, const std::deque<float> &history, int action,
-		float* reward, bool* term) {
+		float* envReward, float* syncBonus, float* varBonus, float* novBonus, bool* term) {
 
 	std::vector<float> nextstate;
 	StateActionInfo* modelInfo = &(info->historyModel[action][history]);
@@ -781,7 +831,10 @@ std::vector<float> ETUCT::simulateNextState(
 		}
 	}
 
-	*reward = modelInfo->reward;
+	*envReward = modelInfo->envReward;
+	*novBonus = modelInfo->novBonus;
+	*varBonus = modelInfo->varBonus;
+	*syncBonus = modelInfo->syncBonus;
 	*term = (rng.uniform() < modelInfo->termProb);
 
 	if (*term) {
@@ -847,10 +900,7 @@ std::vector<float> ETUCT::simulateNextState(
 		}
 	}
 	else {
-		std::pair<std::vector<float>, float> truePred = trueEnv->getMostProbNextState(actualState, action);
-		nextstate = truePred.first;
-		*reward = truePred.second;
-		*term = false;
+
 	}
 
 	if (UCTDEBUG)
@@ -884,7 +934,7 @@ void ETUCT::savePolicy(const char* filename) {
 		policyFile.write((char*) &((*i)[0]), sizeof(float) * fsize);
 
 		// save q-values
-		policyFile.write((char*) &(info->Q[0]), sizeof(float) * numactions);
+		policyFile.write((char*) &(info->sumQ()[0]), sizeof(float) * numactions);
 
 	}
 
@@ -899,7 +949,7 @@ void ETUCT::logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax) {
 			state[1] = i;
 			state_t s = canonicalize(state);
 			state_info* info = &(statedata[s]);
-			std::vector<float> &Q_s = info->Q;
+			std::vector<float> Q_s = info->sumQ();
 			const std::vector<float>::iterator max = random_max_element(
 					Q_s.begin(), Q_s.end());
 			*of << (*max) << ",";

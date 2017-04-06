@@ -97,8 +97,8 @@ public:
   virtual ~ModelBasedAgent();
 
   virtual void setTrueEnv(Environment* trueEnv);
-  virtual int first_action(const std::vector<float> &s);
-  virtual int next_action(float r, const std::vector<float> &s);
+  virtual int first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
+  virtual int next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
   virtual void last_action(float r);
   virtual void seedExp(std::vector<experience> seeds);
   virtual void setDebug(bool d);
@@ -146,7 +146,7 @@ protected:
 
 
   /** Select action from the given state */
-  int chooseAction(const std::vector<float> &s);
+  int chooseAction(const std::vector<float> &s, float* avg_car_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
 
   /** Initialize the model with the given # of features */
   void initModel(int nfactors);

@@ -10,7 +10,6 @@ CC_SRCS += \
 ../src/models/LinearSplitsTree.cc \
 ../src/models/M5Tree.cc \
 ../src/models/MultipleClassifiers.cc \
-../src/models/RMaxModel.cc \
 ../src/models/SepPlanExplore.cc \
 ../src/models/Stump.cc 
 
@@ -21,7 +20,6 @@ CC_DEPS += \
 ./src/models/LinearSplitsTree.d \
 ./src/models/M5Tree.d \
 ./src/models/MultipleClassifiers.d \
-./src/models/RMaxModel.d \
 ./src/models/SepPlanExplore.d \
 ./src/models/Stump.d 
 
@@ -32,7 +30,6 @@ OBJS += \
 ./src/models/LinearSplitsTree.o \
 ./src/models/M5Tree.o \
 ./src/models/MultipleClassifiers.o \
-./src/models/RMaxModel.o \
 ./src/models/SepPlanExplore.o \
 ./src/models/Stump.o 
 
