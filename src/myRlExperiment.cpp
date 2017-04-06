@@ -55,7 +55,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 30; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -1180,7 +1180,7 @@ int main(int argc, char **argv) {
 //						float error_train_r = fabs(predReward-trueReward);
 //						model_error_train_reward += error_train_r;
 //					}
-					int K = 1000;
+					int K = 100;
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
@@ -1196,7 +1196,7 @@ int main(int argc, char **argv) {
 							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 							model_error_test += error_test;
 
-							float error_test_r = fabs(predReward-reward);
+							float error_test_r = fabs(predReward-reward)/rRange;
 							model_error_test_reward += error_test_r;
 							virtualBlockRoom->reset();
 						}
@@ -1215,6 +1215,7 @@ int main(int argc, char **argv) {
 
 //					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
 					reward_model_acc[trainStep/eval_freq] += model_error_test_reward;
+					step_reached[trainStep/eval_freq]++;
 //					plot_model_acc_test_r.push_back(std::make_pair(trainStep-pretrain_steps, model_error_test_reward));
 //					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
 				}
@@ -1323,10 +1324,10 @@ int main(int argc, char **argv) {
 
 
 				int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
-				std::cout << "Total variance bonus received at step 0 : " << avg_var_prop << std::endl;
-				std::cout << "Total novelty bonus received at step 0 : " << avg_nov_prop << std::endl;
-				std::cout << "Total enironment reward received at step 0 : " << avg_reward_prop << std::endl;
-				std::cout << "Total synchronisation bonus received at step 0 : " << avg_sync_prop << std::endl;
+//				std::cout << "Total variance bonus received at step 0 : " << avg_var_prop << std::endl;
+//				std::cout << "Total novelty bonus received at step 0 : " << avg_nov_prop << std::endl;
+//				std::cout << "Total enironment reward received at step 0 : " << avg_reward_prop << std::endl;
+//				std::cout << "Total synchronisation bonus received at step 0 : " << avg_sync_prop << std::endl;
 				occ_info_t info = e->apply(a);
 
 				if (with_tutor){
@@ -1362,7 +1363,7 @@ int main(int argc, char **argv) {
 								float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 								model_error_test += error_test;
 
-								float error_test_r = fabs(predReward-reward);
+								float error_test_r = fabs(predReward-reward)/rRange;
 								model_error_test_r += error_test_r;
 								virtualBlockRoom->reset();
 							}
@@ -1393,11 +1394,11 @@ int main(int argc, char **argv) {
 					es = e->sensation();
 
 					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
-					std::cout << "Total variance bonus received at step " << episode_step << " : " << avg_var_prop << std::endl;
-					std::cout << "Total novelty bonus received at step " << episode_step << " : " << avg_nov_prop << std::endl;
-
-					std::cout << "Total enironment reward received at step " << episode_step << " : " << avg_reward_prop << std::endl;
-					std::cout << "Total synchronisation bonus received at step " << episode_step << " : " << avg_sync_prop << std::endl;
+//					std::cout << "Total variance bonus received at step " << episode_step << " : " << avg_var_prop << std::endl;
+//					std::cout << "Total novelty bonus received at step " << episode_step << " : " << avg_nov_prop << std::endl;
+//
+//					std::cout << "Total enironment reward received at step " << episode_step << " : " << avg_reward_prop << std::endl;
+//					std::cout << "Total synchronisation bonus received at step " << episode_step << " : " << avg_sync_prop << std::endl;
 					info = e->apply(a);
 
 					t_feedback = e->tutorAction();
@@ -1438,9 +1439,9 @@ int main(int argc, char **argv) {
 		delete agent;
 	}
 
-	for (auto action_model_acc: model_acc){
-		for (int i = 0; i<action_model_acc.second.size(); i++){
-			if (step_reached[i]!=0) action_model_acc.second[i]/=step_reached[i];
+	for (int i=0;i<numactions;i++){
+		for (int j = 0; j<model_acc[i].size(); j++){
+			if (step_reached[j]!=0) model_acc[i][j]/=step_reached[j];
 		}
 	}
 	for (int i = 0; i<reward_model_acc.size(); i++){
