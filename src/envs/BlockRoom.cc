@@ -680,7 +680,7 @@ occ_info_t BlockRoom::apply(int action){
 			(*agent_ew) = nearby_pos.front().second;
 		}
 		success = true;
-		reward -= 1;
+		//reward -= 1;
 	}
 	if (action == actions["PICK"]){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
@@ -694,7 +694,7 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[idx].is_in_red_box) = false;
 				}
 				success = true;
-				reward -= 1;
+				//reward -= 1;
 				//reward += 10;
 			}
 		}
@@ -798,13 +798,13 @@ occ_info_t BlockRoom::apply(int action){
 		(*agent_eye_ew) = (*red_box_ew);
 		(*agent_eye_ns) = (*red_box_ns);
 		success = true;
-		reward -= 1;
+		//reward -= 1;
 	}
 	if (action==actions["LOOK_BLUE_BOX"]){
 		(*agent_eye_ew) = (*blue_box_ew);
 		(*agent_eye_ns) = (*blue_box_ns);
 		success = true;
-		reward -= 1;
+		//reward -= 1;
 	}
 	if (action>numactions-nbBlueBlocks-nbRedBlocks-1
 			&& action<numactions){
@@ -815,7 +815,7 @@ occ_info_t BlockRoom::apply(int action){
 			(*agent_eye_ew) = *(blocks[num_block].ew);
 			(*agent_eye_ns) = *(blocks[num_block].ns);
 			success = true;
-			reward -= 1;
+			//reward -= 1;
 		}
 	}
 	if ((*block_hold)>-1){

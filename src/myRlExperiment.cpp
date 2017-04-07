@@ -1346,7 +1346,7 @@ int main(int argc, char **argv) {
 				while (!e->terminal() && episode_step < maxsteps) {
 					if ((trial_step+episode_step) % eval_freq == 0){
 						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
-						int K = 1000;
+						int K = 100;
 						float model_error_test_r = 0;
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 							float model_error_test = 0.;
