@@ -103,7 +103,7 @@ void ModelBasedAgent::initParams(){
   
   BATCH_FREQ = 1; //50;
 
-  TIMEDEBUG = true; //true;
+  TIMEDEBUG = false; //true;
   AGENTDEBUG = false;
   ACTDEBUG = false;//true;
   SIMPLEDEBUG = false; //true; //false; //true;
@@ -418,6 +418,7 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
       
     }
   }
+
 
 
 }

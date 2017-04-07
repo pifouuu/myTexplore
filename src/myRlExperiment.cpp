@@ -916,7 +916,7 @@ int main(int argc, char **argv) {
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
-
+	name += "_batch_50";
 	boost::filesystem::path rootPath ( "./resultats_2/" + name );
 	boost::system::error_code returnedError;
 
