@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 4; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 3; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -1169,7 +1169,7 @@ int main(int argc, char **argv) {
 //						float error_train_r = fabs(predReward-trueReward);
 //						model_error_train_reward += error_train_r;
 //					}
-					int K = 1000;
+					int K = 100;
 					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 						float model_error_test = 0.;
 						for (int testStep=0;testStep<K;testStep++){
@@ -1330,7 +1330,7 @@ int main(int argc, char **argv) {
 				while (!e->terminal() && episode_step < maxsteps) {
 					if ((trial_step+episode_step) % eval_freq == 0){
 						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
-						int K = 1000;
+						int K = 100;
 						float model_error_test_r = 0;
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 							float model_error_test = 0.;
@@ -1401,6 +1401,50 @@ int main(int argc, char **argv) {
 				trial_reward += episode_reward;
 				trial_tutor_reward += episode_tutor_reward;
 				trial_step += episode_step;
+
+				for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
+						it != model_acc.end(); ++it){
+			//		fstream action_acc(rootPath.string()+"/model_acc_"+action_names[it->first]+".dat",
+			//				ios::out | ios::binary);
+			//		if ( !action_acc ) {
+			//		    cerr << "The file could not be opened." << endl;
+			//		    exit(1);
+			//		}
+					// serialize vector
+					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
+					boost::archive::text_oarchive oa(ofs);
+					oa & it->second;
+				}
+
+				std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
+				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+				oa_model_acc_test_r & reward_model_acc;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/accumulated_reward.ser");
+				boost::archive::text_oarchive oa_reward(ofs);
+				oa_reward & accu_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
+				boost::archive::text_oarchive oa_tutor_r(ofs);
+				oa_tutor_r & accu_tutor_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/x_axis.ser");
+				boost::archive::text_oarchive x_axis(ofs);
+				x_axis & eval_steps;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/num_trials.ser");
+				boost::archive::text_oarchive num_trials(ofs);
+				num_trials & step_reached;
+				ofs.close();
+				ofs.clear();
 			}
 
 		}
@@ -1408,58 +1452,7 @@ int main(int argc, char **argv) {
 		delete agent;
 	}
 
-	for (auto action_model_acc: model_acc){
-		for (int i = 0; i<action_model_acc.second.size(); i++){
-			if (step_reached[i]!=0) action_model_acc.second[i]/=step_reached[i];
-		}
-	}
-	for (int i = 0; i<reward_model_acc.size(); i++){
-		if (step_reached[i]!=0) reward_model_acc[i]/=step_reached[i];
-	}
-	for (int i = 0; i<accu_rewards.size(); i++){
-		if (step_reached[i]!=0) accu_rewards[i]/=step_reached[i];
-	}
-	for (int i = 0; i<accu_tutor_rewards.size(); i++){
-		if (step_reached[i]!=0) accu_tutor_rewards[i]/=step_reached[i];
-	}
 
-	for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
-			it != model_acc.end(); ++it){
-//		fstream action_acc(rootPath.string()+"/model_acc_"+action_names[it->first]+".dat",
-//				ios::out | ios::binary);
-//		if ( !action_acc ) {
-//		    cerr << "The file could not be opened." << endl;
-//		    exit(1);
-//		}
-		// serialize vector
-		std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-		boost::archive::text_oarchive oa(ofs);
-		oa & it->second;
-	}
-
-	std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
-	boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-	oa_model_acc_test_r & reward_model_acc;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/accumulated_reward.ser");
-	boost::archive::text_oarchive oa_reward(ofs);
-	oa_reward & accu_rewards;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
-	boost::archive::text_oarchive oa_tutor_r(ofs);
-	oa_tutor_r & accu_tutor_rewards;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/x_axis.ser");
-	boost::archive::text_oarchive x_axis(ofs);
-	x_axis & eval_steps;
-	ofs.close();
-	ofs.clear();
 
 
 } // end main

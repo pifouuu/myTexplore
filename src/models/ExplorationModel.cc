@@ -114,7 +114,7 @@ bool ExplorationModel::updateWithExperience(experience &e){
 		visitChange = visitChange || retval;
 	}
 
-	if (exploreType == UNVISITED_ACT_BONUS || exploreType == DIFF_AND_VISIT_BONUS || exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS){
+	if (exploreType == UNVISITED_ACT_BONUS || exploreType == DIFF_AND_VISIT_BONUS || exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
 		std::vector<float> last2 = e.s;
 		last2.push_back(e.act);
 		bool retval = addStateToSet(last2);

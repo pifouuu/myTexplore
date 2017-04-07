@@ -101,9 +101,9 @@ void ModelBasedAgent::initParams(){
   modelChanged = false;
 
   
-  BATCH_FREQ = 5; //50;
+  BATCH_FREQ = 1; //50;
 
-  TIMEDEBUG = false; //true;
+  TIMEDEBUG = true; //true;
   AGENTDEBUG = false;
   ACTDEBUG = false;//true;
   SIMPLEDEBUG = false; //true; //false; //true;
