@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 30; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.1;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 20.0;
+	float actrate = 10.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -1346,7 +1346,7 @@ int main(int argc, char **argv) {
 				while (!e->terminal() && episode_step < maxsteps) {
 					if ((trial_step+episode_step) % eval_freq == 0){
 						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
-						int K = 1000;
+						int K = 100;
 						float model_error_test_r = 0;
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 							float model_error_test = 0.;
@@ -1529,6 +1529,10 @@ int main(int argc, char **argv) {
 	ofs.close();
 	ofs.clear();
 
-
+	ofs.open(rootPath.string()+"/num_trials.ser");
+	boost::archive::text_oarchive num_trials(ofs);
+	num_trials & step_reached;
+	ofs.close();
+	ofs.clear();
 } // end main
 
