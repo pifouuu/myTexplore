@@ -199,6 +199,8 @@ int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* av
   }
   
   if (SIMPLEDEBUG) cout << "Got Reward " << r << endl;
+
+  if (nactions>=1000){model->setTesting(true);}
  
   // update our models
   // this is where we possibly plan again if model changes

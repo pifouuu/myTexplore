@@ -71,6 +71,7 @@ public:
   void setTesting(bool testMode);
 
   Environment* trueEnv;
+  bool testMode;
 
   bool MODEL_DEBUG;
 
@@ -101,7 +102,7 @@ private:
   const float n;
   const float tutorBonus;
 
-  bool testMode;
+
 
   Random rng;
   

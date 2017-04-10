@@ -55,7 +55,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -916,6 +916,7 @@ int main(int argc, char **argv) {
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
+	name += "_explo1000";
 
 	boost::filesystem::path rootPath ( "./resultats_2/" + name );
 	boost::system::error_code returnedError;
@@ -1393,7 +1394,13 @@ int main(int argc, char **argv) {
 					// perform an action
 					es = e->sensation();
 
-					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					if (trial_step+episode_step<1000){
+						a = agent->next_action(0, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					}
+					else{
+						a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					}
+
 //					std::cout << "Total variance bonus received at step " << episode_step << " : " << avg_var_prop << std::endl;
 //					std::cout << "Total novelty bonus received at step " << episode_step << " : " << avg_nov_prop << std::endl;
 //
@@ -1422,9 +1429,20 @@ int main(int argc, char **argv) {
 
 				// terminal/last state
 				if (e->terminal()){
-					agent->last_action(info.reward);
+					if (trial_step+episode_step<1000){
+						agent->last_action(0);
+					}
+					else{
+						agent->last_action(info.reward);
+					}
+
 				}else{
-					agent->next_action(info.reward, e->sensation(), &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					if (trial_step+episode_step<1000){
+						a = agent->next_action(0, e->sensation(), &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					}
+					else{
+						a = agent->next_action(info.reward, e->sensation(), &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					}
 				}
 
 				e->reset();
@@ -1432,6 +1450,74 @@ int main(int argc, char **argv) {
 				trial_reward += episode_reward;
 				trial_tutor_reward += episode_tutor_reward;
 				trial_step += episode_step;
+
+				for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
+						it != model_acc.end(); ++it){
+			//		fstream action_acc(rootPath.string()+"/model_acc_"+action_names[it->first]+".dat",
+			//				ios::out | ios::binary);
+			//		if ( !action_acc ) {
+			//		    cerr << "The file could not be opened." << endl;
+			//		    exit(1);
+			//		}
+					// serialize vector
+					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
+					boost::archive::text_oarchive oa(ofs);
+					oa & it->second;
+				}
+
+				std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
+				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+				oa_model_acc_test_r & reward_model_acc;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/accumulated_reward.ser");
+				boost::archive::text_oarchive oa_accu_reward(ofs);
+				oa_accu_reward & accu_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
+				boost::archive::text_oarchive oa_tutor_r(ofs);
+				oa_tutor_r & accu_tutor_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/var_prop.ser");
+				boost::archive::text_oarchive oa_var(ofs);
+				oa_var & var_prop;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/nov_prop.ser");
+				boost::archive::text_oarchive oa_nov(ofs);
+				oa_nov & nov_prop;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/sync_prop.ser");
+				boost::archive::text_oarchive oa_sync(ofs);
+				oa_sync & sync_prop;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/reward_prop.ser");
+				boost::archive::text_oarchive oa_reward(ofs);
+				oa_reward & reward_prop;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/x_axis.ser");
+				boost::archive::text_oarchive x_axis(ofs);
+				x_axis & eval_steps;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/num_trials.ser");
+				boost::archive::text_oarchive num_trials(ofs);
+				num_trials & step_reached;
+				ofs.close();
+				ofs.clear();
 			}
 
 		}
@@ -1439,100 +1525,7 @@ int main(int argc, char **argv) {
 		delete agent;
 	}
 
-	for (int i=0;i<numactions;i++){
-		for (int j = 0; j<model_acc[i].size(); j++){
-			if (step_reached[j]!=0) model_acc[i][j]/=step_reached[j];
-		}
-	}
-	for (int i = 0; i<reward_model_acc.size(); i++){
-		if (step_reached[i]!=0) reward_model_acc[i]/=step_reached[i];
-	}
-	for (int i = 0; i<accu_rewards.size(); i++){
-		if (step_reached[i]!=0) accu_rewards[i]/=step_reached[i];
-	}
-	for (int i = 0; i<accu_tutor_rewards.size(); i++){
-		if (step_reached[i]!=0) accu_tutor_rewards[i]/=step_reached[i];
-	}
-	for (int i = 0; i<var_prop.size(); i++){
-		if (step_reached[i]!=0) var_prop[i]/=step_reached[i];
-	}
-	for (int i = 0; i<nov_prop.size(); i++){
-		if (step_reached[i]!=0) nov_prop[i]/=step_reached[i];
-	}
-	for (int i = 0; i<reward_prop.size(); i++){
-		if (step_reached[i]!=0) reward_prop[i]/=step_reached[i];
-	}
-	for (int i = 0; i<sync_prop.size(); i++){
-		if (step_reached[i]!=0) sync_prop[i]/=step_reached[i];
-	}
 
 
-	for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
-			it != model_acc.end(); ++it){
-//		fstream action_acc(rootPath.string()+"/model_acc_"+action_names[it->first]+".dat",
-//				ios::out | ios::binary);
-//		if ( !action_acc ) {
-//		    cerr << "The file could not be opened." << endl;
-//		    exit(1);
-//		}
-		// serialize vector
-		std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-		boost::archive::text_oarchive oa(ofs);
-		oa & it->second;
-	}
-
-	std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
-	boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-	oa_model_acc_test_r & reward_model_acc;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/accumulated_reward.ser");
-	boost::archive::text_oarchive oa_accu_reward(ofs);
-	oa_accu_reward & accu_rewards;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
-	boost::archive::text_oarchive oa_tutor_r(ofs);
-	oa_tutor_r & accu_tutor_rewards;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/var_prop.ser");
-	boost::archive::text_oarchive oa_var(ofs);
-	oa_var & var_prop;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/nov_prop.ser");
-	boost::archive::text_oarchive oa_nov(ofs);
-	oa_nov & nov_prop;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/sync_prop.ser");
-	boost::archive::text_oarchive oa_sync(ofs);
-	oa_sync & sync_prop;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/reward_prop.ser");
-	boost::archive::text_oarchive oa_reward(ofs);
-	oa_reward & reward_prop;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/x_axis.ser");
-	boost::archive::text_oarchive x_axis(ofs);
-	x_axis & eval_steps;
-	ofs.close();
-	ofs.clear();
-
-	ofs.open(rootPath.string()+"/num_trials.ser");
-	boost::archive::text_oarchive num_trials(ofs);
-	num_trials & step_reached;
-	ofs.close();
-	ofs.clear();
 } // end main
 
