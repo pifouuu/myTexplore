@@ -157,10 +157,10 @@ std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<flo
 			return p1.second < p2.second;
 		}
 	);
-	return std::make_tuple(pr->first, sa_info.reward,sa_info.termProb);
+	return std::make_tuple(pr->first, sa_info.envReward,sa_info.termProb);
 }
 
-int ModelBasedAgent::first_action(const std::vector<float> &s) {
+int ModelBasedAgent::first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) {
   if (AGENTDEBUG) cout << "first_action(s)" << endl;
 
   if (model == NULL)
@@ -173,7 +173,7 @@ int ModelBasedAgent::first_action(const std::vector<float> &s) {
     planner->planOnNewModel();
 
   // choose an action
-  int act = chooseAction(s);
+  int act = chooseAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
 
   // save curr state/action for next time
   saveStateAndAction(s, act);
@@ -192,7 +192,7 @@ int ModelBasedAgent::first_action(const std::vector<float> &s) {
 
 }
 
-int ModelBasedAgent::next_action(float r, const std::vector<float> &s) {
+int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop) {
   if (AGENTDEBUG) {
     cout << "next_action(r = " << r 
 	 << ", s = " << &s << ")" << endl;
@@ -205,7 +205,7 @@ int ModelBasedAgent::next_action(float r, const std::vector<float> &s) {
   updateWithNewExperience(prevstate, s, prevact, r, false);
 
   // choose an action
-  int act = chooseAction(s);
+  int act = chooseAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
   
   // save curr state/action for next time
   saveStateAndAction(s, act);
@@ -274,7 +274,7 @@ void ModelBasedAgent::initModel(int nfactors){
   
   // 0 - traditional rmax model (unknown until m visits, then ML)
   if (modelType == RMAX) {
-    model = new RMaxModel(M, numactions, rng);
+//    model = new RMaxModel(M, numactions, rng);
   }
   
   // any tree or stump will be mdptree
@@ -322,7 +322,7 @@ void ModelBasedAgent::setTrueEnv(Environment* e){
 void ModelBasedAgent::initPlanner(){
   if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-  int max_path = 20; //500;
+  int max_path = 100; //500;
 
   // init planner based on typ
   /*
@@ -427,7 +427,7 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
 	planner->evaluate_model();
 }*/
 
-int ModelBasedAgent::chooseAction(const std::vector<float> &s){
+int ModelBasedAgent::chooseAction(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop){
   if (AGENTDEBUG) cout << "chooseAction(s = " << &s 
 		    << ")" << endl;
 
@@ -436,7 +436,7 @@ int ModelBasedAgent::chooseAction(const std::vector<float> &s){
 
   // get action to take from planner
   if (TIMEDEBUG) initTime = getSeconds();
-  int act = planner->getBestAction(s);
+  int act = planner->getBestAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
   if (TIMEDEBUG) {
     timeTwo = getSeconds();
     planningTime += (timeTwo - initTime);
@@ -540,7 +540,7 @@ void ModelBasedAgent::logValues(ofstream *of, int xmin, int xmax, int ymin, int 
 
   // call planner
   if (plannerType == PARALLEL_ET_UCT){
-    ((ParallelETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);
+//    ((ParallelETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);
   }
   if (plannerType == ET_UCT){
     ((ETUCT*)planner)->logValues(of, xmin, xmax, ymin, ymax);

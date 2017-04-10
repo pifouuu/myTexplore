@@ -137,7 +137,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 	//cout << "state: " << state[0] << " act: " << act;
 
 	if (MODEL_DEBUG)// || (conf > 0.0 && conf < 1.0))
-		cout << "reward: " << retval->reward << " conf: " << conf << endl;
+		cout << "reward: " << retval->sumReward() << " conf: " << conf << endl;
 
 	if (!testMode){
 
@@ -153,7 +153,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 					}
 					cout << " Action: " << act << endl;
 				}
-				retval->reward = qmax;
+				retval->envReward = qmax;
 				retval->termProb = 1.0;
 				if (MODEL_DEBUG || MODEL_DEBUG)
 					cout << "   State-Action Unknown in model, using qmax "
@@ -165,15 +165,15 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		if (exploreType == UNVISITED_BONUS){
 			if (!checkForState(state)){
 				// modify reward with a bonus of n
-				float newQ =retval->reward + n;
+				float newQ =retval->envReward + n;
 				if (MODEL_DEBUG){
 					cout << "   State unvisited bonus, orig R: "
-							<< retval->reward
+							<< retval->envReward
 							<< " adding n: " << n
 							<< " new value : " << newQ
 							<< endl;
 				}
-				retval->reward = newQ;
+				retval->novBonus = n;
 			}
 		}
 
@@ -183,15 +183,15 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			state2.push_back(act);
 			if (!checkForState(state2)){
 				// modify reward with a bonus of n
-				float newQ =retval->reward + n;
+				float newQ =retval->envReward + n;
 				if (MODEL_DEBUG){
 					cout << "   State-Action unvisited bonus, orig R: "
-							<< retval->reward
+							<< retval->envReward
 							<< " adding n: " << n
 							<< " new value : " << newQ
 							<< endl;
 				}
-				retval->reward = newQ;
+				retval->novBonus = n;
 			}
 		}
 
@@ -207,7 +207,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 					cout << "   State-Action novel state bonus, dist: " << featDist
 							<< " n: " << n << ", bonus, " << bonus << endl;
 				}
-				retval->reward += bonus;
+				retval->novBonus = bonus;
 			}
 		}
 
@@ -222,7 +222,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 							<< ", using v*(1-conf): "
 							<< bonus << endl;
 				}
-				retval->reward = bonus;
+				retval->varBonus = bonus;
 				retval->termProb = 1.0;
 			}
 		}
@@ -232,7 +232,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			if (conf < 1.0){
 				// percent of conf
 				float bonus = (1.0-conf)*v;
-				retval->reward += bonus;
+				retval->varBonus = bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action continuous bonus conf: "
 							<< conf
@@ -253,7 +253,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 							<< ", using v "
 							<< v << endl;
 				}
-				retval->reward = bonus;
+				retval->varBonus = bonus;
 				retval->termProb = 1.0;
 			}
 		}
@@ -262,7 +262,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		if (exploreType == THRESHOLD_BONUS_R){
 			if (conf < 0.9){
 				float bonus = v;
-				retval->reward += bonus;
+				retval->varBonus += bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action conf< thresh: "
 							<< conf
@@ -277,7 +277,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		if (exploreType == VISITS_CONF){
 			if (conf < 0.5){
 				float bonus = qmax;
-				retval->reward += bonus;
+				retval->envReward += bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action conf< thresh or 0 visits: "
 							<< conf
@@ -285,7 +285,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 							<< ", using qmax "
 							<< qmax << endl;
 				}
-				retval->reward = bonus;
+				retval->envReward = bonus;
 				retval->termProb = 1.0;
 			}
 		}
@@ -294,7 +294,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			bool sync = trueEnv->isSyncTutor(state);
 			float bonus = tutorBonus;
 			if (sync){
-				retval->reward += bonus;
+				retval->syncBonus = bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action tutor bonus: " << endl;
 				}
@@ -302,10 +302,11 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		}
 	}
 
+	float sumReward = retval->sumReward();
 
 	if (MODEL_DEBUG)
-		cout << "   Conf: " << conf << "   Avg reward: " << retval->reward << endl;
-	if (isnan(retval->reward))
+		cout << "   Conf: " << conf << "   Avg reward: " << sumReward << endl;
+	if (isnan(sumReward))
 		cout << "ERROR: Model returned reward of NaN" << endl;
 
 	return true;
