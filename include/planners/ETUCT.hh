@@ -83,7 +83,7 @@ public:
   bool MODELDEBUG;
   bool ACTDEBUG;
   bool UCTDEBUG;
-  bool REALSTATEDEBUG;
+  bool REALSTATEDEBUG = false;
   bool HISTORYDEBUG;
   bool QDEBUG;
   bool USETRUEENV;

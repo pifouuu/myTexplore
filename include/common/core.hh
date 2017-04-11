@@ -193,10 +193,12 @@ struct occ_info_t{
 	};
 
 struct tutor_feedback{
-	float virtual_reward;
+	float tutor_reward;
+	float reward;
 	int action;
-	tutor_feedback(float r, int a){
-		virtual_reward =r;
+	tutor_feedback(float r1, float r2, int a){
+		tutor_reward =r1;
+		reward = r2;
 		action = a;
 	}
 

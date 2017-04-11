@@ -909,6 +909,7 @@ int BlockRoom::trueBestAction(){
 }
 
 tutor_feedback BlockRoom::tutorAction(){
+	float tutor_reward = 0.;
 	float reward = 0.;
 	int tutoract;
 	if (*block_hold!=-1 && *(blocks[*block_hold].color)==RED) {tutoract = tutor_actions["LOOK_RED_BOX"];}
@@ -933,8 +934,12 @@ tutor_feedback BlockRoom::tutorAction(){
 
 	}
 
-	if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {reward += 100;}
 
-	return tutor_feedback(reward,tutoract);
+	if (get_blocks_in()==nbRedBlocks+nbBlueBlocks){
+		reward += finalReward;
+		if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {tutor_reward += finalReward;}
+	}
+
+	return tutor_feedback(tutor_reward, reward, tutoract);
 }
 

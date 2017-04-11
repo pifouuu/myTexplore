@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -938,6 +938,8 @@ int main(int argc, char **argv) {
 	std::vector<float> reward_model_acc((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 	std::vector<float> accu_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 	std::vector<float> accu_tutor_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	std::vector<float> accu_tutor_rewards_2((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+
 	std::vector<int> step_reached((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<int> eval_steps((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, -pretrain_steps);
 
@@ -961,6 +963,7 @@ int main(int argc, char **argv) {
 		int trial_step = 0;
 		float trial_reward = 0.;
 		float trial_tutor_reward = 0.;
+		float trial_tutor_reward_2 = 0.;
 
 		float avg_var_prop = 0.;
 		float avg_nov_prop = 0.;
@@ -1315,8 +1318,9 @@ int main(int argc, char **argv) {
 
 				float episode_reward = 0;
 				float episode_tutor_reward =0.;
+				float episode_tutor_reward_2 = 0.;
 				int episode_step = 0;
-				tutor_feedback t_feedback(0.,0);
+				tutor_feedback t_feedback(0.,0., 0);
 
 				// first action
 				std::vector<float> es = e->sensation();
@@ -1340,7 +1344,8 @@ int main(int argc, char **argv) {
 
 				// update performance
 				episode_reward += info.reward;
-				episode_tutor_reward += t_feedback.virtual_reward;
+				episode_tutor_reward += t_feedback.tutor_reward;
+				episode_tutor_reward_2 += t_feedback.reward;
 
 				while (!e->terminal() && episode_step < maxsteps) {
 					if ((trial_step+episode_step) % eval_freq == 0){
@@ -1373,6 +1378,7 @@ int main(int argc, char **argv) {
 						model_error_test_r /= (K*numactions);
 						reward_model_acc[(trial_step+episode_step)/eval_freq] += model_error_test_r;
 						accu_rewards[(trial_step+episode_step)/eval_freq] += trial_reward+episode_reward;
+						accu_tutor_rewards_2[(trial_step+episode_step)/eval_freq] += trial_tutor_reward_2+episode_tutor_reward_2;
 						accu_tutor_rewards[(trial_step+episode_step)/eval_freq] += trial_tutor_reward+episode_tutor_reward;
 						step_reached[(trial_step+episode_step)/eval_freq]++;
 
@@ -1413,7 +1419,8 @@ int main(int argc, char **argv) {
 
 					// update performance
 					episode_reward += info.reward;
-					episode_tutor_reward += t_feedback.virtual_reward;
+					episode_tutor_reward += t_feedback.tutor_reward;
+					episode_tutor_reward_2 += t_feedback.reward;
 
 
 
@@ -1430,6 +1437,8 @@ int main(int argc, char **argv) {
 
 				trial_reward += episode_reward;
 				trial_tutor_reward += episode_tutor_reward;
+				trial_tutor_reward_2 += episode_tutor_reward_2;
+
 				trial_step += episode_step;
 
 				for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
@@ -1461,6 +1470,12 @@ int main(int argc, char **argv) {
 				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
 				boost::archive::text_oarchive oa_tutor_r(ofs);
 				oa_tutor_r & accu_tutor_rewards;
+				ofs.close();
+				ofs.clear();
+
+				ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
+				boost::archive::text_oarchive oa_tutor_r_2(ofs);
+				oa_tutor_r_2 & accu_tutor_rewards_2;
 				ofs.close();
 				ofs.clear();
 
