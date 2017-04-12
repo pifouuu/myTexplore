@@ -936,8 +936,8 @@ tutor_feedback BlockRoom::tutorAction(){
 
 
 	if (get_blocks_in()==nbRedBlocks+nbBlueBlocks){
-		reward += finalReward;
-		if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {tutor_reward += finalReward;}
+		reward += 100;
+		if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {tutor_reward += 100;}
 	}
 
 	return tutor_feedback(tutor_reward, reward, tutoract);
