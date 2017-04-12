@@ -255,6 +255,7 @@ bool FactoredModel::updateWithExperiences(std::vector<experience> &instances) {
 	for (unsigned i = 0; i < instances.size(); i++) {
 		experience e = instances[i];
 
+
 		std::vector<float> inputs(e.s.size() + nact);
 
 		for (unsigned k = 0; k < e.s.size(); k++) {
