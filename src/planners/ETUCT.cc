@@ -900,7 +900,8 @@ std::vector<float> ETUCT::simulateNextState(
 		}
 	}
 	else {
-
+		//nextstate = trueEnv->apply(action);
+		//NOT WORKING
 	}
 
 	if (UCTDEBUG)

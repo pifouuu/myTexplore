@@ -55,7 +55,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 20; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -1070,7 +1070,7 @@ int main(int argc, char **argv) {
 		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
 		virtualBlockRoom->setDebug(false);
 
-		if (PRETRAIN){
+		if (PRETRAIN && pretrain_steps>0){
 
 			std::cout << "Pretraining :" <<std::endl;
 
@@ -1080,6 +1080,9 @@ int main(int argc, char **argv) {
 			int virtualAct;
 			std::vector<float> virtualState;
 			std::vector<experience> experiences;
+			std::vector<int> numex(numactions,0);
+			std::vector<int> numex_succes(numactions,0);
+			int num_rew = 0;
 
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 				// 23 = nb blocks * 6 étapes par bloc -1
@@ -1095,6 +1098,8 @@ int main(int argc, char **argv) {
 					}
 				}
 
+
+
 				experience exp;
 				exp.s = virtualBlockRoom->sensation();
 
@@ -1103,93 +1108,46 @@ int main(int argc, char **argv) {
 
 				virtualReward = virtualBlockRoom->apply(virtualAct).reward;
 				exp.next = virtualBlockRoom->sensation();
+
 				exp.reward = virtualReward;
+
 
 				exp.terminal = virtualBlockRoom->terminal();
 				count_r += exp.reward;
 
 				experiences.push_back(exp);
 
+				numex[virtualAct]++;
+				if (exp.next!=exp.s) numex_succes[virtualAct]++;
+				if (exp.reward>0) num_rew++;
+
 				virtualBlockRoom->reset();
 
-//				for (int sample_act = 0; sample_act<numactions; sample_act++){
-//					std::pair<std::vector<float>,float> sample_next = e->getMostProbNextState(sample_last,sample_act);
-//					training_samples.push_back(std::make_tuple(sample_last,sample_act,sample_next.first, sample_next.second));
-//
-//					experience exp;
-//					exp.s = sample_last;
-//					exp.next = sample_next.first;
-//					exp.act = sample_act;
-//					exp.reward = sample_next.second;
-//					exp.terminal = false;
-//					count_r += exp.reward;
-//
-//					bool modelChanged = agent->train_only(exp);
-//				}
-
-//				if (trainStep % 20 == 0){
-//					cout << "step " << trainStep << ", received reward : "<< count_r << endl;
-//					int inputvec = 0;
-//					cout << "test ? Enter number for ok." << endl;
-//					while ((cin >> inputvec) && inputvec != 9999){
-//						cout << "Input vector ? :"<<endl;
-//						int val;
-//						std::vector<float> testvec(14);
-//						int i = 0;
-//						while ((cin >> val) && val != 9999)
-//							testvec[i] = val;
-//						i++;
-//						cin.clear();
-//						int act_input;
-//						cout << "Input action ?"<<endl;
-//						cin >> act_input;
-//						std::tuple<std::vector<float>,float,float> prediction = agent->pred(testvec, act_input);
-//						cout << "most probable state :";
-//						for (int i=0; i<testvec.size();i++){
-//							cout << std::get<0>(prediction)[i] <<", ";
-//						}
-//						cout << endl;
-//						cout << "expected reward :" << std::get<1>(prediction) << endl;
-//					}
-//					cin.clear();
-//
-//				}
-				/*
-				if (trainStep % eval_freq == 0){
-
+				if (trainStep % 10000 == 0){
+					bool modelChanged = agent->train_only_many(experiences);
+					experiences.clear();
 					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
-//					float model_error_train = 0.;
-					float model_error_test_reward = 0;
-//					float model_error_train_reward = 0;
 
-					//int numsamples = training_samples.size();
-
-//					for (int step=0;step<50;step++){
-//						double r = rand() % numsamples;
-//						auto it = training_samples.begin();
-//						std::advance(it, r);
-//						std::vector<float> sample_train = std::get<0>(*it);
-//						int sample_act_train = std::get<1>(*it);
-//
-//						std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_train, sample_act_train);
-//						std::vector<float> predNextState = std::get<0>(prediction);
-//						float predReward = std::get<1>(prediction);
-//						//float predTermProb = std::get<2>(prediction);
-//
-//						std::vector<float> trueNextState = std::get<2>(*it);
-//						float error_train = e->getEuclidianDistance(predNextState, trueNextState, minValues, maxValues);
-//						model_error_train += error_train;
-//
-//						float trueReward = std::get<3>(*it);
-//						float error_train_r = fabs(predReward-trueReward);
-//						model_error_train_reward += error_train_r;
-//					}
 					int K = 100;
-					for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-						float model_error_test = 0.;
-						for (int testStep=0;testStep<K;testStep++){
+					float model_error_test_r = 0;
+					std::vector<float> model_error_acts(numactions,0);
+					std::vector<float> virtualState;
+					float virtualReward;
+					int virtualAct;
+					for (int testStep=0;testStep<K;testStep++){
+						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
+						for (int i=0; i<nb_act; i++){
+							virtualState = virtualBlockRoom->sensation();
+							if (!virtualBlockRoom->terminal()){
+								virtualAct = virtualBlockRoom->trueBestAction();
+								virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+							}
+							else{
+								virtualBlockRoom->reset();
+							}
+						}
+						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 							std::vector<float> sample_test = virtualBlockRoom->sensation();
-
 							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 							std::vector<float> predNextState = std::get<0>(prediction);
 							float predReward = std::get<1>(prediction);
@@ -1198,34 +1156,26 @@ int main(int argc, char **argv) {
 							std::vector<float> new_state = virtualBlockRoom->sensation();
 
 							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-							model_error_test += error_test;
+							model_error_acts[sample_act_test] += error_test;
 
 							float error_test_r = fabs(predReward-reward)/rRange;
-							model_error_test_reward += error_test_r;
-							virtualBlockRoom->reset();
+							model_error_test_r += error_test_r;
 						}
-						model_error_test /= K;
-						model_acc[sample_act_test][trainStep/eval_freq] += model_error_test;
-//						plot_model_acc_test[sample_act_test].push_back(std::make_pair(trainStep-pretrain_steps, model_error_test));
 					}
 
-//					model_error_train /= 50;
+					for (int i=0;i<numactions;i++){
+						model_error_acts[i]/=K;
+						model_acc[i][trainStep/eval_freq] += model_error_acts[i];
+					}
 
-//					model_error_train_reward /= 50;
-					model_error_test_reward /= (K*numactions);
+					model_error_test_r /= (K*numactions);
+					reward_model_acc[trainStep/eval_freq] += model_error_test_r;
 
-					//cout << "step " << trainStep << ", reward error on test set : " << model_error_test_reward << endl;
-					//cout << "step " << trainStep << ", model error on test set : " << model_error_test << endl;
-
-//					plot_model_acc_train.push_back(std::make_pair(trainStep, model_error_train));
-					reward_model_acc[trainStep/eval_freq] += model_error_test_reward;
 					step_reached[trainStep/eval_freq]++;
-//					plot_model_acc_test_r.push_back(std::make_pair(trainStep-pretrain_steps, model_error_test_reward));
-//					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
 				}
-				*/
+
 			}
-			bool modelChanged = agent->train_only_many(experiences);
+
 			trial_step += pretrain_steps;
 		}
 
@@ -1357,11 +1307,24 @@ int main(int argc, char **argv) {
 						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
 						int K = 100;
 						float model_error_test_r = 0;
-						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-							float model_error_test = 0.;
-							for (int testStep=0;testStep<K;testStep++){
+						std::vector<float> model_error_acts(numactions,0);
+						std::vector<float> virtualState;
+						float virtualReward;
+						int virtualAct;
+						for (int testStep=0;testStep<K;testStep++){
+							int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
+							for (int i=0; i<nb_act; i++){
+								virtualState = virtualBlockRoom->sensation();
+								if (!virtualBlockRoom->terminal()){
+									virtualAct = virtualBlockRoom->trueBestAction();
+									virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+								}
+								else{
+									virtualBlockRoom->reset();
+								}
+							}
+							for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
 								std::vector<float> sample_test = virtualBlockRoom->sensation();
-
 								std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 								std::vector<float> predNextState = std::get<0>(prediction);
 								float predReward = std::get<1>(prediction);
@@ -1370,18 +1333,21 @@ int main(int argc, char **argv) {
 								std::vector<float> new_state = virtualBlockRoom->sensation();
 
 								float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-								model_error_test += error_test;
+								model_error_acts[sample_act_test] += error_test;
 
 								float error_test_r = fabs(predReward-reward)/rRange;
 								model_error_test_r += error_test_r;
-								virtualBlockRoom->reset();
 							}
-							model_error_test /= K;
-							model_acc[sample_act_test][(trial_step+episode_step)/eval_freq] += model_error_test;
+						}
+
+						for (int i=0;i<numactions;i++){
+							model_error_acts[i]/=K;
+							model_acc[i][(trial_step+episode_step)/eval_freq] += model_error_acts[i];
 						}
 
 						model_error_test_r /= (K*numactions);
 						reward_model_acc[(trial_step+episode_step)/eval_freq] += model_error_test_r;
+
 						accu_rewards[(trial_step+episode_step)/eval_freq] += trial_reward+episode_reward;
 						accu_tutor_rewards_2[(trial_step+episode_step)/eval_freq] += trial_tutor_reward_2+episode_tutor_reward_2;
 						accu_tutor_rewards[(trial_step+episode_step)/eval_freq] += trial_tutor_reward+episode_tutor_reward;
