@@ -1350,7 +1350,9 @@ int main(int argc, char **argv) {
 				episode_tutor_reward += t_feedback.tutor_reward;
 				episode_tutor_reward_2 += t_feedback.reward;
 
+
 				while (!e->terminal() && episode_step < maxsteps) {
+
 					if ((trial_step+episode_step) % eval_freq == 0){
 						std::cout << "Trial " << j << ",eval at step "<< trial_step+episode_step << std::endl;
 						int K = 100;
@@ -1402,6 +1404,7 @@ int main(int argc, char **argv) {
 					es = e->sensation();
 
 					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+//					std::cout << a << std::endl;
 //					std::cout << "Total variance bonus received at step " << episode_step << " : " << avg_var_prop << std::endl;
 //					std::cout << "Total novelty bonus received at step " << episode_step << " : " << avg_nov_prop << std::endl;
 //
@@ -1424,9 +1427,6 @@ int main(int argc, char **argv) {
 					episode_reward += info.reward;
 					episode_tutor_reward += t_feedback.tutor_reward;
 					episode_tutor_reward_2 += t_feedback.reward;
-
-
-
 				}
 
 				// terminal/last state
