@@ -1079,6 +1079,7 @@ int main(int argc, char **argv) {
 			float virtualReward;
 			int virtualAct;
 			std::vector<float> virtualState;
+			std::vector<experience> experiences;
 
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 				// 23 = nb blocks * 6 étapes par bloc -1
@@ -1107,7 +1108,8 @@ int main(int argc, char **argv) {
 				exp.terminal = virtualBlockRoom->terminal();
 				count_r += exp.reward;
 
-				bool modelChanged = agent->train_only(exp);
+				experiences.push_back(exp);
+
 				virtualBlockRoom->reset();
 
 //				for (int sample_act = 0; sample_act<numactions; sample_act++){
@@ -1152,7 +1154,7 @@ int main(int argc, char **argv) {
 //					cin.clear();
 //
 //				}
-
+				/*
 				if (trainStep % eval_freq == 0){
 
 					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
@@ -1221,8 +1223,9 @@ int main(int argc, char **argv) {
 //					plot_model_acc_test_r.push_back(std::make_pair(trainStep-pretrain_steps, model_error_test_reward));
 //					plot_model_acc_train_r.push_back(std::make_pair(trainStep, model_error_train_reward));
 				}
+				*/
 			}
-
+			bool modelChanged = agent->train_only_many(experiences);
 			trial_step += pretrain_steps;
 		}
 

@@ -143,6 +143,12 @@ bool ModelBasedAgent::train_only(experience e){
 	return (model->updateWithExperience(e));
 }
 
+bool ModelBasedAgent::train_only_many(std::vector<experience> e){
+	if (model == NULL)
+	    initModel(e[0].s.size());
+	return (model->updateWithExperiences(e));
+}
+
 std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 	StateActionInfo sa_info;
 	model->setTesting(true);

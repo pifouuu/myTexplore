@@ -105,6 +105,7 @@ public:
   virtual void savePolicy(const char* filename);
   std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act);
   bool train_only(experience e);
+  bool train_only_many(std::vector<experience> e);
 
   /** Output value function to a file */
   void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);
