@@ -1,7 +1,7 @@
 /** \file C45Tree.hh
     Defines the C4.5 decision tree class.
     This is an implementation of C4.5 decision trees described in:
-    J. R. Quinlan, "Induction of decision trees," Machine Learning, vol 1. pp 81-106, 1986.
+    J. R. Quinlan,  ," Machine Learning, vol 1. pp 81-106, 1986.
     \author Todd Hester
 */
 

@@ -39,11 +39,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float final
 	int cnt_actions = 0;
 	int cnt_tutor_actions = 0;
 
-	/*actions[std::string("NORTH")] = cnt_actions++;
+	actions[std::string("NORTH")] = cnt_actions++;
 	actions[std::string("SOUTH")] = cnt_actions++;
 	actions[std::string("EAST")] = cnt_actions++;
-	actions[std::string("WEST")] = cnt_actions++;*/
-	actions[std::string("GO_TO_EYE")] = cnt_actions++;
+	actions[std::string("WEST")] = cnt_actions++;
+//	actions[std::string("GO_TO_EYE")] = cnt_actions++;
 	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
 	/*actions[std::string("PICK_BLUE")] = cnt_actions++;
@@ -644,7 +644,7 @@ occ_info_t BlockRoom::apply(int action){
 	bool success = false;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
-	/*if (action==actions["NORTH"]) {
+	if (action==actions["NORTH"]) {
 		if ((*agent_ns) < height-1) {
 			(*agent_ns)++;
 			success = true;
@@ -667,7 +667,8 @@ occ_info_t BlockRoom::apply(int action){
 			(*agent_ew)--;
 			success = true;
 		}
-	}*/
+	}
+	/*
 	if (action==actions["GO_TO_EYE"]) {
 		if (rng.bernoulli(stoch_param)) {
 			(*agent_ns) = (*agent_eye_ns);
@@ -682,6 +683,7 @@ occ_info_t BlockRoom::apply(int action){
 		success = true;
 		//reward -= 1;
 	}
+	*/
 	if (action == actions["PICK"]){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> blocks_under = find_block_under_eye();

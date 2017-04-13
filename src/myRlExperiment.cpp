@@ -1138,17 +1138,19 @@ int main(int argc, char **argv) {
 //				if (exp.reward>0) num_rew++;
 
 				virtualBlockRoom->reset();
+				bool modelChanged = agent->train_only(exp);
 
-
-				if (trainStep % 100 == 0 && trainStep !=0){
-					std::vector<experience> trainexp(experiences.end()-100,experiences.end());
+				if (trainStep % 1000 == 0 && trainStep !=0){
+					/*
+					std::vector<experience> trainexp(experiences.end()-1000,experiences.end());
 					bool modelChanged = agent->train_only_many(trainexp);
 
 					std::vector<int> numex(numactions,0);
 					std::vector<float> model_error_acts_train(numactions,0);
 					std::vector<float> model_error_comp_train(minValues.size(),0);
+					int K = 100;
 
-					for (int evalTrain=0;evalTrain<experiences.size();evalTrain++){
+					for (int evalTrain=0;evalTrain<numactions*K;evalTrain++){
 						std::tuple<std::vector<float>,float,float> prediction;
 						experience rand_exp = experiences[rng.uniformDiscrete(0, experiences.size()-1)];
 						prediction = agent->pred(rand_exp.s, rand_exp.act);
@@ -1176,11 +1178,11 @@ int main(int argc, char **argv) {
 						model_acc_train[i][trainStep/eval_freq] += model_error_acts_train[i];
 					}
 
-					model_error_train_r /= (experiences.size());
+					model_error_train_r /= (numactions*K);
 					reward_model_acc_train[trainStep/eval_freq] += model_error_train_r;
 
 					for (int i=0;i<minValues.size();i++){
-						model_error_comp_train[i] /= (experiences.size());
+						model_error_comp_train[i] /= (numactions*K);
 						comp_acc_train[i][trainStep/eval_freq] += model_error_comp_train[i];
 					}
 
@@ -1190,7 +1192,7 @@ int main(int argc, char **argv) {
 
 					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
 
-					int K = 100;
+
 					float model_error_test_r = 0;
 					std::vector<float> model_error_acts(numactions,0);
 					std::vector<float> model_error_comp(minValues.size(),0);
@@ -1299,7 +1301,7 @@ int main(int argc, char **argv) {
 					num_trials & step_reached;
 					ofs.close();
 					ofs.clear();
-
+					*/
 				}
 
 			}

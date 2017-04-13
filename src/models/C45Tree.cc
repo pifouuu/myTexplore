@@ -28,7 +28,7 @@ C45Tree::C45Tree(int id, int trainMode, int trainFreq, int m,
 
   MIN_GAIN_RATIO = 0.0001; //0.0004; //0.001; //0.0002; //0.001;
 
-  DTDEBUG = false; //true;
+  DTDEBUG = true; //true;
   SPLITDEBUG = false; //true;
   STOCH_DEBUG = false; //true; //false; //true;
   INCDEBUG = false; //true; //false; //true;
