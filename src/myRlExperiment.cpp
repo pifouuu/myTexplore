@@ -54,7 +54,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 10; //10; //200; //500; //200;
+unsigned NUMEPISODES = 20; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -910,6 +910,7 @@ int main(int argc, char **argv) {
 	auto str = oss.str();
 
 	std::string name = str;
+	name += "_"+std::to_string(modelType)+"_";
 	name += "_v_"+std::to_string(v);
 	name += "_n_"+std::to_string(n);
 	name += "_tb_"+std::to_string(tutorBonus);
