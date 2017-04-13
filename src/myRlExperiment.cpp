@@ -1358,6 +1358,8 @@ int main(int argc, char **argv) {
 						int K = 100;
 						float model_error_test_r = 0;
 						std::vector<float> model_error_acts(numactions,0);
+						std::vector<float> model_error_comp(minValues.size(),0);
+
 						std::vector<float> virtualState;
 						float virtualReward;
 						int virtualAct;
@@ -1385,6 +1387,10 @@ int main(int argc, char **argv) {
 								float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 								model_error_acts[sample_act_test] += error_test;
 
+								for (int i=0;i<minValues.size();i++){
+									model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
+								}
+
 								float error_test_r = fabs(predReward-reward)/rRange;
 								model_error_test_r += error_test_r;
 							}
@@ -1397,6 +1403,11 @@ int main(int argc, char **argv) {
 
 						model_error_test_r /= (K*numactions);
 						reward_model_acc[(trial_step+episode_step)/eval_freq] += model_error_test_r;
+
+						for (int i=0;i<minValues.size();i++){
+							model_error_comp[i] /= (K*numactions);
+							comp_acc[i][(trial_step+episode_step)/eval_freq] += model_error_comp[i];
+						}
 
 						accu_rewards[(trial_step+episode_step)/eval_freq] += trial_reward+episode_reward;
 						accu_tutor_rewards_2[(trial_step+episode_step)/eval_freq] += trial_tutor_reward_2+episode_tutor_reward_2;
@@ -1465,6 +1476,12 @@ int main(int argc, char **argv) {
 					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
 					boost::archive::text_oarchive oa(ofs);
 					oa & it->second;
+				}
+
+				for (int i=0;i<minValues.size();i++){
+					std::ofstream ofs(rootPath.string()+"/component_acc_"+std::to_string(i)+".ser");
+					boost::archive::text_oarchive oa(ofs);
+					oa & comp_acc[i];
 				}
 
 				std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
