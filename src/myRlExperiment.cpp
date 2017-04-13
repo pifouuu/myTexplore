@@ -937,8 +937,8 @@ int main(int argc, char **argv) {
 	}
 
 	std::vector<std::vector<float>> comp_acc(minValues.size());
-	for (auto vals: comp_acc){
-		vals = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	for (int comp=0;comp<minValues.size();comp++){
+		comp_acc[comp] = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 	}
 
 	std::vector<float> reward_model_acc((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
