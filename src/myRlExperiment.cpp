@@ -54,7 +54,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 20; //10; //200; //500; //200;
+unsigned NUMEPISODES = 10; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -916,7 +916,7 @@ int main(int argc, char **argv) {
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
-	boost::filesystem::path rootPath ( "./resultats_2/" + name );
+	boost::filesystem::path rootPath ( "./modelTest/" + name );
 	boost::system::error_code returnedError;
 
 	boost::filesystem::create_directories( rootPath, returnedError );
@@ -1080,9 +1080,9 @@ int main(int argc, char **argv) {
 			int virtualAct;
 			std::vector<float> virtualState;
 			std::vector<experience> experiences;
-			std::vector<int> numex(numactions,0);
-			std::vector<int> numex_succes(numactions,0);
-			int num_rew = 0;
+			//std::vector<int> numex(numactions,0);
+			//std::vector<int> numex_succes(numactions,0);
+			//int num_rew = 0;
 
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 				// 23 = nb blocks * 6 étapes par bloc -1
@@ -1117,13 +1117,13 @@ int main(int argc, char **argv) {
 
 				experiences.push_back(exp);
 
-				numex[virtualAct]++;
-				if (exp.next!=exp.s) numex_succes[virtualAct]++;
-				if (exp.reward>0) num_rew++;
+//				numex[virtualAct]++;
+//				if (exp.next!=exp.s) numex_succes[virtualAct]++;
+//				if (exp.reward>0) num_rew++;
 
 				virtualBlockRoom->reset();
 
-				if (trainStep % 10000 == 0){
+				if (trainStep % 500 == 0){
 					bool modelChanged = agent->train_only_many(experiences);
 					experiences.clear();
 					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
@@ -1172,12 +1172,37 @@ int main(int argc, char **argv) {
 					reward_model_acc[trainStep/eval_freq] += model_error_test_r;
 
 					step_reached[trainStep/eval_freq]++;
+					for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
+							it != model_acc.end(); ++it){
+						std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
+						boost::archive::text_oarchive oa(ofs);
+						oa & it->second;
+					}
+
+					std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
+					boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+					oa_model_acc_test_r & reward_model_acc;
+					ofs.close();
+					ofs.clear();
+
+					ofs.open(rootPath.string()+"/x_axis.ser");
+					boost::archive::text_oarchive x_axis(ofs);
+					x_axis & eval_steps;
+					ofs.close();
+					ofs.clear();
+
+					ofs.open(rootPath.string()+"/num_trials.ser");
+					boost::archive::text_oarchive num_trials(ofs);
+					num_trials & step_reached;
+					ofs.close();
+					ofs.clear();
+
 				}
 
 			}
 
 			trial_step += pretrain_steps;
-		}
+
 
 		// STEP BY STEP DOMAIN
 		if (!episodic){
@@ -1412,13 +1437,6 @@ int main(int argc, char **argv) {
 
 				for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
 						it != model_acc.end(); ++it){
-			//		fstream action_acc(rootPath.string()+"/model_acc_"+action_names[it->first]+".dat",
-			//				ios::out | ios::binary);
-			//		if ( !action_acc ) {
-			//		    cerr << "The file could not be opened." << endl;
-			//		    exit(1);
-			//		}
-					// serialize vector
 					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
 					boost::archive::text_oarchive oa(ofs);
 					oa & it->second;
