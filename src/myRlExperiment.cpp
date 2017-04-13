@@ -1129,7 +1129,7 @@ int main(int argc, char **argv) {
 
 				virtualBlockRoom->reset();
 
-				if (trainStep % 500 == 0){
+				if (trainStep % 100 == 0){
 					bool modelChanged = agent->train_only_many(experiences);
 					experiences.clear();
 					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
@@ -1163,10 +1163,14 @@ int main(int argc, char **argv) {
 							std::vector<float> new_state = virtualBlockRoom->sensation();
 
 							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-							model_error_acts[sample_act_test] += error_test;
+							if (error_test>0){
+								model_error_acts[sample_act_test]++;
+							}
+//							model_error_acts[sample_act_test] += error_test;
 
 							for (int i=0;i<minValues.size();i++){
-								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
+								if (predNextState[i]!=new_state[i]) model_error_comp[i]++;
+//								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
 							}
 
 
