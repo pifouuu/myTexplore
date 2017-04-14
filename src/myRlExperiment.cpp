@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
 	char* envType = NULL;
 	char* tutorType = NULL;
 	float discountfactor = 0.99;
-	float epsilon = 0.1;
+	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
