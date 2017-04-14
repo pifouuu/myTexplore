@@ -54,8 +54,8 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 1000; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+unsigned NUMEPISODES = 100; //10; //200; //500; //200;
+const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -917,7 +917,7 @@ int main(int argc, char **argv) {
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
-	boost::filesystem::path rootPath ( "./modelTest/" + name );
+	boost::filesystem::path rootPath ( "./resultats_3/" + name );
 	boost::system::error_code returnedError;
 
 	boost::filesystem::create_directories( rootPath, returnedError );
@@ -1321,10 +1321,10 @@ int main(int argc, char **argv) {
 			//////////////////////////////////
 			// non-episodic
 			//////////////////////////////////
-			for (unsigned i = 0; i < NUMEPISODES; ++i){
+			for (unsigned step = 0; step < maxsteps; ++step){
 
-				if (trial_step % eval_freq == 0 && trial_step !=0){
-					std::cout << "Trial " << j << ",eval at step "<< trial_step << std::endl;
+				if (step % eval_freq == 0 && step !=0){
+					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
 					int K = 100;
 					float model_error_test_r = 0;
 					std::vector<float> model_error_acts(numactions,0);
@@ -1368,26 +1368,26 @@ int main(int argc, char **argv) {
 
 					for (int i=0;i<numactions;i++){
 						model_error_acts[i]/=K;
-						model_acc[i][(trial_step)/eval_freq] += model_error_acts[i];
+						model_acc[i][(trial_step+step)/eval_freq] += model_error_acts[i];
 					}
 
 					model_error_test_r /= (K*numactions);
-					reward_model_acc[(trial_step)/eval_freq] += model_error_test_r;
+					reward_model_acc[(trial_step+step)/eval_freq] += model_error_test_r;
 
 					for (int i=0;i<minValues.size();i++){
 						model_error_comp[i] /= (K*numactions);
-						comp_acc[i][(trial_step)/eval_freq] += model_error_comp[i];
+						comp_acc[i][(trial_step+step)/eval_freq] += model_error_comp[i];
 					}
 
-					accu_rewards[(trial_step)/eval_freq] += trial_reward;
-					accu_tutor_rewards_2[(trial_step)/eval_freq] += trial_tutor_reward_2;
-					accu_tutor_rewards[(trial_step)/eval_freq] += trial_tutor_reward;
-					step_reached[(trial_step)/eval_freq]++;
+					accu_rewards[(trial_step+step)/eval_freq] += trial_reward;
+					accu_tutor_rewards_2[(trial_step+step)/eval_freq] += trial_tutor_reward_2;
+					accu_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
+					step_reached[(trial_step+step)/eval_freq]++;
 
-					var_prop[(trial_step)/eval_freq] += avg_var_prop/eval_freq;
-					nov_prop[(trial_step)/eval_freq] += avg_nov_prop/eval_freq;
-					reward_prop[(trial_step)/eval_freq] += avg_reward_prop/eval_freq;
-					sync_prop[(trial_step)/eval_freq] += avg_sync_prop/eval_freq;
+					var_prop[(trial_step+step)/eval_freq] += avg_var_prop/eval_freq;
+					nov_prop[(trial_step+step)/eval_freq] += avg_nov_prop/eval_freq;
+					reward_prop[(trial_step+step)/eval_freq] += avg_reward_prop/eval_freq;
+					sync_prop[(trial_step+step)/eval_freq] += avg_sync_prop/eval_freq;
 
 					avg_var_prop = 0.;
 					avg_nov_prop = 0.;
@@ -1399,7 +1399,7 @@ int main(int argc, char **argv) {
 				std::vector<float> es = e->sensation();
 
 				// first step
-				if (i == 0){
+				if (step == 0){
 
 					// first action
 					int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
@@ -1425,7 +1425,6 @@ int main(int argc, char **argv) {
 				trial_reward += info.reward;
 				trial_tutor_reward += t_feedback.tutor_reward;
 				trial_tutor_reward_2 += t_feedback.reward;
-				trial_step ++;
 
 			}
 
