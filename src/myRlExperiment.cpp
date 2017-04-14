@@ -924,6 +924,7 @@ int main(int argc, char **argv) {
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
 	name += "_nmodels_"+std::to_string(nmodels);
 	name += "_batch_"+std::to_string(batchFreq);
+	name += "_steps_"+std::to_string(maxsteps);
 	boost::filesystem::path rootPath ( "./resultats_3/" + name );
 	boost::system::error_code returnedError;
 
