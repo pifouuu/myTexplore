@@ -127,7 +127,7 @@ public:
 	tutor_feedback tutorAction();
 
 
-	bool BRDEBUG = true;
+	bool BRDEBUG = false;
 	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
