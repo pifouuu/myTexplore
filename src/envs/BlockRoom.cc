@@ -16,8 +16,8 @@ using namespace cv;
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float finalReward, int nbRedBlocks, int nbBlueBlocks):
 			height(6),
 			width(6),
-			nbRedBlocks(0),
-			nbBlueBlocks(1),
+			nbRedBlocks(nbRedBlocks),
+			nbBlueBlocks(nbBlueBlocks),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
@@ -105,6 +105,11 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float final
 			it != actions.end() ; ++it ){
 		action_names[it->second] = it->first;
 	}
+
+	*agent_ns = rng.uniformDiscrete(0, height-1);
+	*agent_ew = rng.uniformDiscrete(0, width-1);
+	*agent_eye_ns = rng.uniformDiscrete(0, height-1);
+	*agent_eye_ew = rng.uniformDiscrete(0, width-1);
 	reset();
 
 	if (BRDEBUG) print_map();
@@ -387,10 +392,27 @@ std::vector<float> BlockRoom::generate_state(){
 
 void BlockRoom::reset(){
 	(*block_hold) = -1;
+
 	*(blocks[0].ew) = 4;
 	*(blocks[0].ns) = 4;
+	*(blocks[0].color) = 0;
 	*(blocks[0].is_in_blue_box) = false;
 	*(blocks[0].is_in_red_box) = false;
+
+	*(blocks[1].ew) = 3;
+	*(blocks[1].ns) = 3;
+	*(blocks[1].color) = 0;
+
+	*(blocks[1].is_in_blue_box) = false;
+	*(blocks[1].is_in_red_box) = false;
+
+	*(blocks[2].ew) = 2;
+	*(blocks[2].ns) = 2;
+	*(blocks[2].color) = 1;
+
+	*(blocks[2].is_in_blue_box) = false;
+	*(blocks[2].is_in_red_box) = false;
+
 
 	*blue_box_ew = 0;
 	*blue_box_ns = 0;
@@ -408,6 +430,10 @@ int BlockRoom::applyNoise(int action){
 
 void BlockRoom::setDebug(bool b){
 	BRDEBUG = b;
+}
+
+void BlockRoom::setVerbose(bool b){
+	IS_REAL = b;
 }
 
 std::vector<int> BlockRoom::find_block_under_eye() {
@@ -647,7 +673,7 @@ occ_info_t BlockRoom::apply(int action){
 	}
 
 	if (action == actions["PICK"]){
-		if ((*block_hold)==-1 && eye_hand_sync()) {
+		if (((*block_hold)==-1) && (eye_hand_sync())) {
 			std::vector<int> blocks_under = find_block_under_eye();
 			if (!blocks_under.empty()) {
 				//std::shuffle(blocks_under.begin(), blocks_under.end(), engine);
@@ -658,6 +684,9 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[idx].is_in_red_box) = false;
 				}
 				success = true;
+				if (IS_REAL) {
+					std::cout << "block " << idx <<" taken." << std::endl;
+				}
 				//reward -= 1;
 				//reward += 10;
 			}
@@ -725,15 +754,19 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
 					*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 				}
-				(*block_hold) = -1;
+
 				success = true;
+				if (IS_REAL){
+					std::cout << "block " << *block_hold <<" put in : "<< get_blocks_in() <<" blocks in boxes." << std::endl;
+				}
+
 				if (terminal()){
 					reward += finalReward;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;
 				}
-
+				(*block_hold) = -1;
 			}
 			else if ((*blue_box_ns)==(*agent_ns) && (*blue_box_ew)==(*agent_ew)){
 				if (rng.bernoulli(stoch_param)){
@@ -747,14 +780,18 @@ occ_info_t BlockRoom::apply(int action){
 					*(blocks[(*block_hold)].ns) = nearby_pos.front().first;
 					*(blocks[(*block_hold)].ew) = nearby_pos.front().second;
 				}
-				(*block_hold) = -1;
 				success = true;
+				if (IS_REAL) {
+					std::cout << "block " << *block_hold <<" put in : "<< get_blocks_in() <<" blocks in boxes." << std::endl;
+				}
 				if (terminal()){
 					reward += finalReward;
 				}
 				else {
 					//if (NOPICKBACK) reward += 100;
 				}
+				(*block_hold) = -1;
+
 			}
 		}
 	}

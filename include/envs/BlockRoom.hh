@@ -124,10 +124,12 @@ public:
 	std::vector<int> find_block_under_eye();
 	bool eye_hand_sync();
 	void setDebug(bool b);
+	void setVerbose(bool b);
 	tutor_feedback tutorAction();
 
 
 	bool BRDEBUG = false;
+	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;
 	std::map<int, std::list<int>> actions_occurences;
