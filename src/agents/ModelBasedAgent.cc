@@ -448,7 +448,7 @@ int ModelBasedAgent::chooseAction(const std::vector<float> &s, float* avg_var_pr
     planningTime += (timeTwo - initTime);
   }
 
-  if (exploreType == EPSILONGREEDY && rng.bernoulli(epsilon)){
+  if (rng.bernoulli(epsilon)){
     //if (true) cout << "Random action" << endl;
     act = rng.uniformDiscrete(0, numactions-1);
   }
