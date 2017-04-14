@@ -1048,7 +1048,6 @@ int main(int argc, char **argv) {
 					deptrans, reltrans, featPct, stochastic, episodic, rewarding, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
-			agent->setRewarding(false);
 		}
 
 		/*else if (strcmp(agentType, "savedpolicy") == 0){
@@ -1421,6 +1420,8 @@ int main(int argc, char **argv) {
 						t_feedback = e->tutorAction();
 						e->apply_tutor(t_feedback.action);
 					}
+					agent->setRewarding(false);
+
 
 				}
 				else {

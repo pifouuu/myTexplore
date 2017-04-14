@@ -91,7 +91,7 @@ private:
 
   int id;
   int nfactors;
-  bool rewarding;
+  bool rewarding = true;
   const int nact;
   const int M;
   const int modelType;
