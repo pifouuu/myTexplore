@@ -16,8 +16,8 @@ using namespace cv;
 BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float finalReward, int nbRedBlocks, int nbBlueBlocks):
 			height(6),
 			width(6),
-			nbRedBlocks(nbRedBlocks),
-			nbBlueBlocks(nbBlueBlocks),
+			nbRedBlocks(0),
+			nbBlueBlocks(1),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
@@ -39,17 +39,17 @@ BlockRoom::BlockRoom(Random &rand, bool with_tutor, bool stochastic, float final
 	int cnt_actions = 0;
 	int cnt_tutor_actions = 0;
 
-	actions[std::string("NORTH")] = cnt_actions++;
-	actions[std::string("SOUTH")] = cnt_actions++;
-	actions[std::string("EAST")] = cnt_actions++;
-	actions[std::string("WEST")] = cnt_actions++;
-//	actions[std::string("GO_TO_EYE")] = cnt_actions++;
+//	actions[std::string("NORTH")] = cnt_actions++;
+//	actions[std::string("SOUTH")] = cnt_actions++;
+//	actions[std::string("EAST")] = cnt_actions++;
+//	actions[std::string("WEST")] = cnt_actions++;
+	actions[std::string("GO_TO_EYE")] = cnt_actions++;
 	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
 	/*actions[std::string("PICK_BLUE")] = cnt_actions++;
 	actions[std::string("PICK_RED")] = cnt_actions++;*/
 	actions[std::string("PICK")] = cnt_actions++;
-	//actions[std::string("PUT_DOWN")] = cnt_actions++;
+//	actions[std::string("PUT_DOWN")] = cnt_actions++;
 	actions[std::string("PUT_IN")] = cnt_actions++;
 
 
@@ -387,59 +387,19 @@ std::vector<float> BlockRoom::generate_state(){
 
 void BlockRoom::reset(){
 	(*block_hold) = -1;
-	(*agent_ew) = rng.uniformDiscrete(0, width-1);
-	(*agent_ns) = rng.uniformDiscrete(0, height-1);
-	(*agent_eye_ew) = rng.uniformDiscrete(0, width-1);
-	(*agent_eye_ns) = rng.uniformDiscrete(0, height-1);
-	if (WITH_TUTOR){
-		(*tutor_eye_ew) = rng.uniformDiscrete(0, width -1);
-		(*tutor_eye_ns) = rng.uniformDiscrete(0, height-1);
-	}
-	(*red_box_ew) = rng.uniformDiscrete(0, width-1);
-	(*red_box_ns) = rng.uniformDiscrete(0, height-1);
-	do {
-		(*blue_box_ew) = rng.uniformDiscrete(0, width-1);
-		(*blue_box_ns) = rng.uniformDiscrete(0, height-1);
-	} while ((*red_box_ew)==(*blue_box_ew) && (*blue_box_ns)==(*blue_box_ns));
+	*(blocks[0].ew) = 4;
+	*(blocks[0].ns) = 4;
+	*(blocks[0].is_in_blue_box) = false;
+	*(blocks[0].is_in_red_box) = false;
 
-	/*std::vector<int> x(height*width-1);
-	std::iota(x.begin(), x.end(), 0);
+	*blue_box_ew = 0;
+	*blue_box_ns = 0;
 
-	std::shuffle(x.begin(), x.end(), engine);
+	*red_box_ew = 0;
+	*red_box_ns = 4;
 
-	for (int i = 0; i<nbRedBlocks; i++){
-	 *(blocks[i].color) = RED;
-	 *(blocks[i].ew) = (x[i] % width);
-	 *(blocks[i].ns) = (x[i] / width);
-	 *(blocks[i].is_in_blue_box) = false;
-	 *(blocks[i].is_in_red_box) = false;
-	}
 
-	for (int i = nbRedBlocks;
-			i < nbRedBlocks+nbBlueBlocks;i++){
-	 *(blocks[i].color) = BLUE;
-	 *(blocks[i].ew) = (x[i] % width);
-	 *(blocks[i].ns) = (x[i] / width);
-	 *(blocks[i].is_in_blue_box) = false;
-	 *(blocks[i].is_in_red_box) = false;
-	}*/
 
-	for (int i = 0; i<nbRedBlocks; i++){
-		*(blocks[i].color) = RED;
-		*(blocks[i].ew) = rng.uniformDiscrete(0, width-1);
-		*(blocks[i].ns) = rng.uniformDiscrete(0, height-1);
-		*(blocks[i].is_in_blue_box) = false;
-		*(blocks[i].is_in_red_box) = false;
-	}
-
-	for (int i = nbRedBlocks;
-			i < nbRedBlocks+nbBlueBlocks;i++){
-		*(blocks[i].color) = BLUE;
-		*(blocks[i].ew) = rng.uniformDiscrete(0, width-1);
-		*(blocks[i].ns) = rng.uniformDiscrete(0, height-1);
-		*(blocks[i].is_in_blue_box) = false;
-		*(blocks[i].is_in_red_box) = false;
-	}
 }
 
 int BlockRoom::applyNoise(int action){
@@ -644,6 +604,7 @@ occ_info_t BlockRoom::apply(int action){
 	bool success = false;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
+	/*
 	if (action==actions["NORTH"]) {
 		if ((*agent_ns) < height-1) {
 			(*agent_ns)++;
@@ -668,7 +629,8 @@ occ_info_t BlockRoom::apply(int action){
 			success = true;
 		}
 	}
-	/*
+	*/
+
 	if (action==actions["GO_TO_EYE"]) {
 		if (rng.bernoulli(stoch_param)) {
 			(*agent_ns) = (*agent_eye_ns);
@@ -683,7 +645,7 @@ occ_info_t BlockRoom::apply(int action){
 		success = true;
 		//reward -= 1;
 	}
-	*/
+
 	if (action == actions["PICK"]){
 		if ((*block_hold)==-1 && eye_hand_sync()) {
 			std::vector<int> blocks_under = find_block_under_eye();
@@ -931,7 +893,6 @@ tutor_feedback BlockRoom::tutorAction(){
 		}
 		else{
 			std::cout << "All blocks in boxes !" << std::endl;
-			tutoract = tutor_actions["LOOK_AGENT"];
 		}
 
 	}
@@ -939,6 +900,8 @@ tutor_feedback BlockRoom::tutorAction(){
 
 	if (get_blocks_in()==nbRedBlocks+nbBlueBlocks){
 		reward += 100;
+		tutoract = tutor_actions["LOOK_BLUE_BLOCK_0"];
+		reset();
 		if (get_blocks_right()==nbRedBlocks+nbBlueBlocks) {tutor_reward += 100;}
 	}
 

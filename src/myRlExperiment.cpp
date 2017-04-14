@@ -54,7 +54,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 20; //10; //200; //500; //200;
+unsigned NUMEPISODES = 10000; //10; //200; //500; //200;
 const unsigned NUMTRIALS = 1; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -1313,79 +1313,121 @@ int main(int argc, char **argv) {
 		// STEP BY STEP DOMAIN
 		if (!episodic){
 
-//			// performance tracking
-//			float sum = 0;
-//			int steps = 0;
-//			float trialSum = 0.0;
-//			int blocks_in = 0;
-//			int blocks_right = 0;
-//
-//			tutor_feedback t_feedback(0.,0);
-//			int a = 0;
-//			occ_info_t info(0, 1, 0, 0);
-//
-//			//////////////////////////////////
-//			// non-episodic
-//			//////////////////////////////////
-//			for (unsigned i = 0; i < NUMEPISODES; ++i){
-//
-//				std::vector<float> es = e->sensation();
-//
-//				// first step
-//				if (i == 0){
-//
-//					if (with_tutor){
-//						t_feedback = e->tutorAction();
-//						e->apply_tutor(t_feedback.action);
-//					}
-//
-//					a = agent->first_action(es);
-//					info = e->apply(a);
-//					act_count[a].first++;
-//					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
-//					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
-//					if (info.success){
-//						act_count[a].second++;
-//						//plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
-//					}
-//					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
-//					plot_act_acc[a].push_back(std::make_pair(steps,
-//							act_count[a].second/act_count[a].first));
-//
-//				} else {
-//					t_feedback = e->tutorAction();
-//					if (with_tutor){
-//						e->apply_tutor(t_feedback.action);
-//					}
-//
-//					a = agent->next_action(info.reward, es);
-//					info = e->apply(a);
-//					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_in));
-//					plot_blocks_in.push_back(std::make_pair(steps, info.blocks_right));
-//					act_count[a].first++;
-//					if (info.success){
-//						act_count[a].second++;
-//						//plot_act_succes[a].push_back(std::make_pair(steps,act_count[a].second));
-//					}
-//					plot_act_try[a].push_back(std::make_pair(steps, act_count[a].first));
-//					plot_act_acc[a].push_back(std::make_pair(steps,
-//							act_count[a].second/act_count[a].first));
-//				}
-//
-//				// update performance
-//				sum += info.reward;
-//				++steps;
-//
-//
-//				std::cerr << info.reward << endl;
-//
-//			}
-//			///////////////////////////////////
-//
-//			rsum += sum;
-//			trialSum += sum;
-//			if (PRINTS) cout << "Rsum(trial " << j << "): " << trialSum << " Avg: "
-//					<< (rsum / (float)(j+1))<< endl;
+			tutor_feedback t_feedback(0.,0., 0);
+			occ_info_t info(0,0,0,0);
+
+			int a = 0;
+
+			//////////////////////////////////
+			// non-episodic
+			//////////////////////////////////
+			for (unsigned i = 0; i < NUMEPISODES; ++i){
+
+				if (trial_step % eval_freq == 0 && trial_step !=0){
+					std::cout << "Trial " << j << ",eval at step "<< trial_step << std::endl;
+					int K = 100;
+					float model_error_test_r = 0;
+					std::vector<float> model_error_acts(numactions,0);
+					std::vector<float> model_error_comp(minValues.size(),0);
+
+					std::vector<float> virtualState;
+					float virtualReward;
+					int virtualAct;
+					for (int testStep=0;testStep<K;testStep++){
+						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
+						for (int i=0; i<nb_act; i++){
+							virtualState = virtualBlockRoom->sensation();
+							if (!virtualBlockRoom->terminal()){
+								virtualAct = virtualBlockRoom->trueBestAction();
+								virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+							}
+							else{
+								virtualBlockRoom->reset();
+							}
+						}
+						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
+							std::vector<float> sample_test = virtualBlockRoom->sensation();
+							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
+							std::vector<float> predNextState = std::get<0>(prediction);
+							float predReward = std::get<1>(prediction);
+
+							float reward = virtualBlockRoom->apply(sample_act_test).reward;
+							std::vector<float> new_state = virtualBlockRoom->sensation();
+
+							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
+							model_error_acts[sample_act_test] += error_test;
+
+							for (int i=0;i<minValues.size();i++){
+								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
+							}
+
+							float error_test_r = fabs(predReward-reward)/rRange;
+							model_error_test_r += error_test_r;
+						}
+					}
+
+					for (int i=0;i<numactions;i++){
+						model_error_acts[i]/=K;
+						model_acc[i][(trial_step)/eval_freq] += model_error_acts[i];
+					}
+
+					model_error_test_r /= (K*numactions);
+					reward_model_acc[(trial_step)/eval_freq] += model_error_test_r;
+
+					for (int i=0;i<minValues.size();i++){
+						model_error_comp[i] /= (K*numactions);
+						comp_acc[i][(trial_step)/eval_freq] += model_error_comp[i];
+					}
+
+					accu_rewards[(trial_step)/eval_freq] += trial_reward;
+					accu_tutor_rewards_2[(trial_step)/eval_freq] += trial_tutor_reward_2;
+					accu_tutor_rewards[(trial_step)/eval_freq] += trial_tutor_reward;
+					step_reached[(trial_step)/eval_freq]++;
+
+					var_prop[(trial_step)/eval_freq] += avg_var_prop/eval_freq;
+					nov_prop[(trial_step)/eval_freq] += avg_nov_prop/eval_freq;
+					reward_prop[(trial_step)/eval_freq] += avg_reward_prop/eval_freq;
+					sync_prop[(trial_step)/eval_freq] += avg_sync_prop/eval_freq;
+
+					avg_var_prop = 0.;
+					avg_nov_prop = 0.;
+					avg_reward_prop = 0.;
+					avg_sync_prop = 0.;
+
+				}
+
+				std::vector<float> es = e->sensation();
+
+				// first step
+				if (i == 0){
+
+					// first action
+					int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					occ_info_t info = e->apply(a);
+					if (with_tutor){
+						t_feedback = e->tutorAction();
+						e->apply_tutor(t_feedback.action);
+					}
+
+				}
+				else {
+					// next action
+					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					info = e->apply(a);
+					t_feedback = e->tutorAction();
+					if (with_tutor){
+						e->apply_tutor(t_feedback.action);
+					}
+				}
+
+
+
+				trial_reward += info.reward;
+				trial_tutor_reward += t_feedback.tutor_reward;
+				trial_tutor_reward_2 += t_feedback.reward;
+				trial_step ++;
+
+			}
 
 		}
 
