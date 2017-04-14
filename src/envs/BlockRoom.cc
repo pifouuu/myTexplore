@@ -131,7 +131,7 @@ std::map<int, std::string> BlockRoom::get_action_names(){
 }
 
 bool BlockRoom::isSyncTutor(std::vector<float> state) const {
-	return (state[0]==*tutor_eye_ns && state[1]==*tutor_eye_ew);
+	return (state[0]==*tutor_eye_ns && state[1]==*tutor_eye_ew && tutor_attentive);
 }
 int BlockRoom::get_blocks_in() const {
 	int nb_blocks_in = 0;
@@ -945,5 +945,9 @@ tutor_feedback BlockRoom::tutorAction(){
 	}
 
 	return tutor_feedback(tutor_reward, reward, tutoract);
+}
+
+void BlockRoom::tutorStop(){
+	tutor_attentive = false;
 }
 

@@ -1329,6 +1329,7 @@ int main(int argc, char **argv) {
 
 			int a = 0;
 			int endExploration = 1000;
+			int endTutor = 1000;
 
 			//////////////////////////////////
 			// non-episodic
@@ -1434,6 +1435,9 @@ int main(int argc, char **argv) {
 
 				if (step==endExploration) {
 					agent->setRewarding(true);
+				}
+				if (step==endTutor){
+					e->tutorStop();
 				}
 
 
