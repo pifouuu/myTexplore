@@ -33,7 +33,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  float m, const std::vector<float> &featmin,
                                  const std::vector<float> &featmax, 
                                  std::vector<int> nstatesPerDim, int history, float v, float n, float tutorBonus,
-                                 bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic,
+                                 bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic, int batchFreq,
                                  Random rng):
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
@@ -43,7 +43,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
-  stoch(stoch), episodic(episodic), rng(rng)
+  stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
 {
 
   if (statesPerDim[0] > 0){
@@ -65,7 +65,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  const std::vector<float> &featmax, 
                                  int nstatesPerDim, int history, float v, float n, float tutorBonus,
                                  bool depTrans, bool relTrans, float featPct,
-				 bool stoch, bool episodic, Random rng):
+				 bool stoch, bool episodic, int batchFreq, Random rng):
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
   qmax(rmax/(1.0-gamma)), 
@@ -74,7 +74,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
-  stoch(stoch), episodic(episodic), rng(rng)
+  stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
 {
 
   if (statesPerDim[0] > 0){
@@ -99,9 +99,6 @@ void ModelBasedAgent::initParams(){
   actionTime = 0.0;
   
   modelChanged = false;
-
-  
-  BATCH_FREQ = 1; //50;
 
   TIMEDEBUG = false; //true;
   AGENTDEBUG = false;
@@ -405,7 +402,7 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
 
   // tell the planner to update with the updated model
   if ((modelChanged && (!seeding || modelType == RMAX) 
-       && (nactions % BATCH_FREQ == 0))){
+       && (nactions % batchFreq == 0))){
     planner->planOnNewModel();
     modelChanged = false;
   }

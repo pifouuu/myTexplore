@@ -20,7 +20,7 @@ C45Tree::C45Tree(int id, int trainMode, int trainFreq, int m,
   nOutput = 0;
   nExperiences = 0;
   hadError = false;
-  maxnodes = 100000;
+  maxnodes = 2500;
   totalnodes = 0;
 
   // how close a split has to be to be randomly selected

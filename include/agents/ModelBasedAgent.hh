@@ -50,7 +50,7 @@ public:
                   const std::vector<float> &featmax,
                   int statesPerDim, int history, float v, float n, float tutorBonus,
                   bool depTrans, bool relTrans, float featPct,
-                  bool stoch, bool episodic, Random rng = Random());
+                  bool stoch, bool episodic, int batchFreq, Random rng = Random());
 
   /** Standard constructor 
       \param numactions The number of possible actions
@@ -85,7 +85,7 @@ public:
                   const std::vector<float> &featmax,
                   std::vector<int> statesPerDim, int history, float v, float n, float tutorBonus,
                   bool depTrans, bool relTrans, float featPct,
-                  bool stoch, bool episodic, Random rng = Random());
+                  bool stoch, bool episodic, int batchFreq, Random rng = Random());
   
   /** Init params for both constructors */
   void initParams();
@@ -176,7 +176,7 @@ private:
   bool modelNeedsUpdate;
   int lastUpdate;
 
-  int BATCH_FREQ;
+  int batchFreq;
 
   bool modelChanged;
 
