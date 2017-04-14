@@ -11,13 +11,14 @@ FactoredModel::FactoredModel(int id, int numactions, int M, int modelType,
 		int predType, int nModels, float treeThreshold,
 		const std::vector<float> &featRange, float rRange, bool needConf,
 		bool dep, bool relTrans, float featPct, bool stoch, bool episodic,
+		bool rewarding,
 		Random rng) :
 		rewardModel(NULL), terminalModel(NULL), id(id), nact(numactions), M(M), modelType(
 				modelType), predType(predType), nModels(nModels), treeBuildType(
 				BUILD_ON_ERROR), // build tree after prediction error
 		treeThresh(treeThreshold), featRange(featRange), rRange(rRange), needConf(
 				needConf), dep(dep), relTrans(relTrans), FEAT_PCT(featPct), stoch(
-				stoch), episodic(episodic), rng(rng) {
+				stoch), episodic(episodic), rewarding(rewarding), rng(rng) {
 
 	//cout << "MDP Tree explore type: " << predType << endl;
 	MODEL_DEBUG = false; //true;
@@ -39,7 +40,7 @@ FactoredModel::FactoredModel(const FactoredModel & m) :
 				m.treeBuildType), treeThresh(m.treeThresh), featRange(
 				m.featRange), rRange(m.rRange), needConf(m.needConf), dep(
 				m.dep), relTrans(m.relTrans), FEAT_PCT(m.FEAT_PCT), stoch(
-				m.stoch), episodic(m.episodic), rng(m.rng) {
+				m.stoch), episodic(m.episodic), rewarding(rewarding), rng(m.rng) {
 	COPYDEBUG = m.COPYDEBUG;
 
 	if (COPYDEBUG)
@@ -83,6 +84,10 @@ FactoredModel::~FactoredModel() {
 		delete outputModels[i];
 	}
 	outputModels.clear();
+}
+
+void FactoredModel::setRewarding(bool val){
+	rewarding = val;
 }
 
 // init the trees
@@ -311,8 +316,13 @@ bool FactoredModel::updateWithExperiences(std::vector<experience> &instances) {
 		}
 	}
 
-	bool singleChange = rewardModel->trainInstances(rewardData);
-	changed = changed || singleChange;
+	bool singleChange;
+
+	if (rewarding){
+		singleChange = rewardModel->trainInstances(rewardData);
+		changed = changed || singleChange;
+
+	}
 
 	if (episodic) {
 		singleChange = terminalModel->trainInstances(termData);
@@ -379,10 +389,15 @@ bool FactoredModel::updateWithExperience(experience &e) {
 	classPair cp;
 	cp.in = inputs;
 
+	bool singleChange;
+
 	// reward model
-	cp.out = e.reward;
-	bool singleChange = rewardModel->trainInstance(cp);
-	changed = changed || singleChange;
+	if (rewarding){
+		cp.out = e.reward;
+		singleChange = rewardModel->trainInstance(cp);
+		changed = changed || singleChange;
+	}
+
 
 	// termination model
 	if (episodic) {
@@ -643,7 +658,12 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 	float rewardSum = 0.0;
 	// each value
 	std::map<float, float> rewardPreds;
-	rewardModel->testInstance(inputs, &rewardPreds);
+	if (!rewarding){
+		rewardPreds[0.0]=1.0;
+	}
+	else {
+		rewardModel->testInstance(inputs, &rewardPreds);
+	}
 
 	if (rewardPreds.size() == 0) {
 		//cout << "FactoredModel setting state known false" << endl;
@@ -709,7 +729,10 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 	// if we need confidence measure
 	if (needConf) {
 		// conf is avg of each variable's model's confidence
-		float rConf = rewardModel->getConf(inputs);
+		float rConf = 1.0;
+		if (rewarding){
+			rConf = rewardModel->getConf(inputs);
+		}
 		float tConf = 1.0;
 		if (episodic)
 			tConf = terminalModel->getConf(inputs);

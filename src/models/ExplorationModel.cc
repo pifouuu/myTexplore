@@ -74,6 +74,10 @@ void ExplorationModel::setTesting(bool mode){
 	testMode = mode;
 }
 
+void ExplorationModel::setRewarding(bool val){
+	model->setRewarding(val);
+}
+
 
 bool ExplorationModel::updateWithExperiences(std::vector<experience> &instances){
 	bool changed = model->updateWithExperiences(instances);

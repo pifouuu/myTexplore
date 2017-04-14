@@ -151,6 +151,7 @@ int main(int argc, char **argv) {
 	int nbBlueBlocks = 0;
 	int maxsteps = 100;
 	int batchFreq = 1;
+	bool rewarding=true;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -1044,9 +1045,10 @@ int main(int argc, char **argv) {
 					minValues, maxValues,
 					statesPerDim,//0,
 					history, v, n, tutorBonus,
-					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
+					deptrans, reltrans, featPct, stochastic, episodic, rewarding, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
+			agent->setRewarding(false);
 		}
 
 		/*else if (strcmp(agentType, "savedpolicy") == 0){
@@ -1326,6 +1328,7 @@ int main(int argc, char **argv) {
 			occ_info_t info(0,0,0,0);
 
 			int a = 0;
+			int endExploration = 1000;
 
 			//////////////////////////////////
 			// non-episodic
@@ -1429,6 +1432,9 @@ int main(int argc, char **argv) {
 					}
 				}
 
+				if (step==endExploration) {
+					agent->setRewarding(true);
+				}
 
 
 				trial_reward += info.reward;

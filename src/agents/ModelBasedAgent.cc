@@ -33,7 +33,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  float m, const std::vector<float> &featmin,
                                  const std::vector<float> &featmax, 
                                  std::vector<int> nstatesPerDim, int history, float v, float n, float tutorBonus,
-                                 bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic, int batchFreq,
+                                 bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic, bool rewarding, int batchFreq,
                                  Random rng):
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
@@ -43,7 +43,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
-  stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
+  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq)
 {
 
   if (statesPerDim[0] > 0){
@@ -65,7 +65,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  const std::vector<float> &featmax, 
                                  int nstatesPerDim, int history, float v, float n, float tutorBonus,
                                  bool depTrans, bool relTrans, float featPct,
-				 bool stoch, bool episodic, int batchFreq, Random rng):
+				 bool stoch, bool episodic, bool rewarding, int batchFreq, Random rng):
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
   qmax(rmax/(1.0-gamma)), 
@@ -74,7 +74,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
-  stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
+  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq)
 {
 
   if (statesPerDim[0] > 0){
@@ -134,6 +134,9 @@ ModelBasedAgent::~ModelBasedAgent() {
   prevstate.clear();
 }
 
+void ModelBasedAgent::setRewarding(bool val){
+	model->setRewarding(val);
+}
 bool ModelBasedAgent::train_only(experience e){
 	if (model == NULL)
 	    initModel(e.s.size());
@@ -288,7 +291,8 @@ void ModelBasedAgent::initModel(int nfactors){
            modelType == LSTMULTI || modelType == LSTSINGLE ||
            modelType == GPREGRESS || modelType == GPTREE){
 
-    model = new FactoredModel(0,numactions, M, modelType, predType, nModels, treeRangePct, featRange, rrange, needConf, depTrans, relTrans, featPct, stoch, episodic, rng);
+    model = new FactoredModel(0,numactions, M, modelType, predType, nModels, treeRangePct, featRange, rrange, needConf, depTrans, relTrans, featPct,
+    		stoch, episodic, rewarding, rng);
   }
   
   /*
