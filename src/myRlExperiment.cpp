@@ -150,6 +150,7 @@ int main(int argc, char **argv) {
 	int nbRedBlocks = 1;
 	int nbBlueBlocks = 0;
 	int maxsteps = 100;
+	int batchFreq = 1;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -262,6 +263,7 @@ int main(int argc, char **argv) {
 			{"nbred", 1, 0, 17},
 			{"nbblue",1 ,0, 18},
 			{"maxsteps", 1, 0, 19},
+			{"batchFreq", 1, 0, 20},
 			{0, 0, 0, 0}
 	};
 
@@ -669,6 +671,9 @@ int main(int argc, char **argv) {
 		case 19:
 			maxsteps = std::atof(optarg);
 			break;
+		case 20:
+			batchFreq = std::atof(optarg);
+			break;
 		case 'h':
 		case '?':
 		case 0:
@@ -693,7 +698,7 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	// set history value but not doing uct w/history planner
+	// set history value but not d19oing uct w/history planner
 	if (history > 0 && (plannerType == VALUE_ITERATION || plannerType == POLICY_ITERATION || plannerType == PRI_SWEEPING)){
 		cout << "No reason to set history higher than 0 if not using a UCT planner" << endl;
 		exit(-1);
@@ -917,6 +922,8 @@ int main(int argc, char **argv) {
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
+	name += "_nmodels_"+std::to_string(nmodels);
+	name += "_batch_"+std::to_string(batchFreq);
 	boost::filesystem::path rootPath ( "./resultats_3/" + name );
 	boost::system::error_code returnedError;
 
@@ -1036,7 +1043,7 @@ int main(int argc, char **argv) {
 					minValues, maxValues,
 					statesPerDim,//0,
 					history, v, n, tutorBonus,
-					deptrans, reltrans, featPct, stochastic, episodic,
+					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
 		}
