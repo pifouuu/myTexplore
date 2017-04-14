@@ -1428,6 +1428,79 @@ int main(int argc, char **argv) {
 
 			}
 
+			for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
+					it != model_acc.end(); ++it){
+				std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
+				boost::archive::text_oarchive oa(ofs);
+				oa & it->second;
+			}
+
+			for (int i=0;i<minValues.size();i++){
+				std::ofstream ofs(rootPath.string()+"/component_acc_"+std::to_string(i)+".ser");
+				boost::archive::text_oarchive oa(ofs);
+				oa & comp_acc[i];
+			}
+
+			std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
+			boost::archive::text_oarchive oa_model_acc_test_r(ofs);
+			oa_model_acc_test_r & reward_model_acc;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/accumulated_reward.ser");
+			boost::archive::text_oarchive oa_accu_reward(ofs);
+			oa_accu_reward & accu_rewards;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
+			boost::archive::text_oarchive oa_tutor_r(ofs);
+			oa_tutor_r & accu_tutor_rewards;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
+			boost::archive::text_oarchive oa_tutor_r_2(ofs);
+			oa_tutor_r_2 & accu_tutor_rewards_2;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/var_prop.ser");
+			boost::archive::text_oarchive oa_var(ofs);
+			oa_var & var_prop;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/nov_prop.ser");
+			boost::archive::text_oarchive oa_nov(ofs);
+			oa_nov & nov_prop;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/sync_prop.ser");
+			boost::archive::text_oarchive oa_sync(ofs);
+			oa_sync & sync_prop;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/reward_prop.ser");
+			boost::archive::text_oarchive oa_reward(ofs);
+			oa_reward & reward_prop;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/x_axis.ser");
+			boost::archive::text_oarchive x_axis(ofs);
+			x_axis & eval_steps;
+			ofs.close();
+			ofs.clear();
+
+			ofs.open(rootPath.string()+"/num_trials.ser");
+			boost::archive::text_oarchive num_trials(ofs);
+			num_trials & step_reached;
+			ofs.close();
+			ofs.clear();
+
 		}
 
 		// EPISODIC DOMAINS
