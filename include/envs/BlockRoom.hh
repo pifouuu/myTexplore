@@ -54,6 +54,7 @@ public:
 	bool stochastic;
 	Random &rng;
 	bool WITH_TUTOR;
+	bool tutor_attentive = true;
 	int state_dim_base;
 	std::vector<float> s;
 	float finalReward;
@@ -64,6 +65,7 @@ public:
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;
+	void tutorStop();
 
 	std::default_random_engine engine;
 

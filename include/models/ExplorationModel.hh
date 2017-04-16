@@ -69,6 +69,7 @@ public:
   float getFeatDistToVisitedSA(const std::vector<float> &s);
 
   void setTesting(bool testMode);
+  void setRewarding(bool val);
 
   Environment* trueEnv;
 

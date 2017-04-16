@@ -269,6 +269,7 @@ public:
 		\param action The action the agent wishes to apply.
 		\return The immediate one-step reward caused by the action. */
 	virtual void apply_tutor(int action) = 0;
+	virtual void tutorStop() = 0;
 	virtual tutor_feedback tutorAction() = 0;
 	/** Determines whether the environment has reached a terminal state.
       \return true iff the task is episodic and the present episode
@@ -326,6 +327,7 @@ public:
 	/** Predict a state for a pari action state **/
 	virtual std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act) = 0;
 	virtual void setTrueEnv(Environment* e) = 0;
+	virtual void setRewarding(bool val) = 0;
 	virtual bool train_only(experience e) = 0;
 	virtual bool train_only_many(std::vector<experience> e) = 0;
 	/** Determines the first action that an agent takes in an
@@ -445,6 +447,7 @@ public:
 	virtual MDPModel* getCopy() = 0;
 	virtual void setTrueEnv(Environment*) {};
 	virtual void setTesting(bool){};
+	virtual void setRewarding(bool){};
 	virtual ~MDPModel() {};
 };
 

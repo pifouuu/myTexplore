@@ -45,12 +45,14 @@ public:
           int predType, int nModels, float treeThreshold,
           const std::vector<float> &featRange, float rRange,
           bool needConf, bool dep, bool relTrans, float featPct, 
-	  bool stoch, bool episodic, Random rng = Random());
+	  bool stoch, bool episodic,  bool rewarding, Random rng = Random());
 
   /** Copy Constructor for MDP Tree */
   FactoredModel(const FactoredModel &);
 
   virtual ~FactoredModel();
+
+  void setRewarding(bool val);
 
   virtual bool updateWithExperiences(std::vector<experience> &instances);
   virtual bool updateWithExperience(experience &e);
@@ -89,6 +91,7 @@ private:
 
   int id;
   int nfactors;
+  bool rewarding = true;
   const int nact;
   const int M;
   const int modelType;
@@ -106,6 +109,7 @@ private:
   const float FEAT_PCT;
   const bool stoch;
   const bool episodic;
+
   Random rng;
   
   float EXP_PCT;
