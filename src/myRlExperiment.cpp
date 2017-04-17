@@ -29,6 +29,8 @@
 // Environments //
 //////////////////
 #include "../include/envs/BlockRoom.hh"
+#include "../include/envs/InfiniteBlocks.hh"
+
 
 
 ////////////
@@ -748,9 +750,9 @@ int main(int argc, char **argv) {
 
 	// Construct environment here.
 	Environment* e;
-	if (strcmp(envType, "blockroom") == 0){
-		if (PRINTS) cout << "Environment: blockroom\n";
-		e = new BlockRoom(rng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
+	if (strcmp(envType, "infiniteBlocks") == 0){
+		if (PRINTS) cout << "Environment: infiniteBlocks \n";
+		e = new InfiniteBlocks(rng, with_tutor, stochastic, finalReward);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
