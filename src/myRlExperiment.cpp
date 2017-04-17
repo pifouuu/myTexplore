@@ -1330,7 +1330,7 @@ int main(int argc, char **argv) {
 			occ_info_t info(0,0,0,0);
 
 			int a = 0;
-			int endExploration = 1000;
+			int endExploration = 0;
 			int endTutor = 10000;
 
 			//////////////////////////////////

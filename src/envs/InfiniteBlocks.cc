@@ -451,7 +451,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 		if (*red_block_hold && eye_hand_sync()){
 			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*red_block_hold == 0;
+					*red_block_hold = 0;
 					red_box_count_red++;
 					reward += finalReward;
 					success = true;
@@ -460,24 +460,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 					}
 				}
 			}
-		}
-		if (*blue_block_hold && eye_hand_sync()){
-			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
+			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*blue_block_hold == 0;
-					red_box_count_blue++;
-					reward += finalReward;
-					success = true;
-					if (IS_REAL){
-						std::cout << "Blue block put in red box." << std::endl;
-					}
-				}
-			}
-		}
-		if (*red_block_hold && eye_hand_sync()){
-			if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
-				if (rng.bernoulli(stoch_param)){
-					*red_block_hold == 0;
+					*red_block_hold = 0;
 					blue_box_count_red++;
 					reward += finalReward;
 					success = true;
@@ -487,10 +472,21 @@ occ_info_t InfiniteBlocks::apply(int action){
 				}
 			}
 		}
-		if (*blue_block_hold && eye_hand_sync()){
-			if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
+		else if (*blue_block_hold && eye_hand_sync()){
+			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*blue_block_hold == 0;
+					*blue_block_hold = 0;
+					red_box_count_blue++;
+					reward += finalReward;
+					success = true;
+					if (IS_REAL){
+						std::cout << "Blue block put in red box." << std::endl;
+					}
+				}
+			}
+			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
+				if (rng.bernoulli(stoch_param)){
+					*blue_block_hold = 0;
 					blue_box_count_blue;
 					reward += finalReward;
 					success = true;

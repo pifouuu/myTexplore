@@ -620,9 +620,7 @@ std::pair<std::vector<float>,float> BlockRoom::getMostProbNextState(std::vector<
 
 
 
-float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){
-
-}
+float BlockRoom::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){}
 
 occ_info_t BlockRoom::apply(int action){
 	float reward = 0.;
