@@ -55,7 +55,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -926,6 +926,7 @@ int main(int argc, char **argv) {
 	name += "_nmodels_"+std::to_string(nmodels);
 	name += "_batch_"+std::to_string(batchFreq);
 	name += "_steps_"+std::to_string(maxsteps);
+	name += "_explo";
 	boost::filesystem::path rootPath ( "./resultats_3/" + name );
 	boost::system::error_code returnedError;
 
@@ -1151,7 +1152,7 @@ int main(int argc, char **argv) {
 				bool modelChanged = agent->train_only(exp);
 
 				if (trainStep % 1000 == 0 && trainStep !=0){
-					/*
+
 					std::vector<experience> trainexp(experiences.end()-1000,experiences.end());
 					bool modelChanged = agent->train_only_many(trainexp);
 
@@ -1311,7 +1312,7 @@ int main(int argc, char **argv) {
 					num_trials & step_reached;
 					ofs.close();
 					ofs.clear();
-					*/
+
 				}
 
 			}
@@ -1328,7 +1329,7 @@ int main(int argc, char **argv) {
 
 			int a = 0;
 			int endExploration = 1000;
-			int endTutor = 1000;
+			int endTutor = 10000;
 
 			//////////////////////////////////
 			// non-episodic
