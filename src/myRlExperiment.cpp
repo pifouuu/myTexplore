@@ -57,7 +57,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 10; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 10.0;
+	float actrate = 1000.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -132,8 +132,8 @@ int main(int argc, char **argv) {
 	int nmodels = 1;
 	bool reltrans = true;
 	bool deptrans = false;
-	int v = 0;
-	int n = 0;
+	float v = 0.;
+	float n = 0.;
 	float featPct = 0.2;
 	int nstates = 0;
 	int k = 1000;
@@ -928,8 +928,8 @@ int main(int argc, char **argv) {
 	name += "_nmodels_"+std::to_string(nmodels);
 	name += "_batch_"+std::to_string(batchFreq);
 	name += "_steps_"+std::to_string(maxsteps);
-	name += "_explo";
-	boost::filesystem::path rootPath ( "./resultats_3/" + name );
+//	name += "_explo";
+	boost::filesystem::path rootPath ( "./resultats_4/" + name );
 	boost::system::error_code returnedError;
 
 	boost::filesystem::create_directories( rootPath, returnedError );
@@ -1093,9 +1093,9 @@ int main(int argc, char **argv) {
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
-		Environment* virtualBlockRoom = new BlockRoom(virtualRng, with_tutor, stochastic, finalReward, nbRedBlocks, nbBlueBlocks);
-		virtualBlockRoom->setDebug(false);
-		virtualBlockRoom->setVerbose(false);
+		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, with_tutor, stochastic, finalReward);
+		virtualInfinite->setDebug(false);
+		virtualInfinite->setVerbose(false);
 
 		if (PRETRAIN && pretrain_steps>0){
 
@@ -1118,31 +1118,31 @@ int main(int argc, char **argv) {
 				// 23 = nb blocks * 6 étapes par bloc -1
 				int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
 				for (int i=0; i<nb_act; i++){
-					virtualState = virtualBlockRoom->sensation();
-					if (!virtualBlockRoom->terminal()){
-						virtualAct = virtualBlockRoom->trueBestAction();
-						virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+					virtualState = virtualInfinite->sensation();
+					if (!virtualInfinite->terminal()){
+						virtualAct = virtualInfinite->trueBestAction();
+						virtualReward = virtualInfinite->apply(virtualAct).reward;
 					}
 					else{
-						virtualBlockRoom->reset();
+						virtualInfinite->reset();
 					}
 				}
 
 
 
 				experience exp;
-				exp.s = virtualBlockRoom->sensation();
+				exp.s = virtualInfinite->sensation();
 
-				virtualAct = rng.uniformDiscrete(0, virtualBlockRoom->getNumActions()-1);
+				virtualAct = rng.uniformDiscrete(0, virtualInfinite->getNumActions()-1);
 				exp.act = virtualAct;
 
-				virtualReward = virtualBlockRoom->apply(virtualAct).reward;
-				exp.next = virtualBlockRoom->sensation();
+				virtualReward = virtualInfinite->apply(virtualAct).reward;
+				exp.next = virtualInfinite->sensation();
 
 				exp.reward = virtualReward;
 
 
-				exp.terminal = virtualBlockRoom->terminal();
+				exp.terminal = virtualInfinite->terminal();
 				count_r += exp.reward;
 
 				experiences.push_back(exp);
@@ -1150,7 +1150,7 @@ int main(int argc, char **argv) {
 //				if (exp.next!=exp.s) numex_succes[virtualAct]++;
 //				if (exp.reward>0) num_rew++;
 
-				virtualBlockRoom->reset();
+				virtualInfinite->reset();
 				bool modelChanged = agent->train_only(exp);
 
 				if (trainStep % 1000 == 0 && trainStep !=0){
@@ -1215,23 +1215,23 @@ int main(int argc, char **argv) {
 					for (int evalTest=0;evalTest<K;evalTest++){
 						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
 						for (int i=0; i<nb_act; i++){
-							virtualState = virtualBlockRoom->sensation();
-							if (!virtualBlockRoom->terminal()){
-								virtualAct = virtualBlockRoom->trueBestAction();
-								virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+							virtualState = virtualInfinite->sensation();
+							if (!virtualInfinite->terminal()){
+								virtualAct = virtualInfinite->trueBestAction();
+								virtualReward = virtualInfinite->apply(virtualAct).reward;
 							}
 							else{
-								virtualBlockRoom->reset();
+								virtualInfinite->reset();
 							}
 						}
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-							std::vector<float> sample_test = virtualBlockRoom->sensation();
+							std::vector<float> sample_test = virtualInfinite->sensation();
 							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 							std::vector<float> predNextState = std::get<0>(prediction);
 							float predReward = std::get<1>(prediction);
 
-							float reward = virtualBlockRoom->apply(sample_act_test).reward;
-							std::vector<float> new_state = virtualBlockRoom->sensation();
+							float reward = virtualInfinite->apply(sample_act_test).reward;
+							std::vector<float> new_state = virtualInfinite->sensation();
 
 							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 							if (error_test>0){
@@ -1351,23 +1351,23 @@ int main(int argc, char **argv) {
 					for (int testStep=0;testStep<K;testStep++){
 						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
 						for (int i=0; i<nb_act; i++){
-							virtualState = virtualBlockRoom->sensation();
-							if (!virtualBlockRoom->terminal()){
-								virtualAct = virtualBlockRoom->trueBestAction();
-								virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+							virtualState = virtualInfinite->sensation();
+							if (!virtualInfinite->terminal()){
+								virtualAct = virtualInfinite->trueBestAction();
+								virtualReward = virtualInfinite->apply(virtualAct).reward;
 							}
 							else{
-								virtualBlockRoom->reset();
+								virtualInfinite->reset();
 							}
 						}
 						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-							std::vector<float> sample_test = virtualBlockRoom->sensation();
+							std::vector<float> sample_test = virtualInfinite->sensation();
 							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 							std::vector<float> predNextState = std::get<0>(prediction);
 							float predReward = std::get<1>(prediction);
 
-							float reward = virtualBlockRoom->apply(sample_act_test).reward;
-							std::vector<float> new_state = virtualBlockRoom->sensation();
+							float reward = virtualInfinite->apply(sample_act_test).reward;
+							std::vector<float> new_state = virtualInfinite->sensation();
 
 							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 							model_error_acts[sample_act_test] += error_test;
@@ -1588,23 +1588,23 @@ int main(int argc, char **argv) {
 						for (int testStep=0;testStep<K;testStep++){
 							int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
 							for (int i=0; i<nb_act; i++){
-								virtualState = virtualBlockRoom->sensation();
-								if (!virtualBlockRoom->terminal()){
-									virtualAct = virtualBlockRoom->trueBestAction();
-									virtualReward = virtualBlockRoom->apply(virtualAct).reward;
+								virtualState = virtualInfinite->sensation();
+								if (!virtualInfinite->terminal()){
+									virtualAct = virtualInfinite->trueBestAction();
+									virtualReward = virtualInfinite->apply(virtualAct).reward;
 								}
 								else{
-									virtualBlockRoom->reset();
+									virtualInfinite->reset();
 								}
 							}
 							for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-								std::vector<float> sample_test = virtualBlockRoom->sensation();
+								std::vector<float> sample_test = virtualInfinite->sensation();
 								std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
 								std::vector<float> predNextState = std::get<0>(prediction);
 								float predReward = std::get<1>(prediction);
 
-								float reward = virtualBlockRoom->apply(sample_act_test).reward;
-								std::vector<float> new_state = virtualBlockRoom->sensation();
+								float reward = virtualInfinite->apply(sample_act_test).reward;
+								std::vector<float> new_state = virtualInfinite->sensation();
 
 								float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
 								model_error_acts[sample_act_test] += error_test;

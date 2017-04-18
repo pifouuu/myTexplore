@@ -211,7 +211,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 					cout << "   State-Action novel state bonus, dist: " << featDist
 							<< " n: " << n << ", bonus, " << bonus << endl;
 				}
-				retval->novBonus = bonus;
+				retval->novBonus += bonus;
 			}
 		}
 
@@ -236,7 +236,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			if (conf < 1.0){
 				// percent of conf
 				float bonus = (1.0-conf)*v;
-				retval->varBonus = bonus;
+				retval->varBonus += bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action continuous bonus conf: "
 							<< conf

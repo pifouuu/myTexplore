@@ -40,8 +40,8 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	PLANNERDEBUG = false; //true;
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
-	UCTDEBUG = false; //trueit
-	QDEBUG = false;
+	UCTDEBUG = true; //trueit
+	QDEBUG = true;
 	USETRUEENV = false;
 
 	featmax = fmax;
@@ -374,7 +374,7 @@ int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, f
 		// break after some max time
 		float elapsed = getSeconds()-planTime;
 		if (elapsed > MAX_TIME) { // && i > 500){
-//			cout<<"stopped planning after "<<i<<" iterations and "<<elapsed<<" seconds."<<endl;
+			if (UCTDEBUG) cout<<"stopped planning after "<<i<<" iterations and "<<elapsed<<" seconds."<<endl;
 			break;
 		}
 
@@ -391,8 +391,23 @@ int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, f
 	// Get Q values
 	std::vector<float> Q = info->sumQ();
 	if (QDEBUG){
-		cout << "Q values : ";
-		for (auto qval:Q){
+		cout << "Q envReward values : ";
+		for (auto qval:info->Q_envReward){
+			cout << qval << " | ";
+		}
+		cout << endl;
+		cout << "Q novBonus values : ";
+		for (auto qval:info->Q_novBonus){
+			cout << qval << " | ";
+		}
+		cout << endl;
+		cout << "Q syncBOnus values : ";
+		for (auto qval:info->Q_syncBonus){
+			cout << qval << " | ";
+		}
+		cout << endl;
+		cout << "Q varBonus values : ";
+		for (auto qval:info->Q_varBonus){
 			cout << qval << " | ";
 		}
 		cout << endl;
@@ -604,7 +619,7 @@ void ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 	if (depth > MAX_DEPTH) {
 		// return max q value here
 		std::vector<float> Q = info->sumQ();
-		std::vector<float>::iterator maxAct = std::max_element(Q.begin(),
+		std::vector<float>::iterator maxAct = random_max_element(Q.begin(),
 				Q.end());
 //		float maxval = *maxAct;
 
@@ -678,7 +693,7 @@ void ETUCT::uctSearch(const std::vector<float> &actS, state_t discS, int depth,
 
 	if (UCTDEBUG)
 		cout << " Depth: " << depth << " Selected action " << action << " r: "
-				<< envReward+syncBonus+novBonus+varBonus << endl;
+				<< envReward << " s: "<<syncBonus<<" n: "<<novBonus<<" v: "<<varBonus << endl;
 
 	info->visited++; // = true;
 
@@ -904,9 +919,15 @@ std::vector<float> ETUCT::simulateNextState(
 		//NOT WORKING
 	}
 
-	if (UCTDEBUG)
-		cout << "predicted next state: " << nextstate[0] << ", " << nextstate[1]
-				<< endl;
+	if (UCTDEBUG){
+		cout << "predicted next state: ";
+		for (unsigned i = 0; i < nextstate.size(); i++){
+			cout << nextstate[i] << ", ";
+		}
+		cout << endl;
+	}
+
+
 
 	// return new actual state
 	return nextstate;

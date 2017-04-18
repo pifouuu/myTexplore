@@ -113,7 +113,7 @@ public:
 	tutor_feedback tutorAction();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
 	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;

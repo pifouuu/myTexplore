@@ -44,11 +44,11 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, bool with_tutor, bool stochastic, f
 	int cnt_actions = 0;
 	int cnt_tutor_actions = 0;
 
-//	actions[std::string("NORTH")] = cnt_actions++;
-//	actions[std::string("SOUTH")] = cnt_actions++;
-//	actions[std::string("EAST")] = cnt_actions++;
-//	actions[std::string("WEST")] = cnt_actions++;
-	actions[std::string("GO_TO_EYE")] = cnt_actions++;
+	actions[std::string("NORTH")] = cnt_actions++;
+	actions[std::string("SOUTH")] = cnt_actions++;
+	actions[std::string("EAST")] = cnt_actions++;
+	actions[std::string("WEST")] = cnt_actions++;
+//	actions[std::string("GO_TO_EYE")] = cnt_actions++;
 	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_actions++;
@@ -144,7 +144,7 @@ void InfiniteBlocks::getMinMaxFeatures(std::vector<float> *minFeat,
 		std::vector<float> *maxFeat){
 
 	minFeat->resize(s.size(), 0.0);
-	maxFeat->resize(s.size(), size);
+	maxFeat->resize(s.size(), size-1);
 
 	(*maxFeat)[2] = 1;
 	(*maxFeat)[3] = 1;
@@ -358,32 +358,39 @@ occ_info_t InfiniteBlocks::apply(int action){
 	bool success = false;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
-	/*
+
 	if (action==actions["NORTH"]) {
-		if ((*agent_ns) < size-1) {
+		if ((*agent_ns) < size-1 && *agent_eye_ns > *agent_ns) {
 			(*agent_ns)++;
 			success = true;
 		}
+//		reward--;
 	}
 	if (action==actions["SOUTH"]) {
-		if ((*agent_ns) > 0) {
+		if ((*agent_ns) > 0 && *agent_eye_ns < *agent_ns) {
 			(*agent_ns)--;
 			success = true;
 		}
+//		reward--;
+
 	}
 	if (action==actions["EAST"]) {
-		if ((*agent_ew) < size-1) {
+		if ((*agent_ew) < size-1 && *agent_eye_ew > *agent_ew) {
 			(*agent_ew)++;
 			success = true;
 		}
+//		reward--;
+
 	}
 	if (action==actions["WEST"]) {
-		if ((*agent_ew) > 0) {
+		if ((*agent_ew) > 0 && *agent_eye_ew < *agent_ew) {
 			(*agent_ew)--;
 			success = true;
 		}
+//		reward--;
+
 	}
-	*/
+	/*
 
 	if (action==actions["GO_TO_EYE"]) {
 		if (rng.bernoulli(stoch_param)) {
@@ -398,7 +405,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 		}
 		success = true;
 	}
-
+	*/
 	if (action == actions["PICK"]){
 		if (!(*red_block_hold) && !(*blue_block_hold) && eye_hand_sync()) {
 			if (*agent_ns==*red_blocks_ns && *agent_ew==*red_blocks_ew) {
@@ -410,7 +417,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 					}
 				}
 			}
-			if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
+			else if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 1;
 					success = true;
@@ -420,6 +427,8 @@ occ_info_t InfiniteBlocks::apply(int action){
 				}
 			}
 		}
+//		reward--;
+
 	}
 
 	/*if (action==actions["PUT_DOWN"]) {
@@ -487,7 +496,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
-					blue_box_count_blue;
+					blue_box_count_blue++;
 					reward += finalReward;
 					success = true;
 					if (IS_REAL){
@@ -496,27 +505,37 @@ occ_info_t InfiniteBlocks::apply(int action){
 				}
 			}
 		}
+//		reward--;
+
 	}
 
 	if (action==actions["LOOK_RED_BOX"])	{
 		(*agent_eye_ew) = (*red_box_ew);
 		(*agent_eye_ns) = (*red_box_ns);
 		success = true;
+//		reward--;
+
 	}
 	if (action==actions["LOOK_BLUE_BOX"]){
 		(*agent_eye_ew) = (*blue_box_ew);
 		(*agent_eye_ns) = (*blue_box_ns);
 		success = true;
+//		reward--;
+
 	}
 	if (action==actions["LOOK_RED_BLOCKS"])	{
 		(*agent_eye_ew) = (*red_blocks_ew);
 		(*agent_eye_ns) = (*red_blocks_ns);
 		success = true;
+//		reward--;
+
 	}
 	if (action==actions["LOOK_BLUE_BLOCKS"])	{
 		(*agent_eye_ew) = (*blue_blocks_ew);
 		(*agent_eye_ns) = (*blue_blocks_ns);
 		success = true;
+//		reward--;
+
 	}
 
 	actions_occurences[action].push_back(numstep);
@@ -559,8 +578,8 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	int tutoract;
 	if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 	if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
-	if (!(*red_block_hold)&&!(blue_block_hold)){
-		tutoract = actions["LOOK_RED_BLOCKS"];
+	if (!(*red_block_hold)&&!(*blue_block_hold)){
+		tutoract = tutor_actions["LOOK_RED_BLOCKS"];
 	}
 
 	return tutor_feedback(tutor_reward, reward, tutoract);
