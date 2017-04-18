@@ -184,11 +184,13 @@ struct occ_info_t{
 		bool success;
 		int blocks_in;
 		int blocks_right;
-		occ_info_t(float r, bool s, int i, int ri){
+		float tutor_reward;
+		occ_info_t(float r, bool s, int i, int ri, float tr){
 			reward =r ;
 			success =s;
 			blocks_in = i;
 			blocks_right = ri;
+			tutor_reward = tr;
 		}
 	};
 

@@ -13,8 +13,8 @@
 
 using namespace cv;
 
-InfiniteBlocks::InfiniteBlocks(Random &rand, bool with_tutor, bool stochastic, float finalReward):
-			size(6),
+InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool stochastic, float finalReward):
+			size(size),
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
@@ -79,19 +79,28 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, bool with_tutor, bool stochastic, f
 		action_names[it->second] = it->first;
 	}
 
-	*agent_ns = rng.uniformDiscrete(0, size-1);
-	*agent_ew = rng.uniformDiscrete(0, size-1);
-	*agent_eye_ns = rng.uniformDiscrete(0, size-1);
-	*agent_eye_ew = rng.uniformDiscrete(0, size-1);
+	*agent_ns = size/2;
+	*agent_ew = size/2;
+	*agent_eye_ns = size/2;
+	*agent_eye_ew = size/2;
 
 	*red_blocks_ns = size-1;
 	*red_blocks_ew = size-1;
-	*blue_blocks_ns = size-2;
-	*blue_blocks_ew = size-2;
-	*red_box_ns = rng.uniformDiscrete(0, size-1);
-	*red_box_ew = rng.uniformDiscrete(0, size-1);
-	*blue_box_ew = rng.uniformDiscrete(0, size-1);
-	*blue_box_ns = rng.uniformDiscrete(0, size-1);
+	*blue_blocks_ns = 0;
+	*blue_blocks_ew = 0;
+	*red_box_ns = 0;
+	*red_box_ew =size-1;
+	*blue_box_ew = 0;
+	*blue_box_ns =size-1;
+
+//	*red_blocks_ns = size-1;
+//	*red_blocks_ew = size-1;
+//	*blue_blocks_ns =  size-2;
+//	*blue_blocks_ew =  size-2;
+//	*red_box_ns = rng.uniformDiscrete(0, size-1);
+//	*red_box_ew =rng.uniformDiscrete(0, size-1);
+//	*blue_box_ew = rng.uniformDiscrete(0, size-1);
+//	*blue_box_ns =rng.uniformDiscrete(0, size-1);
 
 	*red_block_hold = 0;
 	*blue_block_hold = 0;
@@ -354,7 +363,7 @@ float InfiniteBlocks::getEuclidianDistance(std::vector<float> & s1, std::vector<
 
 occ_info_t InfiniteBlocks::apply(int action){
 	float reward = 0.;
-	float virtual_reward = 0;
+	float tutor_reward = 0;
 	bool success = false;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
@@ -463,6 +472,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 					*red_block_hold = 0;
 					red_box_count_red++;
 					reward += finalReward;
+					tutor_reward += finalReward;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in red box." << std::endl;
@@ -540,7 +550,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, 0, 0);
+	return occ_info_t(reward, success, 0, 0, tutor_reward);
 }
 
 

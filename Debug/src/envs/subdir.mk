@@ -4,15 +4,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/envs/BlockRoom.cc \
 ../src/envs/InfiniteBlocks.cc 
 
 CC_DEPS += \
-./src/envs/BlockRoom.d \
 ./src/envs/InfiniteBlocks.d 
 
 OBJS += \
-./src/envs/BlockRoom.o \
 ./src/envs/InfiniteBlocks.o 
 
 

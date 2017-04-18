@@ -19,7 +19,7 @@ class InfiniteBlocks: public Environment {
 public:
 	// Constructor
 
-	InfiniteBlocks(Random &rand, bool with_tutor, bool stochastic, float finalReward);
+	InfiniteBlocks(Random &rand, int size, bool with_tutor, bool stochastic, float finalReward);
 
 	/* InfiniteBlocks is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -113,7 +113,7 @@ public:
 	tutor_feedback tutorAction();
 
 
-	bool BRDEBUG = true;
+	bool BRDEBUG = false;
 	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;

@@ -118,11 +118,11 @@ int main(int argc, char **argv) {
 	char* agentType = NULL;
 	char* envType = NULL;
 	char* tutorType = NULL;
-	float discountfactor = 0.99;
+	float discountfactor = 0.9;
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 1000.0;
+	float actrate = 10.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -154,6 +154,7 @@ int main(int argc, char **argv) {
 	int maxsteps = 100;
 	int batchFreq = 1;
 	bool rewarding=true;
+	int roomsize = 5;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -267,6 +268,7 @@ int main(int argc, char **argv) {
 			{"nbblue",1 ,0, 18},
 			{"maxsteps", 1, 0, 19},
 			{"batchFreq", 1, 0, 20},
+			{"roomsize", 1, 0, 21},
 			{0, 0, 0, 0}
 	};
 
@@ -677,6 +679,9 @@ int main(int argc, char **argv) {
 		case 20:
 			batchFreq = std::atof(optarg);
 			break;
+		case 21:
+			roomsize = std::atof(optarg);
+			break;
 		case 'h':
 		case '?':
 		case 0:
@@ -752,7 +757,7 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "infiniteBlocks") == 0){
 		if (PRINTS) cout << "Environment: infiniteBlocks \n";
-		e = new InfiniteBlocks(rng, with_tutor, stochastic, finalReward);
+		e = new InfiniteBlocks(rng, roomsize, with_tutor, stochastic, finalReward);
 	}
 
 	/*else if (strcmp(envType, "cartpole") == 0){
@@ -928,6 +933,7 @@ int main(int argc, char **argv) {
 	name += "_nmodels_"+std::to_string(nmodels);
 	name += "_batch_"+std::to_string(batchFreq);
 	name += "_steps_"+std::to_string(maxsteps);
+	name += "_size_"+std::to_string(roomsize);
 //	name += "_explo";
 	boost::filesystem::path rootPath ( "./resultats_4/" + name );
 	boost::system::error_code returnedError;
@@ -1093,7 +1099,7 @@ int main(int argc, char **argv) {
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
-		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, with_tutor, stochastic, finalReward);
+		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, roomsize, with_tutor, stochastic, finalReward);
 		virtualInfinite->setDebug(false);
 		virtualInfinite->setVerbose(false);
 
@@ -1327,7 +1333,7 @@ int main(int argc, char **argv) {
 		if (!episodic){
 
 			tutor_feedback t_feedback(0.,0., 0);
-			occ_info_t info(0,0,0,0);
+			occ_info_t info(0,0,0,0,0);
 
 			int a = 0;
 			int endExploration = 0;
@@ -1395,7 +1401,7 @@ int main(int argc, char **argv) {
 					}
 
 					accu_rewards[(trial_step+step)/eval_freq] += trial_reward;
-					accu_tutor_rewards_2[(trial_step+step)/eval_freq] += trial_tutor_reward_2;
+//					accu_tutor_rewards_2[(trial_step+step)/eval_freq] += trial_tutor_reward_2;
 					accu_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
 					step_reached[(trial_step+step)/eval_freq]++;
 
@@ -1446,8 +1452,8 @@ int main(int argc, char **argv) {
 
 
 				trial_reward += info.reward;
-				trial_tutor_reward += t_feedback.tutor_reward;
-				trial_tutor_reward_2 += t_feedback.reward;
+				trial_tutor_reward += info.tutor_reward;
+//				trial_tutor_reward_2 += t_feedback.reward;
 
 				if (step % 200 == 0 && step != 0){
 					for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
@@ -1481,11 +1487,11 @@ int main(int argc, char **argv) {
 					ofs.close();
 					ofs.clear();
 
-					ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
-					boost::archive::text_oarchive oa_tutor_r_2(ofs);
-					oa_tutor_r_2 & accu_tutor_rewards_2;
-					ofs.close();
-					ofs.clear();
+//					ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
+//					boost::archive::text_oarchive oa_tutor_r_2(ofs);
+//					oa_tutor_r_2 & accu_tutor_rewards_2;
+//					ofs.close();
+//					ofs.clear();
 
 					ofs.open(rootPath.string()+"/var_prop.ser");
 					boost::archive::text_oarchive oa_var(ofs);

@@ -203,16 +203,17 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
 			std::vector<float> state2 = state;
 			state2.push_back(act);
+			float bonus = 0.;
 			float featDist = getFeatDistToVisitedSA(state2);
 			if (featDist > 0){
 				// modify reward with proportional bonus of n
-				float bonus = featDist * n;
+				bonus = featDist * n;
 				if (MODEL_DEBUG){
 					cout << "   State-Action novel state bonus, dist: " << featDist
 							<< " n: " << n << ", bonus, " << bonus << endl;
 				}
-				retval->novBonus += bonus;
 			}
+			retval->novBonus = bonus;
 		}
 
 		// use some % of v if we're doing continuous terminal bonus
@@ -296,13 +297,14 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 
 		if (exploreType == DIFF_NOVEL_TUTOR){
 			bool sync = trueEnv->isSyncTutor(state);
-			float bonus = tutorBonus;
+			float bonus = 0;
 			if (sync){
-				retval->syncBonus = bonus;
+				bonus = tutorBonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action tutor bonus: " << endl;
 				}
 			}
+			retval->syncBonus = bonus;
 		}
 	}
 

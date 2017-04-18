@@ -824,7 +824,7 @@ occ_info_t BlockRoom::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, get_blocks_in(), get_blocks_right());
+	return occ_info_t(reward, success, get_blocks_in(), get_blocks_right(), );
 }
 
 /*int BlockRoom::trueBestAction(std::vector<float> &state){

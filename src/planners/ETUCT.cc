@@ -40,8 +40,8 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	PLANNERDEBUG = false; //true;
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
-	UCTDEBUG = true; //trueit
-	QDEBUG = true;
+	UCTDEBUG = false; //trueit
+	QDEBUG = false;
 	USETRUEENV = false;
 
 	featmax = fmax;
@@ -792,6 +792,7 @@ int ETUCT::selectUCTAction(state_info* info) {
 	if (rewardBound < 1.0)
 		rewardBound = 1.0;
 	rewardBound /= (1.0 - gamma);
+//	rewardBound = 0.1 / (1.0-gamma);
 	if (UCTDEBUG)
 		cout << "Reward bound: " << rewardBound << endl;
 
@@ -920,11 +921,11 @@ std::vector<float> ETUCT::simulateNextState(
 	}
 
 	if (UCTDEBUG){
-		cout << "predicted next state: ";
+		std::cout << "predicted next state: ";
 		for (unsigned i = 0; i < nextstate.size(); i++){
-			cout << nextstate[i] << ", ";
+			std::cout << nextstate[i] << ", ";
 		}
-		cout << endl;
+		std::cout << endl;
 	}
 
 
