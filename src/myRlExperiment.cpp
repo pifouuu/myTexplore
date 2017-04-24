@@ -57,7 +57,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 10.0;
+	float actrate = 500.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
 	int history = 0;
 	int seed = 1;
 	int pretrain_steps = 0;
-	int tutorBonus = 10;
+	float tutorBonus = 10;
 	int finalReward = 100;
 	int nbRedBlocks = 1;
 	int nbBlueBlocks = 0;

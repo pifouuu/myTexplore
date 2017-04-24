@@ -21,7 +21,7 @@ FactoredModel::FactoredModel(int id, int numactions, int M, int modelType,
 				stoch), episodic(episodic), rewarding(rewarding), rng(rng) {
 
 	//cout << "MDP Tree explore type: " << predType << endl;
-	MODEL_DEBUG = false; //true;
+	MODEL_DEBUG = true; //true;
 	COPYDEBUG = false;
 
 	// percent of experiences to use for each model
@@ -565,7 +565,10 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 	retval->transitionProbs.clear();
 
 	if (outputModels.size() == 0) {
-		retval->envReward = -0.001;
+		retval->envReward = 0;
+		retval->varBonus = 0;
+		retval->novBonus = 0;
+		retval->syncBonus = 0;
 
 		// add to transition map
 		retval->transitionProbs[state] = 1.0;
@@ -685,6 +688,9 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 	}
 
 	retval->envReward = rewardSum / totalVisits;
+	retval->varBonus = 0;
+	retval->novBonus = 0;
+	retval->syncBonus = 0;
 	if (MODEL_DEBUG)
 		cout << "Average reward was " << retval->envReward << endl;
 
