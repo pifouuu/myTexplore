@@ -212,7 +212,7 @@ void save_results(std::vector<float> &model_acc,
 std::pair<float,float> evaluation(Environment* env, Agent* agent, Random rng, int numactions, int numObjects,
 		std::vector<float> minValues, std::vector<float> maxValues, int rRange){
 
-	int K = 100;
+	int K = 1000;
 	float reward_error = 0;
 	float model_error = 0.;
 
@@ -1064,7 +1064,7 @@ int main(int argc, char **argv) {
 	name += "_steps_"+std::to_string(maxsteps);
 	name += "_size_"+std::to_string(roomsize);
 //	name += "_explo";
-	boost::filesystem::path rootPath ( "./resultats_4/" + name );
+	boost::filesystem::path rootPath ( "./resultats_5/" + name );
 	boost::system::error_code returnedError;
 
 	boost::filesystem::create_directories( rootPath, returnedError );

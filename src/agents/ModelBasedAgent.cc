@@ -103,18 +103,21 @@ void ModelBasedAgent::initParams(){
 	TIMEDEBUG = false; //true;
 	AGENTDEBUG = false;
 	ACTDEBUG = false;//true;
-	SIMPLEDEBUG = false; //true; //false; //true;
+	SIMPLEDEBUG = true; //true; //false; //true;
 
-	actions[std::string("LOOK_RED_BOX")] = 0;
-	actions[std::string("LOOK_BLUE_BOX")] = 1;
-	actions[std::string("LOOK_BLUE_BLOCKS")] = 2;
-	actions[std::string("LOOK_RED_BLOCKS")] = 3;
+	actions[std::string("LOOK_RED_BOX")] = 2;
+	actions[std::string("LOOK_BLUE_BOX")] = 3;
+	actions[std::string("LOOK_BLUE_BLOCKS")] = 1;
+	actions[std::string("LOOK_RED_BLOCKS")] = 0;
 
 	featmin = std::vector<float>(0,numattentions);
 	featmin.insert(featmin.end(), featminEnv.begin(), featminEnv.end());
 
 	featmax = std::vector<float>(1, numattentions);
 	featmax.insert(featmax.end(), featmaxEnv.begin(), featmaxEnv.end());
+
+	int first_attention = rng.uniformDiscrete(0, numattentions-1);
+	internalState[first_attention]=1;
 
 	for (int i=0;i<featmin.size();i++){
 		if (i<numattentions) relTrans.push_back(0);
@@ -386,7 +389,7 @@ void ModelBasedAgent::setTrueEnv(Environment* e){
 void ModelBasedAgent::initPlanner(){
 	if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-	int max_path = 10; //500;
+	int max_path = 20; //500;
 
 	// init planner based on typ
 	/*
