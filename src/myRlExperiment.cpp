@@ -129,7 +129,7 @@ experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int nu
 		virtualReward = agent->virtualApply(sampleInt, virtualAct).reward;
 	}
 	else{
-		virtualReward = virtualEnv->apply(virtualAct, sampleInt).reward;
+		virtualReward = virtualEnv->apply(virtualAct-numattentions, sampleInt).reward;
 	}
 	sampleExt = virtualEnv->sensation();
 	sampleGlobal = sampleInt;
@@ -141,6 +141,7 @@ experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int nu
 	exp.terminal = virtualEnv->terminal();
 
 	virtualEnv->reset();
+	return exp;
 }
 
 void save_results(std::vector<float> &model_acc,
@@ -1342,7 +1343,7 @@ int main(int argc, char **argv) {
 						info = agent->apply(a);
 					}
 					else{
-						info = e->apply(a, is);
+						info = e->apply(a-numattentions, is);
 					}
 					if (with_tutor){
 						t_feedback = e->tutorAction();
@@ -1359,7 +1360,7 @@ int main(int argc, char **argv) {
 						info = agent->apply(a);
 					}
 					else{
-						info = e->apply(a, is);
+						info = e->apply(a-numattentions, is);
 					}
 					t_feedback = e->tutorAction();
 					if (with_tutor){

@@ -175,7 +175,7 @@ occ_info_t ModelBasedAgent::virtualApply(std::vector<float> &attention, int acti
 }
 
 std::vector<float> ModelBasedAgent::generateSample(){
-	std::vector<float> res(0,numattentions);
+	std::vector<float> res(numattentions,0);
 	int o = rng.uniformDiscrete(0, numattentions-1);
 	res[o]=1;
 	return res;

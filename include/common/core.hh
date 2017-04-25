@@ -256,8 +256,8 @@ public:
 	/** Provides access to the current sensation that the environment
       gives to the agent.
       \return The current sensation. */
-	virtual const std::vector<float> &sensation() const = 0;
-	virtual void print_map(std::vector<float> attention) const = 0;
+	virtual std::vector<float> sensation() = 0;
+	virtual void print_map(std::vector<float> &attention) const = 0;
 
 
 	/** Allows an agent to affect its environment.

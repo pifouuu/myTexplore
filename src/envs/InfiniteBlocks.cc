@@ -70,37 +70,36 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 	red_block_hold = 0;
 	blue_block_hold = 0;
 
-	int cnt_objects = 0;
-
 	position red_blocks_pos(size-1,size-1);
 	objects.push_back(red_blocks_pos);
-	float* red_blocks_ns = &(objects[cnt_objects].ypos);
-	float* red_blocks_ew = &(objects[cnt_objects].xpos);
-	cnt_objects++;
+
 
 	position blue_blocks_pos(0,0);
 	objects.push_back(blue_blocks_pos);
-	float* blue_blocks_ns = &(objects[cnt_objects].ypos);
-	float* blue_blocks_ew = &(objects[cnt_objects].xpos);
-	cnt_objects++;
+
 
 	position red_box_pos(0,size-1);
 	objects.push_back(red_box_pos);
-	float* red_box_ns = &(objects[cnt_objects].ypos);
-	float* red_box_ew = &(objects[cnt_objects].xpos);
-	cnt_objects++;
+
 
 	position blue_box_pos(size-1,0);
 	objects.push_back(blue_box_pos);
-	float* blue_box_ns = &(objects[cnt_objects].ypos);
-	float* blue_box_ew = &(objects[cnt_objects].xpos);
-	cnt_objects++;
+
+
+	red_blocks_ns = &(objects[0].ypos);
+	red_blocks_ew = &(objects[0].xpos);
+	blue_blocks_ns = &(objects[1].ypos);
+	blue_blocks_ew = &(objects[1].xpos);
+	red_box_ns = &(objects[2].ypos);
+	red_box_ew = &(objects[2].xpos);
+	blue_box_ns = &(objects[3].ypos);
+	blue_box_ew = &(objects[3].xpos);
 
 }
 
 InfiniteBlocks::~InfiniteBlocks() {}
 
-const std::vector<float> &InfiniteBlocks::sensation() const {
+std::vector<float> InfiniteBlocks::sensation() {
 	std::vector<float> s = {agent_ns,agent_ew,red_block_hold,blue_block_hold};
 	for (int i=0; i<objects.size();i++){
 		s.push_back(objects[i].xpos);
@@ -182,7 +181,7 @@ void InfiniteBlocks::getMinMaxReward(float *minR,
 
 }
 
-void InfiniteBlocks::print_map(std::vector<float> attention) const{
+void InfiniteBlocks::print_map(std::vector<float> &attention) const{
 
 	int blockSize=80;
 	Size sizeBlock(blockSize, blockSize);

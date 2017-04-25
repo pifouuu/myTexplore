@@ -47,7 +47,7 @@ public:
 	friend std::ostream &operator<<(std::ostream &out, const InfiniteBlocks &InfiniteBlocks);
 
 	/** Prints the current map. */
-	void print_map(std::vector<float> attention) const;
+	void print_map(std::vector<float> &attention) const;
 
 	int size;
 	bool stochastic;
@@ -103,7 +103,7 @@ public:
 
 	std::map<int, std::string> get_action_names();
 
-	const std::vector<float> &sensation() const;
+	std::vector<float> sensation();
 	int applyNoise(int action);
 	std::vector<std::pair<int,int>> get_nearby_pos(int, int);
 	bool isSyncTutor(std::vector<float>) const;
