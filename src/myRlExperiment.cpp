@@ -111,6 +111,131 @@ void displayHelp(){
 
 }
 
+experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int numactions, int numattentions){
+	std::vector<float> sampleExt = virtualEnv->generateSample();
+	std::vector<float> sampleInt = agent->generateSample();
+	std::vector<float> sampleGlobal = sampleInt;
+	sampleGlobal.insert(sampleGlobal.end(), sampleExt.begin(), sampleExt.end());
+	float virtualReward;
+	int virtualAct;
+
+	experience exp;
+	exp.s = sampleGlobal;
+
+	virtualAct = rng.uniformDiscrete(0, numactions-1);
+	exp.act = virtualAct;
+
+	if (virtualAct<numattentions) {
+		virtualReward = agent->virtualApply(sampleInt, virtualAct).reward;
+	}
+	else{
+		virtualReward = virtualEnv->apply(virtualAct, sampleInt).reward;
+	}
+	sampleExt = virtualEnv->sensation();
+	sampleGlobal = sampleInt;
+	sampleGlobal.insert(sampleGlobal.end(), sampleExt.begin(), sampleExt.end());
+	exp.next = sampleGlobal;
+
+	exp.reward = virtualReward;
+
+	exp.terminal = virtualEnv->terminal();
+
+	virtualEnv->reset();
+}
+
+void save_results(std::vector<float> &model_acc,
+		std::vector<float> &reward_acc,
+		std::vector<float> &accumulated_rewards,
+		std::vector<float> &accumulated_tutor_rewards,
+		std::vector<float> &var_prop,
+		std::vector<float> &sync_prop,
+		std::vector<float> &nov_prop,
+		std::vector<float> &reward_prop,
+		std::vector<int> &step_reached, boost::filesystem::path rootPath){
+
+	std::ofstream ofs(rootPath.string()+"/model_acc"+".ser");
+	boost::archive::text_oarchive oa_model_acc(ofs);
+	oa_model_acc & model_acc;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/reward_acc"+".ser");
+	boost::archive::text_oarchive oa_reward_acc(ofs);
+	oa_reward_acc & reward_acc;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/accumulated_reward.ser");
+	boost::archive::text_oarchive oa_accu_reward(ofs);
+	oa_accu_reward & accumulated_rewards;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
+	boost::archive::text_oarchive oa_tutor_r(ofs);
+	oa_tutor_r & accumulated_tutor_rewards;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/var_prop.ser");
+	boost::archive::text_oarchive oa_var(ofs);
+	oa_var & var_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/nov_prop.ser");
+	boost::archive::text_oarchive oa_nov(ofs);
+	oa_nov & nov_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/sync_prop.ser");
+	boost::archive::text_oarchive oa_sync(ofs);
+	oa_sync & sync_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/reward_prop.ser");
+	boost::archive::text_oarchive oa_reward(ofs);
+	oa_reward & reward_prop;
+	ofs.close();
+	ofs.clear();
+
+	ofs.open(rootPath.string()+"/num_trials.ser");
+	boost::archive::text_oarchive num_trials(ofs);
+	num_trials & step_reached;
+	ofs.close();
+	ofs.clear();
+}
+
+std::pair<float,float> evaluation(Environment* env, Agent* agent, Random rng, int numactions, int numObjects,
+		std::vector<float> minValues, std::vector<float> maxValues, int rRange){
+
+	int K = 100;
+	float reward_error = 0;
+	float model_error = 0.;
+
+	for (int testStep=0;testStep<K;testStep++){
+
+		experience exp = generateExp(env, agent, rng, numactions, numObjects);
+
+		std::tuple<std::vector<float>,float,float> prediction = agent->pred(exp.s, exp.act);
+		std::vector<float> predNextState = std::get<0>(prediction);
+		float predReward = std::get<1>(prediction);
+
+		float me = env->getEuclidianDistance(predNextState, exp.next, minValues, maxValues);
+		model_error += me;
+
+		float re = fabs(predReward-exp.reward)/rRange;
+		reward_error += re;
+
+	}
+
+	reward_error /= K;
+	model_error /= K;
+	return std::make_pair(reward_error, model_error);
+}
+
 
 int main(int argc, char **argv) {
 
@@ -852,14 +977,17 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
-	const int numactions = e->getNumActions(); // Most agents will need this?
+	const int numExtActions = e->getNumActions();
 	const int num_tutor_actions = e->getNumTutorActions();
+	const int numattentions = e->getNumObjects();
+	const int numactions = numattentions+numExtActions;
 
 	std::map<int,std::string> action_names = e->get_action_names();
 
-	std::vector<float> minValues;
-	std::vector<float> maxValues;
-	e->getMinMaxFeatures(&minValues, &maxValues);
+	std::vector<float> minValuesEnv;
+	std::vector<float> maxValuesEnv;
+	e->getMinMaxFeatures(&minValuesEnv, &maxValuesEnv);
+
 	bool episodic = e->isEpisodic();
 
 	cout << "Environment is ";
@@ -867,9 +995,9 @@ int main(int argc, char **argv) {
 	cout << "episodic." << endl;
 
 	// lets just check this for now
-	for (unsigned i = 0; i < minValues.size(); i++){
-		if (PRINTS) cout << "Feat " << i << " min: " << minValues[i]
-																  << " max: " << maxValues[i] << endl;
+	for (unsigned i = 0; i < minValuesEnv.size(); i++){
+		if (PRINTS) cout << "Feat " << i << " min: " << minValuesEnv[i]
+																  << " max: " << maxValuesEnv[i] << endl;
 	}
 
 	// get max/min reward for the domain
@@ -894,7 +1022,7 @@ int main(int argc, char **argv) {
 
 	if (statesPerDim.size() == 0){
 		cout << "set statesPerDim to " << nstates << " for all dim" << endl;
-		statesPerDim.resize(minValues.size(), nstates);
+		statesPerDim.resize(minValuesEnv.size(), nstates);
 	}
 
 	// Construct tutor here.
@@ -942,47 +1070,32 @@ int main(int argc, char **argv) {
 
 	int eval_freq = 25;
 
-	//std::vector<act_info_t> act_to_occ;
-//	std::vector<std::pair<float,float>> act_count(numactions);
+	std::vector<float> model_acc((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	std::vector<float> model_acc_train((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
-	//std::map<int,std::vector<std::pair<float, float>>> plot_act_succes;
-//	std::map<int,std::vector<std::pair<float, float>>> plot_act_try;
-//	std::map<int, std::vector<std::pair<float,float>>> plot_act_acc;
-//	std::list<std::pair<int,int>> plot_blocks_in;
-//	std::list<std::pair<int,int>> plot_blocks_right;
-	std::map<int, std::vector<float>> model_acc;
-	std::map<int, std::vector<float>> model_acc_train;
-	for (int act=0;act<numactions;act++){
-		model_acc[act] = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		model_acc_train[act] = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-	}
+	std::vector<float> reward_acc((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	std::vector<float> reward_acc_train((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
-	std::vector<std::vector<float>> comp_acc(minValues.size());
-	std::vector<std::vector<float>> comp_acc_train(minValues.size());
-	for (int comp=0;comp<minValues.size();comp++){
-		comp_acc[comp] = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		comp_acc_train[comp] = std::vector<float>((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-
-	}
-
-	std::vector<float> reward_model_acc((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-	std::vector<float> reward_model_acc_train((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-
-	std::vector<float> accu_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-	std::vector<float> accu_tutor_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
-	std::vector<float> accu_tutor_rewards_2((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	std::vector<float> accumulated_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
+	std::vector<float> accumulated_tutor_rewards((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
 	std::vector<int> step_reached((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
-	std::vector<int> eval_steps((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, -pretrain_steps);
 
 	std::vector<float> var_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<float> nov_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<float> reward_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 	std::vector<float> sync_prop((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, 0);
 
+	std::vector<int> eval_steps((NUMEPISODES*maxsteps+pretrain_steps)/eval_freq+1, -pretrain_steps);
 	for (int tmp = 1; tmp<eval_steps.size();tmp++){
 		eval_steps[tmp]+=eval_freq*tmp;
 	}
+	std::ofstream ofs(rootPath.string()+"/x_axis.ser");
+	boost::archive::text_oarchive x_axis(ofs);
+	x_axis & eval_steps;
+	ofs.close();
+	ofs.clear();
+
 
 
 
@@ -1001,6 +1114,9 @@ int main(int argc, char **argv) {
 		float avg_nov_prop = 0.;
 		float avg_reward_prop = 0.;
 		float avg_sync_prop = 0.;
+
+		std::vector<float> minValuesAgent;
+		std::vector<float> maxValuesAgent;
 
 		// Construct agent here.
 		Agent* agent;
@@ -1040,6 +1156,7 @@ int main(int argc, char **argv) {
 		if (strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") || strcmp(agentType, "texplore")){
 			if (PRINTS) cout << "Agent: Model Based" << endl;
 			agent = new ModelBasedAgent(numactions,
+					numattentions,
 					discountfactor,
 					rMax, rRange,
 					modelType,
@@ -1051,12 +1168,14 @@ int main(int argc, char **argv) {
 					lambda,
 					(1.0/actrate), //0.1, //0.1, //0.01, // max time
 					M,
-					minValues, maxValues,
+					minValuesEnv, maxValuesEnv,
 					statesPerDim,//0,
 					history, v, n, tutorBonus,
-					deptrans, reltrans, featPct, stochastic, episodic, rewarding, batchFreq,
+					deptrans, featPct, stochastic, episodic, rewarding, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
+
+			agent->getMinMaxFeatures(&minValuesAgent, &maxValuesAgent);
 		}
 
 		/*else if (strcmp(agentType, "savedpolicy") == 0){
@@ -1096,6 +1215,10 @@ int main(int argc, char **argv) {
 			int success;
 		};
 
+		std::vector<float> minValues = minValuesAgent;
+		minValues.insert(minValues.end(), minValuesEnv.begin(), minValuesEnv.end());
+		std::vector<float> maxValues = maxValuesAgent;
+		maxValues.insert(maxValues.end(), maxValuesEnv.begin(), maxValuesEnv.end());
 
 		int virtualSeed = 12;
 		Random virtualRng(virtualSeed);
@@ -1111,7 +1234,9 @@ int main(int argc, char **argv) {
 			float count_r = 0;
 			float virtualReward;
 			int virtualAct;
-			std::vector<float> virtualState;
+			std::vector<float> virtualEs;
+			std::vector<float> virtualIs;
+			std::vector<float> virtualGs;
 			std::vector<experience> experiences;
 
 			float model_error_train_r = 0;
@@ -1121,205 +1246,38 @@ int main(int argc, char **argv) {
 
 //			std::vector<float> count_acts_train(numactions,0);
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
-				// 23 = nb blocks * 6 étapes par bloc -1
-				int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
-				for (int i=0; i<nb_act; i++){
-					virtualState = virtualInfinite->sensation();
-					if (!virtualInfinite->terminal()){
-						virtualAct = virtualInfinite->trueBestAction();
-						virtualReward = virtualInfinite->apply(virtualAct).reward;
-					}
-					else{
-						virtualInfinite->reset();
-					}
-				}
 
+				experience exp = generateExp(virtualInfinite, agent, rng, numactions, numattentions);
 
-
-				experience exp;
-				exp.s = virtualInfinite->sensation();
-
-				virtualAct = rng.uniformDiscrete(0, virtualInfinite->getNumActions()-1);
-				exp.act = virtualAct;
-
-				virtualReward = virtualInfinite->apply(virtualAct).reward;
-				exp.next = virtualInfinite->sensation();
-
-				exp.reward = virtualReward;
-
-
-				exp.terminal = virtualInfinite->terminal();
 				count_r += exp.reward;
 
 				experiences.push_back(exp);
-
-//				if (exp.next!=exp.s) numex_succes[virtualAct]++;
-//				if (exp.reward>0) num_rew++;
-
-				virtualInfinite->reset();
-				bool modelChanged = agent->train_only(exp);
 
 				if (trainStep % 1000 == 0 && trainStep !=0){
 
 					std::vector<experience> trainexp(experiences.end()-1000,experiences.end());
 					bool modelChanged = agent->train_only_many(trainexp);
 
-					std::vector<int> numex(numactions,0);
-					std::vector<float> model_error_acts_train(numactions,0);
-					std::vector<float> model_error_comp_train(minValues.size(),0);
-					int K = 100;
+					std::cout << "Trial " << j << ",eval at step "<< trainStep << std::endl;
 
-					for (int evalTrain=0;evalTrain<numactions*K;evalTrain++){
-						std::tuple<std::vector<float>,float,float> prediction;
-						experience rand_exp = experiences[rng.uniformDiscrete(0, experiences.size()-1)];
-						prediction = agent->pred(rand_exp.s, rand_exp.act);
-						numex[rand_exp.act]++;
-						std::vector<float> predNextState = std::get<0>(prediction);
-						float predReward = std::get<1>(prediction);
+					std::pair<float,float> errors = evaluation(virtualInfinite, agent, rng, numactions, numattentions, minValues, maxValues, rRange);
 
-						float error_train = e->getEuclidianDistance(predNextState, rand_exp.next, minValues, maxValues);
-						if (error_train>0){
-							model_error_acts_train[rand_exp.act]++;
-						}
+					reward_acc[trainStep/eval_freq] += errors.first;
+					model_acc[trainStep/eval_freq] += errors.second;
 
-						for (int i=0;i<minValues.size();i++){
-							if (predNextState[i]!=rand_exp.next[i]) model_error_comp_train[i]++;
-//								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
-						}
-
-
-						float error_train_r = fabs(predReward-rand_exp.reward)/rRange;
-						model_error_train_r += error_train_r;
-					}
-
-					for (int i=0;i<numactions;i++){
-						if (numex[i]!=0) model_error_acts_train[i]/=numex[i];
-						model_acc_train[i][trainStep/eval_freq] += model_error_acts_train[i];
-					}
-
-					model_error_train_r /= (numactions*K);
-					reward_model_acc_train[trainStep/eval_freq] += model_error_train_r;
-
-					for (int i=0;i<minValues.size();i++){
-						model_error_comp_train[i] /= (numactions*K);
-						comp_acc_train[i][trainStep/eval_freq] += model_error_comp_train[i];
-					}
-
-//					std::fill(numex.begin(), numex.end(), 0);
-//					std::fill(model_error_acts_train.begin(), model_error_acts_train.end(), 0);
-//					std::fill(model_error_comp_train.begin(), model_error_comp_train.end(), 0);
-
-					std::cout << "Evaluation during pretraining, step " << trainStep << std::endl;
-
-
-					float model_error_test_r = 0;
-					std::vector<float> model_error_acts(numactions,0);
-					std::vector<float> model_error_comp(minValues.size(),0);
-					std::vector<float> virtualState;
-					float virtualReward;
-					int virtualAct;
-					for (int evalTest=0;evalTest<K;evalTest++){
-						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
-						for (int i=0; i<nb_act; i++){
-							virtualState = virtualInfinite->sensation();
-							if (!virtualInfinite->terminal()){
-								virtualAct = virtualInfinite->trueBestAction();
-								virtualReward = virtualInfinite->apply(virtualAct).reward;
-							}
-							else{
-								virtualInfinite->reset();
-							}
-						}
-						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-							std::vector<float> sample_test = virtualInfinite->sensation();
-							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
-							std::vector<float> predNextState = std::get<0>(prediction);
-							float predReward = std::get<1>(prediction);
-
-							float reward = virtualInfinite->apply(sample_act_test).reward;
-							std::vector<float> new_state = virtualInfinite->sensation();
-
-							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-							if (error_test>0){
-								model_error_acts[sample_act_test]++;
-							}
-//							model_error_acts[sample_act_test] += error_test;
-
-							for (int i=0;i<minValues.size();i++){
-								if (predNextState[i]!=new_state[i]) model_error_comp[i]++;
-//								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
-							}
-
-
-							float error_test_r = fabs(predReward-reward)/rRange;
-							model_error_test_r += error_test_r;
-						}
-					}
-
-					for (int i=0;i<numactions;i++){
-						model_error_acts[i]/=K;
-						model_acc[i][trainStep/eval_freq] += model_error_acts[i];
-					}
-
-					model_error_test_r /= (K*numactions);
-					reward_model_acc[trainStep/eval_freq] += model_error_test_r;
-
-					for (int i=0;i<minValues.size();i++){
-						model_error_comp[i] /= (K*numactions);
-						comp_acc[i][trainStep/eval_freq] += model_error_comp[i];
-					}
-
+					accumulated_rewards[trainStep/eval_freq] += trial_reward;
+					accumulated_tutor_rewards[trainStep/eval_freq] += trial_tutor_reward;
 					step_reached[trainStep/eval_freq]++;
 
-					for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
-							it != model_acc.end(); ++it){
-						std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & it->second;
-					}
-
-					for (int i=0;i<minValues.size();i++){
-						std::ofstream ofs(rootPath.string()+"/component_acc_"+std::to_string(i)+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & comp_acc[i];
-					}
-
-					for (std::map<int, std::vector<float>>::iterator it = model_acc_train.begin();
-							it != model_acc_train.end(); ++it){
-						std::ofstream ofs(rootPath.string()+"/model_acc_train_"+action_names[it->first]+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & it->second;
-					}
-
-					for (int i=0;i<minValues.size();i++){
-						std::ofstream ofs(rootPath.string()+"/component_acc_train"+std::to_string(i)+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & comp_acc_train[i];
-					}
-
-					std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
-					boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-					oa_model_acc_test_r & reward_model_acc;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/reward_model_acc_train"+".ser");
-					boost::archive::text_oarchive oa_model_acc_train_r(ofs);
-					oa_model_acc_train_r & reward_model_acc_train;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/x_axis.ser");
-					boost::archive::text_oarchive x_axis(ofs);
-					x_axis & eval_steps;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/num_trials.ser");
-					boost::archive::text_oarchive num_trials(ofs);
-					num_trials & step_reached;
-					ofs.close();
-					ofs.clear();
+					save_results(model_acc,
+							reward_acc,
+							accumulated_rewards,
+							accumulated_tutor_rewards,
+							var_prop,
+							sync_prop,
+							nov_prop,
+							reward_prop,
+							step_reached, rootPath);
 
 				}
 
@@ -1345,64 +1303,16 @@ int main(int argc, char **argv) {
 			for (unsigned step = 0; step < maxsteps; ++step){
 
 				if (step % eval_freq == 0 && step !=0){
+
 					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
-					int K = 100;
-					float model_error_test_r = 0;
-					std::vector<float> model_error_acts(numactions,0);
-					std::vector<float> model_error_comp(minValues.size(),0);
 
-					std::vector<float> virtualState;
-					float virtualReward;
-					int virtualAct;
-					for (int testStep=0;testStep<K;testStep++){
-						int nb_act = rng.uniformDiscrete(0,(nbRedBlocks+nbBlueBlocks)*6-1);
-						for (int i=0; i<nb_act; i++){
-							virtualState = virtualInfinite->sensation();
-							if (!virtualInfinite->terminal()){
-								virtualAct = virtualInfinite->trueBestAction();
-								virtualReward = virtualInfinite->apply(virtualAct).reward;
-							}
-							else{
-								virtualInfinite->reset();
-							}
-						}
-						for (int sample_act_test = 0; sample_act_test<numactions; sample_act_test++){
-							std::vector<float> sample_test = virtualInfinite->sensation();
-							std::tuple<std::vector<float>,float,float> prediction = agent->pred(sample_test, sample_act_test);
-							std::vector<float> predNextState = std::get<0>(prediction);
-							float predReward = std::get<1>(prediction);
+					std::pair<float,float> errors = evaluation(virtualInfinite, agent, rng, numactions, numattentions, minValues, maxValues, rRange);
 
-							float reward = virtualInfinite->apply(sample_act_test).reward;
-							std::vector<float> new_state = virtualInfinite->sensation();
+					reward_acc[(trial_step+step)/eval_freq] += errors.first;
+					model_acc[(trial_step+step)/eval_freq] += errors.second;
 
-							float error_test = e->getEuclidianDistance(predNextState, new_state, minValues, maxValues);
-							model_error_acts[sample_act_test] += error_test;
-
-							for (int i=0;i<minValues.size();i++){
-								model_error_comp[i] += (predNextState[i]-new_state[i])/(maxValues[i]-minValues[i]);
-							}
-
-							float error_test_r = fabs(predReward-reward)/rRange;
-							model_error_test_r += error_test_r;
-						}
-					}
-
-					for (int i=0;i<numactions;i++){
-						model_error_acts[i]/=K;
-						model_acc[i][(trial_step+step)/eval_freq] += model_error_acts[i];
-					}
-
-					model_error_test_r /= (K*numactions);
-					reward_model_acc[(trial_step+step)/eval_freq] += model_error_test_r;
-
-					for (int i=0;i<minValues.size();i++){
-						model_error_comp[i] /= (K*numactions);
-						comp_acc[i][(trial_step+step)/eval_freq] += model_error_comp[i];
-					}
-
-					accu_rewards[(trial_step+step)/eval_freq] += trial_reward;
-//					accu_tutor_rewards_2[(trial_step+step)/eval_freq] += trial_tutor_reward_2;
-					accu_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
+					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
+					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
 					step_reached[(trial_step+step)/eval_freq]++;
 
 					var_prop[(trial_step+step)/eval_freq] += avg_var_prop/eval_freq;
@@ -1418,13 +1328,22 @@ int main(int argc, char **argv) {
 				}
 
 				std::vector<float> es = e->sensation();
+				std::vector<float> is = agent->attention();
+				std::vector<float> gs = is;
+				gs.insert(gs.end(), es.begin(), es.end());
+				e->print_map(is);
 
 				// first step
 				if (step == 0){
 
 					// first action
-					int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
-					occ_info_t info = e->apply(a);
+					int a = agent->first_action(gs, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					if (a<numattentions) {
+						info = agent->apply(a);
+					}
+					else{
+						info = e->apply(a, is);
+					}
 					if (with_tutor){
 						t_feedback = e->tutorAction();
 						e->apply_tutor(t_feedback.action);
@@ -1435,8 +1354,13 @@ int main(int argc, char **argv) {
 				}
 				else {
 					// next action
-					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
-					info = e->apply(a);
+					a = agent->next_action(info.reward, gs, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					if (a<numattentions) {
+						info = agent->apply(a);
+					}
+					else{
+						info = e->apply(a, is);
+					}
 					t_feedback = e->tutorAction();
 					if (with_tutor){
 						e->apply_tutor(t_feedback.action);
@@ -1453,81 +1377,19 @@ int main(int argc, char **argv) {
 
 				trial_reward += info.reward;
 				trial_tutor_reward += info.tutor_reward;
-//				trial_tutor_reward_2 += t_feedback.reward;
 
 				if (step % 200 == 0 && step != 0){
-					for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
-							it != model_acc.end(); ++it){
-						std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & it->second;
-					}
 
-					for (int i=0;i<minValues.size();i++){
-						std::ofstream ofs(rootPath.string()+"/component_acc_"+std::to_string(i)+".ser");
-						boost::archive::text_oarchive oa(ofs);
-						oa & comp_acc[i];
-					}
+					save_results(model_acc,
+							reward_acc,
+							accumulated_rewards,
+							accumulated_tutor_rewards,
+							var_prop,
+							sync_prop,
+							nov_prop,
+							reward_prop,
+							step_reached, rootPath);
 
-					std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
-					boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-					oa_model_acc_test_r & reward_model_acc;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/accumulated_reward.ser");
-					boost::archive::text_oarchive oa_accu_reward(ofs);
-					oa_accu_reward & accu_rewards;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
-					boost::archive::text_oarchive oa_tutor_r(ofs);
-					oa_tutor_r & accu_tutor_rewards;
-					ofs.close();
-					ofs.clear();
-
-//					ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
-//					boost::archive::text_oarchive oa_tutor_r_2(ofs);
-//					oa_tutor_r_2 & accu_tutor_rewards_2;
-//					ofs.close();
-//					ofs.clear();
-
-					ofs.open(rootPath.string()+"/var_prop.ser");
-					boost::archive::text_oarchive oa_var(ofs);
-					oa_var & var_prop;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/nov_prop.ser");
-					boost::archive::text_oarchive oa_nov(ofs);
-					oa_nov & nov_prop;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/sync_prop.ser");
-					boost::archive::text_oarchive oa_sync(ofs);
-					oa_sync & sync_prop;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/reward_prop.ser");
-					boost::archive::text_oarchive oa_reward(ofs);
-					oa_reward & reward_prop;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/x_axis.ser");
-					boost::archive::text_oarchive x_axis(ofs);
-					x_axis & eval_steps;
-					ofs.close();
-					ofs.clear();
-
-					ofs.open(rootPath.string()+"/num_trials.ser");
-					boost::archive::text_oarchive num_trials(ofs);
-					num_trials & step_reached;
-					ofs.close();
-					ofs.clear();
 				}
 
 			}
@@ -1538,7 +1400,7 @@ int main(int argc, char **argv) {
 
 		// EPISODIC DOMAINS
 		else {
-
+			/*
 
 			//////////////////////////////////
 			// episodic
@@ -1568,10 +1430,7 @@ int main(int argc, char **argv) {
 					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
 				}
-			/*	act_count[a].first++;
-				if (info.success){
-					act_count[a].second++;
-				}*/
+
 
 				// update performance
 				episode_reward += info.reward;
@@ -1772,7 +1631,7 @@ int main(int argc, char **argv) {
 				ofs.close();
 				ofs.clear();
 			}
-
+			*/
 		}
 
 		delete agent;

@@ -18,22 +18,11 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 			stochastic(stochastic),
 			rng(rand),
 			WITH_TUTOR(with_tutor),
-			s(14),
 			finalReward(finalReward),
-			agent_ns(&(s[0])),
-			agent_ew(&(s[1])),
-			red_block_hold(&(s[2])),
-			blue_block_hold(&s[3]),
-			agent_eye_ns(&(s[4])),
-			agent_eye_ew(&(s[5])),
-			red_box_ns(&(s[6])),
-			red_box_ew(&(s[7])),
-			blue_box_ns(&(s[8])),
-			blue_box_ew(&(s[9])),
-			red_blocks_ns(&s[10]),
-			red_blocks_ew(&s[11]),
-			blue_blocks_ns(&s[12]),
-			blue_blocks_ew(&s[13]),
+			agent_ns(size/2),
+			agent_ew(size/2),
+			red_block_hold(0),
+			blue_block_hold(0),
 			t_state(2),
 			numstep(0),
 			red_box_count_red(0),
@@ -49,10 +38,7 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 	actions[std::string("EAST")] = cnt_actions++;
 	actions[std::string("WEST")] = cnt_actions++;
 //	actions[std::string("GO_TO_EYE")] = cnt_actions++;
-	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
-	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
-	actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_actions++;
-	actions[std::string("LOOK_RED_BLOCKS")] = cnt_actions++;
+
 
 	actions[std::string("PICK")] = cnt_actions++;
 //	actions[std::string("PUT_DOWN")] = cnt_actions++;
@@ -79,39 +65,63 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 		action_names[it->second] = it->first;
 	}
 
-	*agent_ns = size/2;
-	*agent_ew = size/2;
-	*agent_eye_ns = size/2;
-	*agent_eye_ew = size/2;
+	agent_ns = size/2;
+	agent_ew = size/2;
+	red_block_hold = 0;
+	blue_block_hold = 0;
 
-	*red_blocks_ns = size-1;
-	*red_blocks_ew = size-1;
-	*blue_blocks_ns = 0;
-	*blue_blocks_ew = 0;
-	*red_box_ns = 0;
-	*red_box_ew =size-1;
-	*blue_box_ew = 0;
-	*blue_box_ns =size-1;
+	int cnt_objects = 0;
 
-//	*red_blocks_ns = size-1;
-//	*red_blocks_ew = size-1;
-//	*blue_blocks_ns =  size-2;
-//	*blue_blocks_ew =  size-2;
-//	*red_box_ns = rng.uniformDiscrete(0, size-1);
-//	*red_box_ew =rng.uniformDiscrete(0, size-1);
-//	*blue_box_ew = rng.uniformDiscrete(0, size-1);
-//	*blue_box_ns =rng.uniformDiscrete(0, size-1);
+	position red_blocks_pos(size-1,size-1);
+	objects.push_back(red_blocks_pos);
+	float* red_blocks_ns = &(objects[cnt_objects].ypos);
+	float* red_blocks_ew = &(objects[cnt_objects].xpos);
+	cnt_objects++;
 
-	*red_block_hold = 0;
-	*blue_block_hold = 0;
+	position blue_blocks_pos(0,0);
+	objects.push_back(blue_blocks_pos);
+	float* blue_blocks_ns = &(objects[cnt_objects].ypos);
+	float* blue_blocks_ew = &(objects[cnt_objects].xpos);
+	cnt_objects++;
 
-	if (BRDEBUG) print_map();
+	position red_box_pos(0,size-1);
+	objects.push_back(red_box_pos);
+	float* red_box_ns = &(objects[cnt_objects].ypos);
+	float* red_box_ew = &(objects[cnt_objects].xpos);
+	cnt_objects++;
+
+	position blue_box_pos(size-1,0);
+	objects.push_back(blue_box_pos);
+	float* blue_box_ns = &(objects[cnt_objects].ypos);
+	float* blue_box_ew = &(objects[cnt_objects].xpos);
+	cnt_objects++;
+
 }
 
 InfiniteBlocks::~InfiniteBlocks() {}
 
 const std::vector<float> &InfiniteBlocks::sensation() const {
-	if (BRDEBUG) print_map();
+	std::vector<float> s = {agent_ns,agent_ew,red_block_hold,blue_block_hold};
+	for (int i=0; i<objects.size();i++){
+		s.push_back(objects[i].xpos);
+		s.push_back(objects[i].ypos);
+	}
+	return s;
+}
+
+std::vector<float> InfiniteBlocks::generateSample(){
+	float ans = rng.uniformDiscrete(0, size-1);
+	float aew = rng.uniformDiscrete(0, size-1);
+	float rbh,bbh;
+	float tirage = rng.uniformDiscrete(0,2);
+	if (tirage==0) rbh = 1, bbh = 0;
+	else if (tirage==1) rbh = 0, bbh = 1;
+	else rbh = 0, bbh = 0;
+	std::vector<float> s = {ans,aew,rbh,bbh};;
+	for (int i=0; i<objects.size();i++){
+		s.push_back(objects[i].xpos);
+		s.push_back(objects[i].ypos);
+	}
 	return s;
 }
 
@@ -144,6 +154,10 @@ int InfiniteBlocks::getNumActions() {
 	return numactions; //num_actions;
 }
 
+int InfiniteBlocks::getNumObjects(){
+	return objects.size();
+}
+
 int InfiniteBlocks::getNumTutorActions() {
 	if (BRDEBUG) cout << "Return number of tutor actions: " << num_tutor_actions << endl;
 	return num_tutor_actions; //num_actions;
@@ -152,8 +166,8 @@ int InfiniteBlocks::getNumTutorActions() {
 void InfiniteBlocks::getMinMaxFeatures(std::vector<float> *minFeat,
 		std::vector<float> *maxFeat){
 
-	minFeat->resize(s.size(), 0.0);
-	maxFeat->resize(s.size(), size-1);
+	minFeat->resize(objects.size()*2+4, 0.0);
+	maxFeat->resize(objects.size()*2+4, size-1);
 
 	(*maxFeat)[2] = 1;
 	(*maxFeat)[3] = 1;
@@ -168,7 +182,7 @@ void InfiniteBlocks::getMinMaxReward(float *minR,
 
 }
 
-void InfiniteBlocks::print_map() const{
+void InfiniteBlocks::print_map(std::vector<float> attention) const{
 
 	int blockSize=80;
 	Size sizeBlock(blockSize, blockSize);
@@ -205,23 +219,24 @@ void InfiniteBlocks::print_map() const{
 	}
 
 
-	if (*red_block_hold){
-		posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(red_block_img);
+	if (red_block_hold){
+		posToImg[std::pair<int,int>(blockSize*(agent_ew),blockSize*(agent_ns))].push_back(red_block_img);
 	}
-	if (*blue_block_hold){
-		posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(blue_block_img);
+	if (blue_block_hold){
+		posToImg[std::pair<int,int>(blockSize*(agent_ew),blockSize*(agent_ns))].push_back(blue_block_img);
 	}
 	posToImg[std::pair<int,int>(blockSize*(*blue_blocks_ew),blockSize*(*blue_blocks_ns))].push_back(blue_block_img);
 	posToImg[std::pair<int,int>(blockSize*(*red_blocks_ew),blockSize*(*red_blocks_ns))].push_back(red_block_img);
 	posToImg[std::pair<int,int>(blockSize*(*blue_box_ew),blockSize*(*blue_box_ns))].push_back(blue_box_img);
 	posToImg[std::pair<int,int>(blockSize*(*red_box_ew),blockSize*(*red_box_ns))].push_back(red_box_img);
-	posToImg[std::pair<int,int>(blockSize*(*agent_eye_ew),blockSize*(*agent_eye_ns))].push_back(agent_eye_img);
+	position posEye = getAttDir(attention);
+	posToImg[std::pair<int,int>(blockSize*(posEye.xpos),blockSize*(posEye.ypos))].push_back(agent_eye_img);
 
 	if (WITH_TUTOR){
 		posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
 	}
 
-	posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(agent_hand_img);
+	posToImg[std::pair<int,int>(blockSize*(agent_ew),blockSize*(agent_ns))].push_back(agent_hand_img);
 
 	for (auto elem : posToImg){
 		if (elem.second.size()==1){
@@ -290,7 +305,7 @@ std::vector<int> InfiniteBlocks::find_block_under_eye() {
 std::vector<int> InfiniteBlocks::find_red_block_under_hand() {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==RED){
+		if (*(it->ns)==(agent_ns) && *(it->ew)==(agent_ew) && *(it->color)==RED){
 			l.push_back(it-blocks.begin());
 		}
 	}
@@ -300,7 +315,7 @@ std::vector<int> InfiniteBlocks::find_red_block_under_hand() {
 std::vector<int> InfiniteBlocks::find_blue_block_under_hand() {
 	std::vector<int> l;
 	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==BLUE){
+		if (*(it->ns)==(agent_ns) && *(it->ew)==(agent_ew) && *(it->color)==BLUE){
 			l.push_back(it-blocks.begin());
 		}
 	}
@@ -308,14 +323,31 @@ std::vector<int> InfiniteBlocks::find_blue_block_under_hand() {
 }
 */
 
-bool InfiniteBlocks::eye_hand_sync(){
-	return (*agent_eye_ns==*agent_ns
-			&& *agent_eye_ew==*agent_ew);
+position InfiniteBlocks::getAttDir(std::vector<float> attention) const{
+	int i = 0;
+	bool found = false;
+	while (!found && i<attention.size()){
+		found = attention[i]==1 ;
+		i++;
+	}
+	return objects[i-1];
 }
+
+bool InfiniteBlocks::eye_hand_sync(std::vector<float> attention){
+	bool res = false;
+	if (attention.size()!=objects.size()) return -1;
+	int i = 0;
+	while (!res && i<objects.size()){
+		res = (attention[i]==1 && objects[i].xpos==agent_ew && objects[i].ypos == agent_ns);
+		i++;
+	}
+	return res;
+}
+
 void InfiniteBlocks::apply_tutor(int action){
 	if (action==actions["LOOK_AGENT"]){
-		(*tutor_eye_ew) = (*agent_eye_ew);
-		(*tutor_eye_ns) = (*agent_eye_ns);
+		(*tutor_eye_ew) = (agent_ew);
+		(*tutor_eye_ns) = (agent_ns);
 	}
 	if (action==tutor_actions["LOOK_RED_BOX"])	{
 		(*tutor_eye_ew) = (*red_box_ew);
@@ -361,7 +393,7 @@ float InfiniteBlocks::getEuclidianDistance(std::vector<float> & s1, std::vector<
 	return sqrt(res/nfeats);
 }
 
-occ_info_t InfiniteBlocks::apply(int action){
+occ_info_t InfiniteBlocks::apply(int action, const std::vector<float> &attention){
 	float reward = 0.;
 	float tutor_reward = 0;
 	bool success = false;
@@ -369,31 +401,31 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 
 	if (action==actions["NORTH"]) {
-		if ((*agent_ns) < size-1 && *agent_eye_ns > *agent_ns) {
-			(*agent_ns)++;
+		if ((agent_ns) < size-1) {
+			(agent_ns)++;
 			success = true;
 		}
 //		reward--;
 	}
 	if (action==actions["SOUTH"]) {
-		if ((*agent_ns) > 0 && *agent_eye_ns < *agent_ns) {
-			(*agent_ns)--;
+		if ((agent_ns) > 0) {
+			(agent_ns)--;
 			success = true;
 		}
 //		reward--;
 
 	}
 	if (action==actions["EAST"]) {
-		if ((*agent_ew) < size-1 && *agent_eye_ew > *agent_ew) {
-			(*agent_ew)++;
+		if ((agent_ew) < size-1) {
+			(agent_ew)++;
 			success = true;
 		}
 //		reward--;
 
 	}
 	if (action==actions["WEST"]) {
-		if ((*agent_ew) > 0 && *agent_eye_ew < *agent_ew) {
-			(*agent_ew)--;
+		if ((agent_ew) > 0) {
+			(agent_ew)--;
 			success = true;
 		}
 //		reward--;
@@ -403,32 +435,32 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	if (action==actions["GO_TO_EYE"]) {
 		if (rng.bernoulli(stoch_param)) {
-			(*agent_ns) = (*agent_eye_ns);
-			(*agent_ew) = (*agent_eye_ew);
+			(agent_ns) = (*agent_eye_ns);
+			(agent_ew) = (*agent_eye_ew);
 		}
 		else {
 			std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_eye_ns,*agent_eye_ew);
 			std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
-			(*agent_ns) = nearby_pos.front().first;
-			(*agent_ew) = nearby_pos.front().second;
+			(agent_ns) = nearby_pos.front().first;
+			(agent_ew) = nearby_pos.front().second;
 		}
 		success = true;
 	}
 	*/
 	if (action == actions["PICK"]){
-		if (!(*red_block_hold) && !(*blue_block_hold) && eye_hand_sync()) {
-			if (*agent_ns==*red_blocks_ns && *agent_ew==*red_blocks_ew) {
+		if (!(red_block_hold) && !(blue_block_hold) && eye_hand_sync(attention)) {
+			if (agent_ns==*red_blocks_ns && agent_ew==*red_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
-					*red_block_hold = 1;
+					red_block_hold = 1;
 					success = true;
 					if (IS_REAL) {
 						std::cout << "Red block taken." << std::endl;
 					}
 				}
 			}
-			else if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
+			else if (agent_ns==*blue_blocks_ns && agent_ew==*blue_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
-					*blue_block_hold = 1;
+					blue_block_hold = 1;
 					success = true;
 					if (IS_REAL) {
 						std::cout << "Blue block taken." << std::endl;
@@ -447,14 +479,14 @@ occ_info_t InfiniteBlocks::apply(int action){
 				&& eye_hand_sync()
 				&& red_blocks_under.empty()
 				&& blue_blocks_under.empty()
-				&& ((*red_box_ns)!=(*agent_ns) || (*red_box_ew)!=(*agent_ew))
-				&& ((*blue_box_ns)!=(*agent_ns) || (*blue_box_ew)!=(*agent_ew))){
+				&& ((*red_box_ns)!=(agent_ns) || (*red_box_ew)!=(agent_ew))
+				&& ((*blue_box_ns)!=(agent_ns) || (*blue_box_ew)!=(agent_ew))){
 			if (rng.bernoulli(stoch_param)){
-	 *(blocks[(*block_hold)].ns) = (*agent_ns);
-	 *(blocks[(*block_hold)].ew) = (*agent_ew);
+	 *(blocks[(*block_hold)].ns) = (agent_ns);
+	 *(blocks[(*block_hold)].ew) = (agent_ew);
 			}
 			else{
-				std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_ns,*agent_ew);
+				std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(agent_ns,agent_ew);
 				std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
 	 *(blocks[(*block_hold)].ns) = nearby_pos.front().first;
 	 *(blocks[(*block_hold)].ew) = nearby_pos.front().second;
@@ -466,10 +498,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 	}*/
 
 	if (action==actions["PUT_IN"]) {
-		if (*red_block_hold && eye_hand_sync()){
-			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
+		if (red_block_hold && eye_hand_sync(attention)){
+			if (*red_box_ns==agent_ns && *red_box_ew==agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*red_block_hold = 0;
+					red_block_hold = 0;
 					red_box_count_red++;
 					reward += finalReward;
 					tutor_reward += finalReward;
@@ -479,9 +511,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 					}
 				}
 			}
-			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
+			else if (*blue_box_ns==agent_ns && *blue_box_ew==agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*red_block_hold = 0;
+					red_block_hold = 0;
 					blue_box_count_red++;
 					reward += finalReward;
 					success = true;
@@ -491,10 +523,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 				}
 			}
 		}
-		else if (*blue_block_hold && eye_hand_sync()){
-			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
+		else if (blue_block_hold && eye_hand_sync(attention)){
+			if (*red_box_ns==agent_ns && *red_box_ew==agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*blue_block_hold = 0;
+					blue_block_hold = 0;
 					red_box_count_blue++;
 					reward += finalReward;
 					success = true;
@@ -503,9 +535,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 					}
 				}
 			}
-			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
+			else if (*blue_box_ns==agent_ns && *blue_box_ew==agent_ew){
 				if (rng.bernoulli(stoch_param)){
-					*blue_block_hold = 0;
+					blue_block_hold = 0;
 					blue_box_count_blue++;
 					reward += finalReward;
 					success = true;
@@ -519,76 +551,45 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	}
 
-	if (action==actions["LOOK_RED_BOX"])	{
-		(*agent_eye_ew) = (*red_box_ew);
-		(*agent_eye_ns) = (*red_box_ns);
-		success = true;
-//		reward--;
-
-	}
-	if (action==actions["LOOK_BLUE_BOX"]){
-		(*agent_eye_ew) = (*blue_box_ew);
-		(*agent_eye_ns) = (*blue_box_ns);
-		success = true;
-//		reward--;
-
-	}
-	if (action==actions["LOOK_RED_BLOCKS"])	{
-		(*agent_eye_ew) = (*red_blocks_ew);
-		(*agent_eye_ns) = (*red_blocks_ns);
-		success = true;
-//		reward--;
-
-	}
-	if (action==actions["LOOK_BLUE_BLOCKS"])	{
-		(*agent_eye_ew) = (*blue_blocks_ew);
-		(*agent_eye_ns) = (*blue_blocks_ns);
-		success = true;
-//		reward--;
-
-	}
-
 	actions_occurences[action].push_back(numstep);
 	numstep++;
 	return occ_info_t(reward, success, 0, 0, tutor_reward);
 }
 
-
-int InfiniteBlocks::trueBestAction(){
-	int res = -1;
-	if (*red_block_hold || *blue_block_hold) {
-		if (((*agent_ns==*red_box_ns && *agent_ew==*red_box_ew)||
-				(*agent_ns==*blue_box_ns && *agent_ew==*blue_box_ew)) && eye_hand_sync()){
-			res = actions["PUT_IN"];
-		}
-		else if ((*agent_eye_ns != *red_box_ns || *agent_eye_ew!=*red_box_ew) && (*agent_eye_ns!=*blue_box_ns||*agent_eye_ew!=*blue_box_ew)){
-			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BOX"] : actions["LOOK_BLUE_BOX"]);
-		}
-	}
-	else if (!(*red_block_hold) && !(*blue_block_hold)){
-		if ((*agent_eye_ns != *red_blocks_ns || *agent_eye_ew!=*red_blocks_ew)
-				&& (*agent_eye_ns!=*blue_blocks_ns||*agent_eye_ew!=*blue_blocks_ew)){
-			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BLOCKS"] : actions["LOOK_BLUE_BLOCKS"]);
-		}
-		else{
-			if (eye_hand_sync()){
-				res = actions["PICK"];
-			}
-		}
-	}
-	if (res==-1){
-		res = actions["GO_TO_EYE"];
-	}
-	return res;
-}
+//int InfiniteBlocks::trueBestAction(std::vector<float> attention){
+//	int res = -1;
+//	if (red_block_hold || blue_block_hold) {
+//		if (((agent_ns==*red_box_ns && agent_ew==*red_box_ew)||
+//				(agent_ns==*blue_box_ns && agent_ew==*blue_box_ew)) && eye_hand_sync(attention)){
+//			res = actions["PUT_IN"];
+//		}
+//		else if (attention[2]!=1 && attention[3]!=1){
+//			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BOX"] : actions["LOOK_BLUE_BOX"]);
+//		}
+//	}
+//	else if (!(red_block_hold) && !(blue_block_hold)){
+//		if (attention[0]!=1 && attention[1]!=1){
+//			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BLOCKS"] : actions["LOOK_BLUE_BLOCKS"]);
+//		}
+//		else{
+//			if (eye_hand_sync(attention)){
+//				res = actions["PICK"];
+//			}
+//		}
+//	}
+//	if (res==-1){
+//		res = actions["GO_TO_EYE"];
+//	}
+//	return res;
+//}
 
 tutor_feedback InfiniteBlocks::tutorAction(){
 	float tutor_reward = 0.;
 	float reward = 0.;
 	int tutoract;
-	if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
-	if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
-	if (!(*red_block_hold)&&!(*blue_block_hold)){
+	if (red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+	if (blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+	if (!(red_block_hold)&&!(blue_block_hold)){
 		tutoract = tutor_actions["LOOK_RED_BLOCKS"];
 	}
 

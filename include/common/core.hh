@@ -206,6 +206,15 @@ struct tutor_feedback{
 
 };
 
+struct position{
+	float xpos;
+	float ypos;
+	position(float x, float y){
+		xpos = x;
+		ypos = y;
+	}
+};
+
 /** All the relevant information predicted by a model for a given state-action.
     This includes predicted reward, next state probabilities, probability of episod termination, and model confidence.
  */
@@ -248,11 +257,13 @@ public:
       gives to the agent.
       \return The current sensation. */
 	virtual const std::vector<float> &sensation() const = 0;
+	virtual void print_map(std::vector<float> attention) const = 0;
+
 
 	/** Allows an agent to affect its environment.
       \param action The action the agent wishes to apply.
       \return The immediate one-step reward caused by the action. */
-	virtual occ_info_t apply(int action) = 0;
+	virtual occ_info_t apply(int action, const std::vector<float> &attention) = 0;
 	virtual void setDebug(bool b) = 0;
 	virtual void setVerbose(bool b) = 0;
 	/** Retrieve a true prediction with for a state and an action in a
@@ -261,7 +272,8 @@ public:
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 	virtual bool isSyncTutor(std::vector<float> state) const = 0;
-	virtual int trueBestAction() = 0;
+//	virtual int trueBestAction(std::vector<float> attention) = 0;
+	virtual std::vector<float> generateSample() = 0;
 	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues) = 0;
@@ -288,6 +300,8 @@ public:
 	/** Returns the number of actions available in this environment.
       \return The number of actions available */
 	virtual int getNumActions() = 0;
+
+	virtual int getNumObjects() = 0;
 
 	/** Returns the number of actions available in this environment.
 	  \return The number of actions available */
@@ -330,6 +344,10 @@ public:
 	virtual std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act) = 0;
 	virtual void setTrueEnv(Environment* e) = 0;
 	virtual void setRewarding(bool val) = 0;
+	virtual std::vector<float> generateSample() = 0;
+	virtual void getMinMaxFeatures(std::vector<float> *minFeat,
+			std::vector<float> *maxFeat) = 0;
+
 	virtual bool train_only(experience e) = 0;
 	virtual bool train_only_many(std::vector<experience> e) = 0;
 	/** Determines the first action that an agent takes in an
@@ -355,6 +373,11 @@ public:
       represented.
       \param r The one-step reward resulting from the previous action. */
 	virtual void last_action(float r) = 0;
+
+	virtual occ_info_t apply(int action) = 0;
+	virtual occ_info_t virtualApply(std::vector<float> &attention, int action) = 0;
+
+	virtual const std::vector<float> &attention() const = 0;
 
 	/** Set some debug flags on/off */
 	virtual void setDebug(bool d) = 0;
@@ -525,6 +548,7 @@ public:
 	Random rng;
 
 };
+
 
 
 #endif

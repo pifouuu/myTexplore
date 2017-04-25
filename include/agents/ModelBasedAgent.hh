@@ -1,7 +1,7 @@
 /** \file ModelBasedAgent.hh
     Defines the ModelBasedAgent class
     \author Todd Hester
-*/
+ */
 
 #ifndef _MODELBASED_HH_
 #define _MODELBASED_HH_
@@ -16,7 +16,7 @@
 /** Code for a model based agent, that can use any model and planner that meet the interface requirements */
 class ModelBasedAgent: public Agent {
 public:
-  /** Standard constructor
+	/** Standard constructor
       \param numactions The number of possible actions
       \param gamma The discount factor
       \param rmax max reward value, given out for unknown states
@@ -42,17 +42,17 @@ public:
       \param stoch is the domain stochastic?
       \param episodic is the domain episodic?
       \param rng Initial state of the random number generator to use */
-  ModelBasedAgent(int numactions, float gamma, float rmax, float rrange, 
-                  int modelType, int exploreType, 
-                  int predType, int nModels, int plannerType,
-                  float epsilon, float lambda, float MAX_TIME,
-                  float m, const std::vector<float> &featmin, 
-                  const std::vector<float> &featmax,
-                  int statesPerDim, int history, float v, float n, float tutorBonus,
-                  bool depTrans, bool relTrans, float featPct,
-                  bool stoch, bool episodic, bool rewarding, int batchFreq, Random rng = Random());
+	ModelBasedAgent(int numactions, int numattentions, float gamma, float rmax, float rrange,
+			int modelType, int exploreType,
+			int predType, int nModels, int plannerType,
+			float epsilon, float lambda, float MAX_TIME,
+			float m, const std::vector<float> &featmin,
+			const std::vector<float> &featmax,
+			int statesPerDim, int history, float v, float n, float tutorBonus,
+			bool depTrans, float featPct,
+			bool stoch, bool episodic, bool rewarding, int batchFreq, Random rng = Random());
 
-  /** Standard constructor 
+	/** Standard constructor
       \param numactions The number of possible actions
       \param gamma The discount factor
       \param rmax max reward value, given out for unknown states
@@ -77,141 +77,154 @@ public:
       \param stoch is the domain stochastic?
       \param episodic is the domain episodic?
       \param rng Initial state of the random number generator to use*/
-  ModelBasedAgent(int numactions, float gamma, float rmax, float rrange, 
-                  int modelType, int exploreType, 
-                  int predType, int nModels, int plannerType,
-                  float epsilon, float lambda, float MAX_TIME,
-                  float m, const std::vector<float> &featmin, 
-                  const std::vector<float> &featmax,
-                  std::vector<int> statesPerDim, int history, float v, float n, float tutorBonus,
-                  bool depTrans, bool relTrans, float featPct,
-                  bool stoch, bool episodic, bool rewarding, int batchFreq, Random rng = Random());
-  
-  /** Init params for both constructors */
-  void initParams();
+	ModelBasedAgent(int numactions, int numattetions, float gamma, float rmax, float rrange,
+			int modelType, int exploreType,
+			int predType, int nModels, int plannerType,
+			float epsilon, float lambda, float MAX_TIME,
+			float m, const std::vector<float> &featmin,
+			const std::vector<float> &featmax,
+			std::vector<int> statesPerDim, int history, float v, float n, float tutorBonus,
+			bool depTrans,float featPct,
+			bool stoch, bool episodic, bool rewarding, int batchFreq, Random rng = Random());
 
-  /** Unimplemented copy constructor: internal state cannot be simply
+	/** Init params for both constructors */
+	void initParams();
+
+	/** Unimplemented copy constructor: internal state cannot be simply
       copied. */
-  ModelBasedAgent(const ModelBasedAgent &);
+	ModelBasedAgent(const ModelBasedAgent &);
 
-  virtual ~ModelBasedAgent();
+	virtual ~ModelBasedAgent();
 
-  virtual void setTrueEnv(Environment* trueEnv);
-  virtual int first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
-  virtual int next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
-  virtual void last_action(float r);
-  virtual void seedExp(std::vector<experience> seeds);
-  virtual void setDebug(bool d);
-  virtual void savePolicy(const char* filename);
-  std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act);
-  bool train_only(experience e);
-  bool train_only_many(std::vector<experience> e);
-  void setRewarding(bool val);
+	virtual void setTrueEnv(Environment* trueEnv);
+	virtual void getMinMaxFeatures(std::vector<float> *minFeat,std::vector<float> *maxFeat);
+	virtual int first_action(const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
+	virtual int next_action(float r, const std::vector<float> &s, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
+	virtual void last_action(float r);
+	virtual void seedExp(std::vector<experience> seeds);
+	virtual void setDebug(bool d);
+	virtual void savePolicy(const char* filename);
+	std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act);
+	bool train_only(experience e);
+	bool train_only_many(std::vector<experience> e);
+	void setRewarding(bool val);
+	const std::vector<float> &attention() const;
+	std::vector<float> generateSample();
 
-  /** Output value function to a file */
-  void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);
+	occ_info_t apply(int action);
+	occ_info_t virtualApply(std::vector<float> &attention, int action);
 
-  bool AGENTDEBUG;
-  bool POLICYDEBUG; //= false; //true;
-  bool ACTDEBUG;
-  bool SIMPLEDEBUG;
-  bool TIMEDEBUG;
 
-  bool seeding;
+	/** Output value function to a file */
+	void logValues(ofstream *of, int xmin, int xmax, int ymin, int ymax);
 
-  /** Model that we're using */
-  MDPModel* model;
+	bool AGENTDEBUG;
+	bool POLICYDEBUG; //= false; //true;
+	bool ACTDEBUG;
+	bool SIMPLEDEBUG;
+	bool TIMEDEBUG;
 
-  /** Planner that we're using */
-  Planner* planner;
+	bool seeding;
 
-  /** True environment */
-  Environment* trueEnv;
+	/** Model that we're using */
+	MDPModel* model;
 
-  float planningTime;
-  float modelUpdateTime;
-  float actionTime;
+	/** Planner that we're using */
+	Planner* planner;
 
-  std::vector<float> featmin;
-  std::vector<float> featmax;
+	/** True environment */
+	Environment* trueEnv;
 
+	float planningTime;
+	float modelUpdateTime;
+	float actionTime;
+
+	std::vector<float> featminEnv;
+	std::vector<float> featmaxEnv;
+
+	std::vector<float> featmin;
+	std::vector<float> featmax;
 protected:
 
-  /** The implementation maps all sensations to a set of canonical
+	/** The implementation maps all sensations to a set of canonical
       pointers, which serve as the internal representation of
       environment state. */
-  typedef const std::vector<float> *state_t;
+	typedef const std::vector<float> *state_t;
 
-  /** Saves state and action to use for update on next action */
-  void saveStateAndAction(const std::vector<float> &s, int act);
+	/** Saves state and action to use for update on next action */
+	void saveStateAndAction(const std::vector<float> &s, int act);
 
 
 
-  /** Select action from the given state */
-  int chooseAction(const std::vector<float> &s, float* avg_car_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
+	/** Select action from the given state */
+	int chooseAction(const std::vector<float> &s, float* avg_car_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
 
-  /** Initialize the model with the given # of features */
-  void initModel(int nfactors);
+	/** Initialize the model with the given # of features */
+	void initModel(int nfactors);
 
-  /** Initialize the planner */
-  void initPlanner();
+	/** Initialize the planner */
+	void initPlanner();
 
-  /** Update the agent with the new s,a,s',r experience */
-  void updateWithNewExperience(const std::vector<float> &last, 
-                               const std::vector<float> & curr, 
-                               int lastact, float reward, bool term);
+	/** Update the agent with the new s,a,s',r experience */
+	void updateWithNewExperience(const std::vector<float> &last,
+			const std::vector<float> & curr,
+			int lastact, float reward, bool term);
 
-  /** Get the current time in seconds */
-  double getSeconds();
+	/** Get the current time in seconds */
+	double getSeconds();
 
 private:
 
-  /** Previous state */
-  std::vector<float> prevstate;
-  /** Previous action */
-  int prevact;
+	/** Previous state */
+	std::vector<float> prevstate;
+	/** Previous action */
+	int prevact;
 
-  int nstates;
-  int nactions; 
- 
-  bool modelNeedsUpdate;
-  int lastUpdate;
 
-  int batchFreq;
 
-  bool modelChanged;
-  bool rewarding;
+	int nstates;
+	int nactions;
 
-  const int numactions;
-  const float gamma;
+	bool modelNeedsUpdate;
+	int lastUpdate;
 
-  const float rmax;
-  const float rrange;
-  const float qmax;
-  const int modelType;
-  const int exploreType;
-  const int predType;
-  const int nModels;
-  const int plannerType;
-  //const int tutorType;
+	int batchFreq;
+	std::vector<float> internalState;
+	bool modelChanged;
+	bool rewarding;
+	std::map<std::string, int> actions;
+	std::vector<int> relTrans;
 
-  const float epsilon;
-  const float lambda;
-  const float MAX_TIME;
+	const int numactions;
+	const int numattentions;
+	const float gamma;
 
-  const float M;
-  const std::vector<int> statesPerDim;
-  const int history;
-  const float v;
-  const float n;
-  const float tutorBonus;
-  const bool depTrans;
-  const bool relTrans;
-  const float featPct;
-  const bool stoch;
-  const bool episodic;
+	const float rmax;
+	const float rrange;
+	const float qmax;
+	const int modelType;
+	const int exploreType;
+	const int predType;
+	const int nModels;
+	const int plannerType;
+	//const int tutorType;
 
-  Random rng;
+	const float epsilon;
+	const float lambda;
+	const float MAX_TIME;
+
+	const float M;
+	const std::vector<int> statesPerDim;
+	const int history;
+	const float v;
+	const float n;
+	const bool depTrans;
+	const float tutorBonus;
+	const float featPct;
+	const bool stoch;
+	const bool episodic;
+
+	Random rng;
 
 };
 

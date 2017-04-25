@@ -41,10 +41,10 @@ public:
       \param episodic if the domain is episodic
       \param rng Random Number Generator 
   */
-  FactoredModel(int id, int numactions, int M, int modelType, 
+  FactoredModel(int id, int numactions, const std::vector<int> &relTrans, int M, int modelType,
           int predType, int nModels, float treeThreshold,
           const std::vector<float> &featRange, float rRange,
-          bool needConf, bool dep, bool relTrans, float featPct, 
+          bool needConf, bool dep, float featPct,
 	  bool stoch, bool episodic,  bool rewarding, Random rng = Random());
 
   /** Copy Constructor for MDP Tree */
@@ -76,7 +76,7 @@ public:
   std::vector<float> addVec(const std::vector<float> &a, const std::vector<float> &b);
 
   /** Helper function to subtract two vectors */
-  std::vector<float> subVec(const std::vector<float> &a, const std::vector<float> &b);
+  std::vector<float> subVec(const std::vector<float> &a, const std::vector<float> &b, int nfactorsAbs);
   
 private:
   
@@ -90,6 +90,7 @@ private:
   Classifier* terminalModel;
 
   int id;
+  std::vector<int> relTrans;
   int nfactors;
   bool rewarding = true;
   const int nact;
@@ -105,7 +106,6 @@ private:
 
   const bool needConf;
   const bool dep;
-  const bool relTrans;
   const float FEAT_PCT;
   const bool stoch;
   const bool episodic;

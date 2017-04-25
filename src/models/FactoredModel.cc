@@ -7,17 +7,17 @@
 #include "../../include/models/FactoredModel.hh"
 using namespace std;
 
-FactoredModel::FactoredModel(int id, int numactions, int M, int modelType,
+FactoredModel::FactoredModel(int id, int numactions, const std::vector<int> &relTrans, int M, int modelType,
 		int predType, int nModels, float treeThreshold,
 		const std::vector<float> &featRange, float rRange, bool needConf,
-		bool dep, bool relTrans, float featPct, bool stoch, bool episodic,
+		bool dep, float featPct, bool stoch, bool episodic,
 		bool rewarding,
 		Random rng) :
-		rewardModel(NULL), terminalModel(NULL), id(id), nact(numactions), M(M), modelType(
-				modelType), predType(predType), nModels(nModels), treeBuildType(
+		rewardModel(NULL), terminalModel(NULL), id(id), nact(numactions),relTrans(relTrans),
+		M(M), modelType(modelType), predType(predType), nModels(nModels), treeBuildType(
 				BUILD_ON_ERROR), // build tree after prediction error
 		treeThresh(treeThreshold), featRange(featRange), rRange(rRange), needConf(
-				needConf), dep(dep), relTrans(relTrans), FEAT_PCT(featPct), stoch(
+				needConf), dep(dep), FEAT_PCT(featPct), stoch(
 				stoch), episodic(episodic), rewarding(rewarding), rng(rng) {
 
 	//cout << "MDP Tree explore type: " << predType << endl;
@@ -36,10 +36,10 @@ FactoredModel::FactoredModel(int id, int numactions, int M, int modelType,
 
 FactoredModel::FactoredModel(const FactoredModel & m) :
 		rewardModel(NULL), terminalModel(NULL), id(m.id), nact(m.nact), M(m.M), modelType(
-				m.modelType), predType(m.predType), nModels(m.nModels), treeBuildType(
+				m.modelType), predType(m.predType), relTrans(m.relTrans), nModels(m.nModels), treeBuildType(
 				m.treeBuildType), treeThresh(m.treeThresh), featRange(
 				m.featRange), rRange(m.rRange), needConf(m.needConf), dep(
-				m.dep), relTrans(m.relTrans), FEAT_PCT(m.FEAT_PCT), stoch(
+				m.dep), FEAT_PCT(m.FEAT_PCT), stoch(
 				m.stoch), episodic(m.episodic), rewarding(rewarding), rng(m.rng) {
 	COPYDEBUG = m.COPYDEBUG;
 
@@ -275,8 +275,9 @@ bool FactoredModel::updateWithExperiences(std::vector<experience> &instances) {
 		}
 
 		// convert to rel
-		if (relTrans)
-			e.next = subVec(e.next, e.s);
+		for (int i = 0; i<outputModels.size();i++){
+			if (relTrans[i]) e.next[i]=e.next[i]-e.s[i];
+		}
 
 		// reward and terminal models
 		classPair cp;
@@ -381,8 +382,9 @@ bool FactoredModel::updateWithExperience(experience &e) {
 	}
 
 	// convert to rel
-	if (relTrans)
-		e.next = subVec(e.next, e.s);
+	for (int i = 0; i<outputModels.size();i++){
+		if (relTrans[i]) e.next[i]=e.next[i]-e.s[i];
+	}
 
 	// split the outcome and rewards up
 	// and train the trees
@@ -431,119 +433,119 @@ bool FactoredModel::updateWithExperience(experience &e) {
 float FactoredModel::getSingleSAInfo(const std::vector<float> &state, int act,
 		StateActionInfo* retval) {
 
-	retval->transitionProbs.clear();
-
-	if (outputModels.size() == 0) {
-		retval->envReward = -0.001;
-
-		// add to transition map
-		retval->transitionProbs[state] = 1.0;
-		retval->known = false;
-		retval->termProb = 0.0;
-		return 0;
-	}
-
-	// input we want predictions for
-	std::vector<float> inputs(state.size() + nact);
-	for (unsigned i = 0; i < state.size(); i++) {
-		inputs[i] = state[i];
-	}
-	// convert to binary vector of length nact
-	for (int k = 0; k < nact; k++) {
-		if (act == k)
-			inputs[state.size() + k] = 1;
-		else
-			inputs[state.size() + k] = 0;
-	}
-
-	// just pick one sample from each feature prediction
-	std::vector<float> output(nfactors);
-	for (int i = 0; i < nfactors; i++) {
-
-		// get prediction
-		std::map<float, float> outputPreds;
-		outputModels[i]->testInstance(inputs, &outputPreds);
-
-		// sample a value
-		float randProb = rng.uniform();
-		float probSum = 0;
-		for (std::map<float, float>::iterator it1 = outputPreds.begin();
-				it1 != outputPreds.end(); it1++) {
-
-			// get prob
-			probSum += (*it1).second;
-
-			if (randProb <= probSum) {
-				output[i] = (*it1).first;
-				break;
-			}
-		}
-	}
-
-	retval->transitionProbs[output] = 1.0;
-
-	// calculate reward and terminal probabilities
-	// calculate expected reward
-	float rewardSum = 0.0;
-	// each value
-	std::map<float, float> rewardPreds;
-	rewardModel->testInstance(inputs, &rewardPreds);
-
-	float totalVisits = 0.0;
-	for (std::map<float, float>::iterator it = rewardPreds.begin();
-			it != rewardPreds.end(); it++) {
-		// get key from iterator
-		float val = (*it).first;
-		float prob = (*it).second;
-		totalVisits += prob;
-		if (MODEL_DEBUG)
-			cout << "Reward value " << val << " had prob of " << prob << endl;
-		rewardSum += (prob * val);
-	}
-
-	retval->envReward = rewardSum / totalVisits;
-	if (MODEL_DEBUG)
-		cout << "Average reward was " << retval->envReward << endl;
-
-	if (isnan(retval->envReward))
-		cout << "FactoredModel setting model reward to NaN" << endl;
-
-	// get termination prob
-	std::map<float, float> termProbs;
-	if (!episodic) {
-		termProbs[0.0] = 1.0;
-	} else {
-		terminalModel->testInstance(inputs, &termProbs);
-	}
-	// this needs to be a weighted sum.
-	// discrete trees will give some probabilty of termination (outcome 1)
-	// where continuous ones will give some value between 0 and 1
-	float termSum = 0;
-	float probSum = 0;
-	for (std::map<float, float>::iterator it = termProbs.begin();
-			it != termProbs.end(); it++) {
-		// get key from iterator
-		float val = (*it).first;
-		if (val > 1.0)
-			val = 1.0;
-		if (val < 0.0)
-			val = 0.0;
-		float prob = (*it).second;
-		if (MODEL_DEBUG)
-			cout << "Term value " << val << " had prob of " << prob << endl;
-		termSum += (prob * val);
-		probSum += prob;
-	}
-
-	retval->termProb = termSum / probSum;
-	if (retval->termProb < 0 || retval->termProb > 1) {
-		cout << "Invalid termination probability!!! " << retval->termProb
-				<< endl;
-	}
-	if (MODEL_DEBUG)
-		cout << "Termination prob is " << retval->termProb << endl;
-
-	return 1.0;
+//	retval->transitionProbs.clear();
+//
+//	if (outputModels.size() == 0) {
+//		retval->envReward = -0.001;
+//
+//		// add to transition map
+//		retval->transitionProbs[state] = 1.0;
+//		retval->known = false;
+//		retval->termProb = 0.0;
+//		return 0;
+//	}
+//
+//	// input we want predictions for
+//	std::vector<float> inputs(state.size() + nact);
+//	for (unsigned i = 0; i < state.size(); i++) {
+//		inputs[i] = state[i];
+//	}
+//	// convert to binary vector of length nact
+//	for (int k = 0; k < nact; k++) {
+//		if (act == k)
+//			inputs[state.size() + k] = 1;
+//		else
+//			inputs[state.size() + k] = 0;
+//	}
+//
+//	// just pick one sample from each feature prediction
+//	std::vector<float> output(nfactors);
+//	for (int i = 0; i < nfactors; i++) {
+//
+//		// get prediction
+//		std::map<float, float> outputPreds;
+//		outputModels[i]->testInstance(inputs, &outputPreds);
+//
+//		// sample a value
+//		float randProb = rng.uniform();
+//		float probSum = 0;
+//		for (std::map<float, float>::iterator it1 = outputPreds.begin();
+//				it1 != outputPreds.end(); it1++) {
+//
+//			// get prob
+//			probSum += (*it1).second;
+//
+//			if (randProb <= probSum) {
+//				output[i] = (*it1).first;
+//				break;
+//			}
+//		}
+//	}
+//
+//	retval->transitionProbs[output] = 1.0;
+//
+//	// calculate reward and terminal probabilities
+//	// calculate expected reward
+//	float rewardSum = 0.0;
+//	// each value
+//	std::map<float, float> rewardPreds;
+//	rewardModel->testInstance(inputs, &rewardPreds);
+//
+//	float totalVisits = 0.0;
+//	for (std::map<float, float>::iterator it = rewardPreds.begin();
+//			it != rewardPreds.end(); it++) {
+//		// get key from iterator
+//		float val = (*it).first;
+//		float prob = (*it).second;
+//		totalVisits += prob;
+//		if (MODEL_DEBUG)
+//			cout << "Reward value " << val << " had prob of " << prob << endl;
+//		rewardSum += (prob * val);
+//	}
+//
+//	retval->envReward = rewardSum / totalVisits;
+//	if (MODEL_DEBUG)
+//		cout << "Average reward was " << retval->envReward << endl;
+//
+//	if (isnan(retval->envReward))
+//		cout << "FactoredModel setting model reward to NaN" << endl;
+//
+//	// get termination prob
+//	std::map<float, float> termProbs;
+//	if (!episodic) {
+//		termProbs[0.0] = 1.0;
+//	} else {
+//		terminalModel->testInstance(inputs, &termProbs);
+//	}
+//	// this needs to be a weighted sum.
+//	// discrete trees will give some probabilty of termination (outcome 1)
+//	// where continuous ones will give some value between 0 and 1
+//	float termSum = 0;
+//	float probSum = 0;
+//	for (std::map<float, float>::iterator it = termProbs.begin();
+//			it != termProbs.end(); it++) {
+//		// get key from iterator
+//		float val = (*it).first;
+//		if (val > 1.0)
+//			val = 1.0;
+//		if (val < 0.0)
+//			val = 0.0;
+//		float prob = (*it).second;
+//		if (MODEL_DEBUG)
+//			cout << "Term value " << val << " had prob of " << prob << endl;
+//		termSum += (prob * val);
+//		probSum += prob;
+//	}
+//
+//	retval->termProb = termSum / probSum;
+//	if (retval->termProb < 0 || retval->termProb > 1) {
+//		cout << "Invalid termination probability!!! " << retval->termProb
+//				<< endl;
+//	}
+//	if (MODEL_DEBUG)
+//		cout << "Termination prob is " << retval->termProb << endl;
+//
+//	return 1.0;
 
 }
 
@@ -615,7 +617,7 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 			if (needConf && dep)
 				confSum += outputModels[i]->getConf(inputCopy);
 			float val = outputPreds.begin()->first;
-			if (relTrans)
+			if (relTrans[i])
 				val = val + inputs[i];
 			MLnext[i] = val;
 			if (dep) {
@@ -812,7 +814,7 @@ void FactoredModel::addFactorProb(float* probs, std::vector<float>* next,
 			x.push_back(val);
 		}
 
-		if (relTrans)
+		if (relTrans[index])
 			val = val + x[index];
 
 		(*next)[index] = val;
@@ -864,7 +866,7 @@ std::vector<float> FactoredModel::addVec(const std::vector<float> &a,
 }
 
 std::vector<float> FactoredModel::subVec(const std::vector<float> &a,
-		const std::vector<float> &b) {
+		const std::vector<float> &b, int nfactorsAbs) {
 	//if (a.size() != b.size())
 	// cout << "ERROR: vector sizes wrong" << endl;
 
@@ -873,7 +875,10 @@ std::vector<float> FactoredModel::subVec(const std::vector<float> &a,
 		smaller = b.size();
 
 	std::vector<float> c(smaller, 0.0);
-	for (int i = 0; i < smaller; i++) {
+	for (int i = 0; i<nfactorsAbs; i++){
+		c[i] = a[i];
+	}
+	for (int i = nfactorsAbs; i < smaller; i++) {
 		c[i] = a[i] - b[i];
 	}
 

@@ -31,7 +31,9 @@ public:
 	bool terminal() const;
 	void reset();
 	int getNumActions();
-	int trueBestAction();
+	int getNumObjects();
+//	int trueBestAction(std::vector<float> attention);
+	std::vector<float> generateSample();
 	int getNumTutorActions();
 	std::vector<float> generate_state();
 	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
@@ -45,37 +47,38 @@ public:
 	friend std::ostream &operator<<(std::ostream &out, const InfiniteBlocks &InfiniteBlocks);
 
 	/** Prints the current map. */
-	void print_map() const;
+	void print_map(std::vector<float> attention) const;
 
 	int size;
 	bool stochastic;
 	Random &rng;
 	bool WITH_TUTOR;
 	bool tutor_attentive = true;
-	std::vector<float> s;
 	float finalReward;
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;
 	void tutorStop();
+	position getAttDir(std::vector<float> attention) const;
 
 	std::default_random_engine engine;
 
 
 
-	occ_info_t apply(int action);
+	occ_info_t apply(int action, const std::vector<float> &attention);
 	float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds);
 
-	float* agent_ns;
-	float* agent_ew;
-	float* blue_block_hold;
-	float* red_block_hold;
+	float agent_ns;
+	float agent_ew;
+	float blue_block_hold;
+	float red_block_hold;
+
+	std::vector<position> objects;
+
 	float* red_blocks_ns;
 	float* blue_blocks_ns;
 	float* red_blocks_ew;
 	float* blue_blocks_ew;
-	float* agent_eye_ns;
-	float* agent_eye_ew;
 	float* red_box_ns;
 	float* red_box_ew;
 	float* blue_box_ns;
@@ -107,7 +110,7 @@ public:
 	std::vector<int> find_red_block_under_hand();
 	std::vector<int> find_blue_block_under_hand();
 	std::vector<int> find_block_under_eye();
-	bool eye_hand_sync();
+	bool eye_hand_sync(std::vector<float> attention);
 	void setDebug(bool b);
 	void setVerbose(bool b);
 	tutor_feedback tutorAction();
