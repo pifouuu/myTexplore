@@ -40,7 +40,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	PLANNERDEBUG = false; //true;
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
-	UCTDEBUG = true; //trueit
+	UCTDEBUG = false; //trueit
 	QDEBUG = true;
 	USETRUEENV = false;
 
