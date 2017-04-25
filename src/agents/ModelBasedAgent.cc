@@ -117,8 +117,8 @@ void ModelBasedAgent::initParams(){
 	featmax.insert(featmax.end(), featmaxEnv.begin(), featmaxEnv.end());
 
 	for (int i=0;i<featmin.size();i++){
-		if (i<numattentions) relTrans[i]=0;
-		else relTrans[i]=1;
+		if (i<numattentions) relTrans.push_back(0);
+		else relTrans.push_back(1);;
 	}
 
 	// check
