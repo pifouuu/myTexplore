@@ -111,7 +111,7 @@ void displayHelp(){
 
 }
 
-experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int numactions, int numattentions){
+experience generateExp(Environment* virtualEnv, Agent* agent, int act, int numattentions){
 	std::vector<float> sampleExt = virtualEnv->generateSample();
 	std::vector<float> sampleInt = agent->generateSample();
 	std::vector<float> sampleGlobal = sampleInt;
@@ -122,8 +122,7 @@ experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int nu
 	experience exp;
 	exp.s = sampleGlobal;
 
-	virtualAct = rng.uniformDiscrete(0, numactions-1);
-	exp.act = virtualAct;
+	exp.act = act;
 
 	if (virtualAct<numattentions) {
 		virtualReward = agent->virtualApply(sampleInt, virtualAct).reward;
@@ -211,7 +210,7 @@ void save_results(std::vector<float> &model_acc,
 	ofs.clear();
 }
 
-std::pair<float,float> evaluation(Environment* env, Agent* agent, Random rng, int numactions, int numObjects,
+std::pair<float,float> evaluation(Environment* env, Agent* agent, int numactions, Random* rng, int numObjects,
 		std::vector<float> minValues, std::vector<float> maxValues, int rRange){
 
 	int K = 1000;
@@ -219,8 +218,8 @@ std::pair<float,float> evaluation(Environment* env, Agent* agent, Random rng, in
 	float model_error = 0.;
 
 	for (int testStep=0;testStep<K;testStep++){
-
-		experience exp = generateExp(env, agent, rng, numactions, numObjects);
+		int act = rng->uniformDiscrete(0,numactions);
+		experience exp = generateExp(env, agent, act, numObjects);
 
 		std::tuple<std::vector<float>,float,float> prediction = agent->pred(exp.s, exp.act);
 		std::vector<float> predNextState = std::get<0>(prediction);
@@ -1250,7 +1249,8 @@ int main(int argc, char **argv) {
 //			std::vector<float> count_acts_train(numactions,0);
 			for (int trainStep=0;trainStep<pretrain_steps;trainStep++){
 
-				experience exp = generateExp(virtualInfinite, agent, rng, numactions, numattentions);
+				int virtualAct = rng.uniformDiscrete(0,numactions-1);
+				experience exp = generateExp(virtualInfinite, agent, virtualAct, numattentions);
 
 				count_r += exp.reward;
 
@@ -1263,7 +1263,7 @@ int main(int argc, char **argv) {
 
 					std::cout << "Trial " << j << ",eval at step "<< trainStep << std::endl;
 
-					std::pair<float,float> errors = evaluation(virtualInfinite, agent, rng, numactions, numattentions, minValues, maxValues, rRange);
+					std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, numattentions, minValues, maxValues, rRange);
 
 					reward_acc[trainStep/eval_freq] += errors.first;
 					model_acc[trainStep/eval_freq] += errors.second;
@@ -1309,7 +1309,7 @@ int main(int argc, char **argv) {
 
 					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
 
-					std::pair<float,float> errors = evaluation(virtualInfinite, agent, rng, numactions, numattentions, minValues, maxValues, rRange);
+					std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, numattentions, minValues, maxValues, rRange);
 
 					reward_acc[(trial_step+step)/eval_freq] += errors.first;
 					model_acc[(trial_step+step)/eval_freq] += errors.second;

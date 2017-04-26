@@ -109,14 +109,13 @@ std::vector<float> InfiniteBlocks::sensation() {
 }
 
 std::vector<float> InfiniteBlocks::generateSample(){
-	float ans = rng.uniformDiscrete(0, size-1);
-	float aew = rng.uniformDiscrete(0, size-1);
-	float rbh,bbh;
+	agent_ns = rng.uniformDiscrete(0, size-1);
+	agent_ew = rng.uniformDiscrete(0, size-1);
 	float tirage = rng.uniformDiscrete(0,2);
-	if (tirage==0) rbh = 1, bbh = 0;
-	else if (tirage==1) rbh = 0, bbh = 1;
-	else rbh = 0, bbh = 0;
-	std::vector<float> s = {ans,aew,rbh,bbh};;
+	if (tirage==0) red_block_hold = 1, blue_block_hold = 0;
+	else if (tirage==1) red_block_hold = 0, blue_block_hold = 1;
+	else red_block_hold = 0, blue_block_hold = 0;
+	std::vector<float> s = {agent_ns,agent_ew,red_block_hold,blue_block_hold};
 	for (int i=0; i<objects.size();i++){
 		s.push_back(objects[i].xpos);
 		s.push_back(objects[i].ypos);
