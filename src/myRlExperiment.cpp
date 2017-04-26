@@ -250,7 +250,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 500.0;
+	float actrate = 10.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -1313,6 +1313,8 @@ int main(int argc, char **argv) {
 
 					reward_acc[(trial_step+step)/eval_freq] += errors.first;
 					model_acc[(trial_step+step)/eval_freq] += errors.second;
+
+					std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
 
 					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
 					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;

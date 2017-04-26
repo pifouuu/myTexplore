@@ -103,7 +103,7 @@ void ModelBasedAgent::initParams(){
 	TIMEDEBUG = false; //true;
 	AGENTDEBUG = false;
 	ACTDEBUG = false;//true;
-	SIMPLEDEBUG = true; //true; //false; //true;
+	SIMPLEDEBUG = false; //true; //false; //true;
 
 	actions[std::string("LOOK_RED_BOX")] = 2;
 	actions[std::string("LOOK_BLUE_BOX")] = 3;

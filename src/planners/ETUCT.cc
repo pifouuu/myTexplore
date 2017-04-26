@@ -40,8 +40,8 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	PLANNERDEBUG = false; //true;
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
-	UCTDEBUG = true; //trueit
-	QDEBUG = true;
+	UCTDEBUG = false; //trueit
+	QDEBUG = false;
 	USETRUEENV = false;
 
 	featmax = fmax;
