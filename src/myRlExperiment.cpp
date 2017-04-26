@@ -1256,10 +1256,13 @@ int main(int argc, char **argv) {
 						}
 					}
 
+					float toterror;
 					for (int i=0;i<numactions;i++){
 						model_error_acts[i]/=K;
+						toterror+= model_error_acts[i];
 						model_acc[i][trainStep/eval_freq] += model_error_acts[i];
 					}
+					std::cout<<"error model : "<<toterror/numactions<<std::endl;
 
 					model_error_test_r /= (K*numactions);
 					reward_model_acc[trainStep/eval_freq] += model_error_test_r;
@@ -1344,7 +1347,7 @@ int main(int argc, char **argv) {
 			//////////////////////////////////
 			for (unsigned step = 0; step < maxsteps; ++step){
 
-				if (step % 3000 == 0 && step !=0){
+				if (step % eval_freq == 0 && step !=0){
 					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
 					int K = 100;
 					float model_error_test_r = 0;
@@ -1386,11 +1389,15 @@ int main(int argc, char **argv) {
 							model_error_test_r += error_test_r;
 						}
 					}
-
+					float toterror;
 					for (int i=0;i<numactions;i++){
 						model_error_acts[i]/=K;
+						toterror+= model_error_acts[i];
 						model_acc[i][(trial_step+step)/eval_freq] += model_error_acts[i];
+
 					}
+					std::cout<<"error model : "<<toterror/numactions<<std::endl;
+					toterror = 0;
 
 					model_error_test_r /= (K*numactions);
 					reward_model_acc[(trial_step+step)/eval_freq] += model_error_test_r;
