@@ -41,7 +41,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
 	UCTDEBUG = false; //trueit
-	QDEBUG = true;
+	QDEBUG = false;
 	USETRUEENV = false;
 
 	featmax = fmax;

@@ -122,7 +122,7 @@ int main(int argc, char **argv) {
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
-	float actrate = 500.0;
+	float actrate = 10.0;
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
@@ -1344,7 +1344,7 @@ int main(int argc, char **argv) {
 			//////////////////////////////////
 			for (unsigned step = 0; step < maxsteps; ++step){
 
-				if (step % eval_freq == 0 && step !=0){
+				if (step % 3000 == 0 && step !=0){
 					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
 					int K = 100;
 					float model_error_test_r = 0;
