@@ -59,7 +59,8 @@ public:
   virtual bool updateModelWithExperience(const std::vector<float> &last, 
                                          int act, 
                                          const std::vector<float> &curr, 
-                                         float reward, bool term);
+                                         float reward, bool term,
+										 const std::vector<float> &update);
   virtual void planOnNewModel();
   virtual int getBestAction(const std::vector<float> &state, float* avg_var_prop, float* avg_nov_prop, float* avg_reward_prop, float* avg_sync_prop);
   std::vector<float> eval(std::vector<float> & s, int act);

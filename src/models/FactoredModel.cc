@@ -383,7 +383,9 @@ bool FactoredModel::updateWithExperience(experience &e) {
 
 	// convert to rel
 	for (int i = 0; i<outputModels.size();i++){
-		if (relTrans[i]) e.next[i]=e.next[i]-e.s[i];
+		if (relTrans[i]) {
+			e.next[i]=e.next[i]-e.s[i];
+		}
 	}
 
 	// split the outcome and rewards up
@@ -411,15 +413,17 @@ bool FactoredModel::updateWithExperience(experience &e) {
 	// if not a terminal transition
 	if (!e.terminal) {
 		for (unsigned i = 0; i < e.next.size(); i++) {
-			cp.in = inputs;
-			cp.out = e.next[i];
+			if (e.update[i]){
+				cp.in = inputs;
+				cp.out = e.next[i];
 
-			bool singleChange = outputModels[i]->trainInstance(cp);
-			changed = changed || singleChange;
+				bool singleChange = outputModels[i]->trainInstance(cp);
+				changed = changed || singleChange;
 
-			// add this model's target to input for next model
-			if (dep) {
-				inputs.push_back(e.next[i]);
+				// add this model's target to input for next model
+				if (dep) {
+					inputs.push_back(e.next[i]);
+				}
 			}
 		}
 	}

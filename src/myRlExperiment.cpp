@@ -140,6 +140,8 @@ experience generateExp(Environment* virtualEnv, Agent* agent, Random rng, int nu
 
 	exp.terminal = virtualEnv->terminal();
 
+	exp.update = agent->getUpdate(virtualAct);
+
 	virtualEnv->reset();
 	return exp;
 }

@@ -171,7 +171,7 @@ void ETUCT::initNewState(state_t s) {
 
 bool ETUCT::updateModelWithExperience(const std::vector<float> &laststate,
 		int lastact, const std::vector<float> &currstate, float reward,
-		bool term) {
+		bool term, const std::vector<float> &update) {
 	//  if (PLANNERDEBUG) cout << "updateModelWithExperience(last = " << &laststate
 	//     << ", curr = " << &currstate
 	//        << ", lastact = " << lastact
@@ -217,6 +217,7 @@ bool ETUCT::updateModelWithExperience(const std::vector<float> &laststate,
 	e.act = lastact;
 	e.reward = reward;
 	e.terminal = term;
+	e.update = update;
 
 	// Complete the e.s vector with previous states if history > 0
 	if (HISTORY_SIZE > 0) {
@@ -373,7 +374,8 @@ int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, f
 
 		// break after some max time
 		float elapsed = getSeconds()-planTime;
-		if (elapsed > MAX_TIME) { // && i > 500){
+//		if (elapsed > MAX_TIME) { // && i > 500){
+		if (i>3){
 			if (UCTDEBUG) cout<<"stopped planning after "<<i<<" iterations and "<<elapsed<<" seconds."<<endl;
 			break;
 		}

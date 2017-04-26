@@ -110,18 +110,22 @@ void ModelBasedAgent::initParams(){
 	actions[std::string("LOOK_BLUE_BLOCKS")] = 1;
 	actions[std::string("LOOK_RED_BLOCKS")] = 0;
 
-	featmin = std::vector<float>(0,numattentions);
+	featmin = std::vector<float>(numattentions,0);
 	featmin.insert(featmin.end(), featminEnv.begin(), featminEnv.end());
 
-	featmax = std::vector<float>(1, numattentions);
+	featmax = std::vector<float>(numattentions, 1);
 	featmax.insert(featmax.end(), featmaxEnv.begin(), featmaxEnv.end());
 
 	int first_attention = rng.uniformDiscrete(0, numattentions-1);
 	internalState[first_attention]=1;
 
 	for (int i=0;i<featmin.size();i++){
-		if (i<numattentions) relTrans.push_back(0);
-		else relTrans.push_back(1);;
+		if (i<numattentions) {
+			relTrans.push_back(0);
+		}
+		else {
+			relTrans.push_back(1);
+		}
 	}
 
 	// check
@@ -155,6 +159,16 @@ ModelBasedAgent::~ModelBasedAgent() {
 
 void ModelBasedAgent::setRewarding(bool val){
 	model->setRewarding(val);
+}
+
+std::vector<float> ModelBasedAgent::getUpdate(int act){
+	std::vector<float> res(featmin.size(), 0);
+	for (int i=0; i<res.size();i++){
+		if ((act<numattentions && i<numattentions) || (act>=numattentions && i>=numattentions)){
+			res[i] = 1;
+		}
+	}
+	return res;
 }
 
 occ_info_t ModelBasedAgent::apply(int action){
@@ -268,7 +282,7 @@ int ModelBasedAgent::next_action(float r, const std::vector<float> &s, float* av
 
 	// update our models
 	// this is where we possibly plan again if model changes
-	updateWithNewExperience(prevstate, s, prevact, r, false);
+	updateWithNewExperience(prevstate, s, prevact, r, false, getUpdate(prevact));
 
 	// choose an action
 	int act = chooseAction(s, avg_var_prop, avg_nov_prop, avg_reward_prop, avg_sync_prop);
@@ -298,7 +312,7 @@ void ModelBasedAgent::last_action(float r) {
 
 	// update our models
 	// this is where we possibly plan again if model changes
-	updateWithNewExperience(prevstate, prevstate, prevact, r, true);
+	updateWithNewExperience(prevstate, prevstate, prevact, r, true, getUpdate(prevact));
 
 }
 
@@ -440,7 +454,7 @@ void ModelBasedAgent::initPlanner(){
 void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last, 
 		const std::vector<float> &curr,
 		int lastact, float reward,
-		bool terminal){
+		bool terminal, const std::vector<float> &update){
 	if (AGENTDEBUG) cout << "updateWithNewExperience(last = " << &last
 			<< ", curr = " << &curr
 			<< ", lastact = " << lastact
@@ -458,7 +472,7 @@ void ModelBasedAgent::updateWithNewExperience(const std::vector<float> &last,
 	// update our models and see if they change
 	if (false || TIMEDEBUG) initTime = getSeconds();
 
-	modelChanged = planner->updateModelWithExperience(last, lastact, curr, reward, terminal) || modelChanged;
+	modelChanged = planner->updateModelWithExperience(last, lastact, curr, reward, terminal, update) || modelChanged;
 
 	if (false || TIMEDEBUG) timeTwo = getSeconds();
 
@@ -571,7 +585,7 @@ void ModelBasedAgent::seedExp(std::vector<experience> seeds){
 
 		// update our models
 		// this is where we possibly run qmax again if model(s) change
-		updateWithNewExperience(e.s, e.next, e.act, e.reward, e.terminal);
+		updateWithNewExperience(e.s, e.next, e.act, e.reward, e.terminal, e.update);
 
 		/*
     cout << "Seeding with experience " << i << endl;

@@ -113,6 +113,7 @@ public:
 
 	occ_info_t apply(int action);
 	occ_info_t virtualApply(std::vector<float> &attention, int action);
+	std::vector<float> getUpdate(int act);
 
 
 	/** Output value function to a file */
@@ -168,7 +169,7 @@ protected:
 	/** Update the agent with the new s,a,s',r experience */
 	void updateWithNewExperience(const std::vector<float> &last,
 			const std::vector<float> & curr,
-			int lastact, float reward, bool term);
+			int lastact, float reward, bool term, const std::vector<float> &update);
 
 	/** Get the current time in seconds */
 	double getSeconds();

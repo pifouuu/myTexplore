@@ -164,6 +164,7 @@ struct experience {
 	float reward;
 	std::vector<float> next;
 	bool terminal;
+	std::vector<float> update;
 };
 
 /** Training instances for prediction models */
@@ -376,6 +377,7 @@ public:
 
 	virtual occ_info_t apply(int action) = 0;
 	virtual occ_info_t virtualApply(std::vector<float> &attention, int action) = 0;
+	virtual std::vector<float> getUpdate(int act) = 0;
 
 	virtual const std::vector<float> &attention() const = 0;
 
@@ -487,7 +489,8 @@ public:
 	virtual bool updateModelWithExperience(const std::vector<float>& last,
 			int act,
 			const std::vector<float>& curr,
-			float reward, bool terminal) = 0;
+			float reward, bool terminal,
+			const std::vector<float>& update) = 0;
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;
