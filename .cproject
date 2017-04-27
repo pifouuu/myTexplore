@@ -41,6 +41,7 @@
 							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug.248811588" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.exe.debug">
 								<option id="gnu.cpp.link.option.libs.720329016" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" useByScannerDiscovery="false" valueType="libs">
 									<listOptionValue builtIn="false" value="pthread"/>
+									<listOptionValue builtIn="false" value="opencv_imgcodecs"/>
 									<listOptionValue builtIn="false" value="boost_serialization"/>
 									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="boost_iostreams"/>
@@ -64,7 +65,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="agents|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="envs/BlockRoom.cc|models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -113,7 +114,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="agents|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-						<entry excluding="models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="envs/BlockRoom.cc|models/RMaxModel.cc|planners/ValueIteration.cc|planners/ParallelETUCT.cc|agents/DiscretizationAgent.cc|planners/PrioritizedSweeping.cc|planners/PolicyIteration.cc|planners/PO_ParallelETUCT.cc|planners/PO_ETUCT.cc|planners/MBS.cc|agents/SavedPolicy.cc|agents/Sarsa.cc|agents/Dyna.cc|envs/tworooms.cc|envs/taxi.cc|envs/stocks.cc|envs/RobotCarVel.cc|envs/MountainCar.cc|envs/LightWorld.cc|envs/gridworld.cc|envs/FuelRooms.cc|envs/fourrooms.cc|envs/energyrooms.cc|envs/CartPole.cc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

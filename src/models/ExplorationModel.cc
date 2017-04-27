@@ -148,6 +148,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		// check exploration bonuses
 
 		// use qmax if state is unknown
+		// ATTENTION PLUS VALABLE AVEC ENVREWARD
 		if (exploreType == EXPLORE_UNKNOWN){
 			if (!retval->known){
 				if (MODEL_DEBUG){
@@ -166,6 +167,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		}
 
 		// small bonus for unvisited states
+		// ATTENTION PLUS VALABLE AVEC ENVREWARD
 		if (exploreType == UNVISITED_BONUS){
 			if (!checkForState(state)){
 				// modify reward with a bonus of n
@@ -182,6 +184,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		}
 
 		// small bonus for unvisited state-actions
+		// ATTENTION PLUS VALABLE AVEC ENVREWARD
 		if (exploreType == UNVISITED_ACT_BONUS || exploreType == DIFF_AND_VISIT_BONUS){
 			std::vector<float> state2 = state;
 			state2.push_back(act);
@@ -203,19 +206,22 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		if (exploreType == NOVEL_STATE_BONUS || exploreType == DIFF_AND_NOVEL_BONUS || exploreType == DIFF_NOVEL_TUTOR){
 			std::vector<float> state2 = state;
 			state2.push_back(act);
+			float bonus = 0.;
 			float featDist = getFeatDistToVisitedSA(state2);
 			if (featDist > 0){
 				// modify reward with proportional bonus of n
-				float bonus = featDist * n;
+				bonus = featDist * n;
 				if (MODEL_DEBUG){
 					cout << "   State-Action novel state bonus, dist: " << featDist
 							<< " n: " << n << ", bonus, " << bonus << endl;
 				}
-				retval->novBonus = bonus;
 			}
+			retval->novBonus += bonus;
 		}
 
 		// use some % of v if we're doing continuous terminal bonus
+		// ATTENTION PLUS VALABLE AVEC ENVREWARD
+
 		if (exploreType == CONTINUOUS_BONUS){
 			if (conf < 1.0){
 				// percent of conf
@@ -236,7 +242,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 			if (conf < 1.0){
 				// percent of conf
 				float bonus = (1.0-conf)*v;
-				retval->varBonus = bonus;
+				retval->varBonus += bonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action continuous bonus conf: "
 							<< conf
@@ -247,6 +253,7 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 		}
 
 		// use qmax if we're doing threshold terminal bonus and conf under threshold
+		// ATTENTION PLUS VALABLE AVEC ENVREWARD
 		if (exploreType == THRESHOLD_BONUS){
 			if (conf < 0.5){
 				float bonus = v;
@@ -296,13 +303,14 @@ float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int 
 
 		if (exploreType == DIFF_NOVEL_TUTOR){
 			bool sync = trueEnv->isSyncTutor(state);
-			float bonus = tutorBonus;
+			float bonus = 0;
 			if (sync){
-				retval->syncBonus = bonus;
+				bonus = tutorBonus;
 				if (MODEL_DEBUG){
 					cout << "   State-Action tutor bonus: " << endl;
 				}
 			}
+			retval->syncBonus += bonus;
 		}
 	}
 
