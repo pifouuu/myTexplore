@@ -468,7 +468,7 @@ public:
 	virtual bool updateWithExperience(experience &instance) = 0;
 
 	/** Get the predictions of the MDP model for a given state action */
-	virtual float getStateActionInfo(const std::vector<float> &state, int action, StateActionInfo* retval) = 0;
+	virtual float getStateActionInfo(const std::vector<float> &state, int action, StateActionInfo* retval, std::vector<float> &query) = 0;
 
 	/** Get a copy of the MDP Model */
 	virtual MDPModel* getCopy() = 0;

@@ -43,7 +43,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, int numattentions, float gamma,
 		  epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
 		  M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
 		  featPct(featPct),
-		  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq), internalState(numattentions)
+		  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq), internalState(1)
 {
 
 	if (statesPerDim[0] > 0){
@@ -74,7 +74,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, int numattentions, float gamma,
 		  epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
 		  M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
 		  featPct(featPct),
-		  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq), internalState(numattentions)
+		  stoch(stoch), episodic(episodic), rewarding(rewarding), rng(rng), batchFreq(batchFreq), internalState(1)
 {
 
 	if (statesPerDim[0] > 0){
@@ -110,17 +110,16 @@ void ModelBasedAgent::initParams(){
 	actions[std::string("LOOK_BLUE_BLOCKS")] = 1;
 	actions[std::string("LOOK_RED_BLOCKS")] = 0;
 
-	featmin = std::vector<float>(numattentions,0);
+	featmin = std::vector<float>(internalState.size(),0);
 	featmin.insert(featmin.end(), featminEnv.begin(), featminEnv.end());
 
-	featmax = std::vector<float>(numattentions, 1);
+	featmax = std::vector<float>(internalState.size(), numattentions-1);
 	featmax.insert(featmax.end(), featmaxEnv.begin(), featmaxEnv.end());
 
-	int first_attention = rng.uniformDiscrete(0, numattentions-1);
-	internalState[first_attention]=1;
+	internalState[0] = rng.uniformDiscrete(0, numattentions-1);
 
 	for (int i=0;i<featmin.size();i++){
-		if (i<numattentions) {
+		if (i<internalState.size()) {
 			relTrans.push_back(0);
 		}
 		else {
@@ -164,7 +163,7 @@ void ModelBasedAgent::setRewarding(bool val){
 std::vector<float> ModelBasedAgent::getUpdate(int act){
 	std::vector<float> res(featmin.size(), 0);
 	for (int i=0; i<res.size();i++){
-		if ((act<numattentions && i<numattentions) || (act>=numattentions && i>=numattentions)){
+		if ((act<numattentions && i<internalState.size()) || (act>=numattentions && i>=internalState.size())){
 			res[i] = 1;
 		}
 	}
@@ -177,7 +176,7 @@ occ_info_t ModelBasedAgent::apply(int action){
 	bool success = false;
 
 	std::fill(internalState.begin(), internalState.end(),0);
-	internalState[action] = 1;
+	internalState[0] = action;
 	return occ_info_t(reward, success, 0, 0, tutor_reward);
 }
 
@@ -187,14 +186,13 @@ occ_info_t ModelBasedAgent::virtualApply(std::vector<float> &attention, int acti
 	bool success = false;
 
 	std::fill(attention.begin(), attention.end(),0);
-	attention[action] = 1;
+	attention[0] = action;
 	return occ_info_t(reward, success, 0, 0, tutor_reward);
 }
 
 std::vector<float> ModelBasedAgent::generateSample(){
-	std::vector<float> res(numattentions,0);
-	int o = rng.uniformDiscrete(0, numattentions-1);
-	res[o]=1;
+	std::vector<float> res(1,0);
+	res[0]=rng.uniformDiscrete(0, numattentions-1);
 	return res;
 }
 
@@ -217,8 +215,8 @@ bool ModelBasedAgent::train_only_many(std::vector<experience> e){
 void ModelBasedAgent::getMinMaxFeatures(std::vector<float> *minFeat,
 		std::vector<float> *maxFeat){
 
-	minFeat->resize(numattentions, 0);
-	maxFeat->resize(numattentions, 1);
+	minFeat->resize(1, 0);
+	maxFeat->resize(1, numattentions-1);
 
 }
 
@@ -226,7 +224,8 @@ void ModelBasedAgent::getMinMaxFeatures(std::vector<float> *minFeat,
 std::tuple<std::vector<float>,float,float> ModelBasedAgent::pred(std::vector<float> & s, int act){
 	StateActionInfo sa_info;
 	model->setTesting(true);
-	float conf = model->getStateActionInfo(s, act, &sa_info);
+	std::vector<float> query = getUpdate(act);
+	float conf = model->getStateActionInfo(s, act, &sa_info, query);
 	model->setTesting(false);
 	std::map<std::vector<float>, float> preds = sa_info.transitionProbs;
 	auto pr = std::max_element
@@ -403,7 +402,7 @@ void ModelBasedAgent::setTrueEnv(Environment* e){
 void ModelBasedAgent::initPlanner(){
 	if (AGENTDEBUG) cout << "InitPlanner type: " << plannerType << endl;
 
-	int max_path = 20; //500;
+	int max_path = 100; //500;
 
 	// init planner based on typ
 	/*
@@ -424,7 +423,8 @@ void ModelBasedAgent::initPlanner(){
     planner = new PrioritizedSweeping(numactions, gamma, 10.0, false, modelType, featmax, featmin, rng);
   }*/
 	if (plannerType == ET_UCT){
-		planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);
+		planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, numattentions,
+				internalState.size(), rng);
 	}
 	/* else if (plannerType == POMDP_ETUCT){
     planner = new PO_ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
@@ -433,7 +433,8 @@ void ModelBasedAgent::initPlanner(){
     planner = new PO_ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
   }*/
 	else if (plannerType == ET_UCT_ACTUAL){
-		planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, rng);
+		planner = new ETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, true, history, numattentions,
+				internalState.size(), rng);
 	}
 	/*else if (plannerType == PARALLEL_ET_UCT){
     planner = new ParallelETUCT(numactions, gamma, rrange, lambda, 500000, MAX_TIME, max_path, modelType, featmax, featmin, statesPerDim, false, history, rng);

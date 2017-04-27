@@ -17,12 +17,12 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 		int MAX_ITER, float MAX_TIME, int MAX_DEPTH, int modelType,
 		const std::vector<float> &fmax, const std::vector<float> &fmin,
 		const std::vector<int> &nstatesPerDim, bool trackActual,
-		int historySize, Random r) :
+		int historySize, int numattentions, int intStSize, Random r) :
 		numactions(numactions), gamma(gamma), rrange(rrange), lambda(lambda), MAX_ITER(
 				MAX_ITER), MAX_TIME(MAX_TIME), MAX_DEPTH(MAX_DEPTH), modelType(
 				modelType), statesPerDim(nstatesPerDim), trackActual(
 				trackActual), HISTORY_SIZE(historySize), HISTORY_FL_SIZE(
-				historySize * numactions) //fmax.size())
+				historySize * numactions), numattentions(numattentions), intStSize(intStSize) //fmax.size())
 {
 	rng = r;
 
@@ -106,6 +106,17 @@ void ETUCT::setTrueEnv(Environment* e){
 	trueEnv = e;
 
 }
+
+std::vector<float> ETUCT::getUpdate(int act){
+	std::vector<float> res(featmin.size(), 0);
+	for (int i=0; i<res.size();i++){
+		if ((act<numattentions && i<intStSize) || (act>=numattentions && i>=intStSize)){
+			res[i] = 1;
+		}
+	}
+	return res;
+}
+
 
 // canonicalize all the states so we already have them in our statespace
 void ETUCT::initStates() {
@@ -322,7 +333,8 @@ void ETUCT::updateStateActionHistoryFromModel(const std::vector<float> modState,
 
 	// update state info
 	// get state action info for each action
-	model->getStateActionInfo(modState, a, newModel);
+	std::vector<float> query = getUpdate(a);
+	model->getStateActionInfo(modState, a, newModel, query);
 	newModel->frameUpdated = nactions;
 
 	//canonNextStates(newModel);
@@ -374,8 +386,8 @@ int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, f
 
 		// break after some max time
 		float elapsed = getSeconds()-planTime;
-//		if (elapsed > MAX_TIME) { // && i > 500){
-		if (i>3){
+		if (elapsed > MAX_TIME) { // && i > 500){
+//		if (i>3){
 			if (UCTDEBUG) cout<<"stopped planning after "<<i<<" iterations and "<<elapsed<<" seconds."<<endl;
 			break;
 		}

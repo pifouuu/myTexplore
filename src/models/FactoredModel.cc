@@ -555,7 +555,7 @@ float FactoredModel::getSingleSAInfo(const std::vector<float> &state, int act,
 
 // fill in StateActionInfo struct and return it
 float FactoredModel::getStateActionInfo(const std::vector<float> &state,
-		int act, StateActionInfo* retval) {
+		int act, StateActionInfo* retval, std::vector<float> &query) {
 	if (MODEL_DEBUG)
 		cout << "getStateActionInfo, " << &state << ", " << act << endl;
 
@@ -649,7 +649,17 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 		std::vector<std::map<float, float> > predictions(nfactors);
 		if (!dep) {
 			for (int i = 0; i < nfactors; i++) {
-				outputModels[i]->testInstance(inputs, &(predictions[i]));
+				if (query[i]){
+					outputModels[i]->testInstance(inputs, &(predictions[i]));
+				}
+				else{
+					if (relTrans[i]) {
+						predictions[i][0]=1;
+					}
+					else {
+						predictions[i][state[i]]=1;
+					}
+				}
 			}
 		}
 
@@ -752,15 +762,22 @@ float FactoredModel::getStateActionInfo(const std::vector<float> &state,
 		//cout << "conf is " << confSum << ", r: " << rConf << ", " << tConf << endl;
 
 		confSum += rConf + tConf;
-
+		int countConf = 0;
 		if (!dep) {
 			for (int i = 0; i < nfactors; i++) {
-				float featConf = outputModels[i]->getConf(inputs);
-				confSum += featConf;
+				float featConf;
+				if (query[i]){
+					featConf = outputModels[i]->getConf(inputs);
+					confSum += featConf;
+					countConf++;
+				}
+				else{
+
+				}
 				//cout << "indep, conf for " << i << ": " << featConf << endl;
 			}
 		}
-		confSum /= (float) (state.size() + 2.0);
+		confSum /= (float) (countConf + 2.0);
 	} else {
 		confSum = 1.0;
 	}

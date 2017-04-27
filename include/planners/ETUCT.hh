@@ -46,7 +46,8 @@ public:
         int MAX_ITER, float MAX_TIME, int MAX_DEPTH,  int modelType,
         const std::vector<float> &featmax, const std::vector<float> &featmin,
 	const std::vector<int> &statesPerDim, bool trackActual, 
-	int history, Random rng = Random());
+	int history, int numattentions,
+	int internalStateSize, Random rng = Random());
   
   /** Unimplemented copy constructor: internal state cannot be simply
       copied. */
@@ -56,6 +57,7 @@ public:
 
   virtual void setModel(MDPModel* model);
   virtual void setTrueEnv(Environment* e);
+  std::vector<float> getUpdate(int act);
   virtual bool updateModelWithExperience(const std::vector<float> &last, 
                                          int act, 
                                          const std::vector<float> &curr, 
@@ -240,6 +242,8 @@ private:
   state_info* previnfo;
 
   double planTime;
+  int numattentions;
+  int intStSize;
 
   bool seedMode;
 

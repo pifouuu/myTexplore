@@ -57,7 +57,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 100; //30; //30; //5; //30; //30; //50
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -117,18 +117,17 @@ experience generateExp(Environment* virtualEnv, Agent* agent, int act, int numat
 	std::vector<float> sampleGlobal = sampleInt;
 	sampleGlobal.insert(sampleGlobal.end(), sampleExt.begin(), sampleExt.end());
 	float virtualReward;
-	int virtualAct;
 
 	experience exp;
 	exp.s = sampleGlobal;
 
 	exp.act = act;
 
-	if (virtualAct<numattentions) {
-		virtualReward = agent->virtualApply(sampleInt, virtualAct).reward;
+	if (act<numattentions) {
+		virtualReward = agent->virtualApply(sampleInt, act).reward;
 	}
 	else{
-		virtualReward = virtualEnv->apply(virtualAct-numattentions, sampleInt).reward;
+		virtualReward = virtualEnv->apply(act-numattentions, sampleInt).reward;
 	}
 	sampleExt = virtualEnv->sensation();
 	sampleGlobal = sampleInt;
@@ -139,7 +138,7 @@ experience generateExp(Environment* virtualEnv, Agent* agent, int act, int numat
 
 	exp.terminal = virtualEnv->terminal();
 
-	exp.update = agent->getUpdate(virtualAct);
+	exp.update = agent->getUpdate(act);
 
 	virtualEnv->reset();
 	return exp;

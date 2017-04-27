@@ -322,24 +322,12 @@ std::vector<int> InfiniteBlocks::find_blue_block_under_hand() {
 */
 
 position InfiniteBlocks::getAttDir(std::vector<float> attention) const{
-	int i = 0;
-	bool found = false;
-	while (!found && i<attention.size()){
-		found = attention[i]==1 ;
-		i++;
-	}
-	return objects[i-1];
+	return objects[attention[0]];
 }
 
 bool InfiniteBlocks::eye_hand_sync(std::vector<float> attention){
-	bool res = false;
-	if (attention.size()!=objects.size()) return -1;
-	int i = 0;
-	while (!res && i<objects.size()){
-		res = (attention[i]==1 && objects[i].xpos==agent_ew && objects[i].ypos == agent_ns);
-		i++;
-	}
-	return res;
+	position pos = getAttDir(attention);
+	return (pos.xpos==agent_ew && pos.ypos==agent_ns);
 }
 
 void InfiniteBlocks::apply_tutor(int action){

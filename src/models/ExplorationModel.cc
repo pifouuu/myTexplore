@@ -130,12 +130,12 @@ bool ExplorationModel::updateWithExperience(experience &e){
 
 
 // calculate state info such as transition probs, known/unknown, reward prediction
-float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int act, StateActionInfo* retval){
+float ExplorationModel::getStateActionInfo(const std::vector<float> &state, int act, StateActionInfo* retval, std::vector<float> &query){
 	//if (MODEL_DEBUG) cout << "getStateActionInfo, " << &state <<  ", " << act << endl;
 
 	retval->transitionProbs.clear();
 
-	float conf = model->getStateActionInfo(state, act, retval);
+	float conf = model->getStateActionInfo(state, act, retval, query);
 
 
 	//cout << "state: " << state[0] << " act: " << act;
