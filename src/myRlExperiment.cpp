@@ -1047,6 +1047,7 @@ int main(int argc, char **argv) {
 	name += "_v_"+std::to_string(v);
 	name += "_n_"+std::to_string(n);
 	name += "_tb_"+std::to_string(tutorBonus);
+	name += "_eps_"+std::to_string(epsilon);
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
