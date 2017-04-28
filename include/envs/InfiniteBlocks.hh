@@ -111,6 +111,7 @@ public:
 	void setDebug(bool b);
 	void setVerbose(bool b);
 	tutor_feedback tutorAction();
+	std::vector<float> generateSample();
 
 
 	bool BRDEBUG = true;
