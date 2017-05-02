@@ -936,7 +936,7 @@ int main(int argc, char **argv) {
 	name += "_steps_"+std::to_string(maxsteps);
 	name += "_size_"+std::to_string(roomsize);
 //	name += "_explo";
-	boost::filesystem::path rootPath ( "./resultats_4/" + name );
+	boost::filesystem::path rootPath ( "./resultats_5/" + name );
 	boost::system::error_code returnedError;
 
 	boost::filesystem::create_directories( rootPath, returnedError );
