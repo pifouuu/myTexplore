@@ -50,7 +50,7 @@ local.properties
 .recommenders
 
 # Fichiers sérialisés
-resultats/
+resultats*
 *.ser
 *.bin
 
