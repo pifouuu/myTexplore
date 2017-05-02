@@ -27,7 +27,7 @@ ExplorationModel::ExplorationModel(MDPModel* innermodel, int modelType, int expl
 
 	model = innermodel;
 
-	MODEL_DEBUG = false; //true;
+	MODEL_DEBUG = true; //true;
 
 	cout << "Exploration Model " << exploreType << ", v: " << v << ", n: " << n << endl;
 
@@ -124,6 +124,8 @@ bool ExplorationModel::updateWithExperience(experience &e){
 		bool retval = addStateToSet(last2);
 		visitChange = visitChange || retval;
 	}
+
+	if(exploreType)
 
 	return (changed || visitChange);
 }
