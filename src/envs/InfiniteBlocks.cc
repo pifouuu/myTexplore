@@ -115,6 +115,10 @@ const std::vector<float> &InfiniteBlocks::sensation() const {
 	return s;
 }
 
+std::vector<float> &InfiniteBlocks::getTstate(){
+	return t_state;
+}
+
 std::vector<float> InfiniteBlocks::generateSample(){
 	*agent_ns = rng.uniformDiscrete(0, size-1);
 	*agent_ew = rng.uniformDiscrete(0, size-1);
@@ -139,7 +143,7 @@ std::map<int, std::string> InfiniteBlocks::get_action_names(){
 }
 
 bool InfiniteBlocks::isSyncTutor(std::vector<float> state) const {
-	return (state[0]==*tutor_eye_ns && state[1]==*tutor_eye_ew && tutor_attentive);
+	return (state[4]==*tutor_eye_ns && state[5]==*tutor_eye_ew && tutor_attentive);
 }
 int InfiniteBlocks::get_blocks_in() const {
 	return red_box_count_blue+blue_box_count_blue+red_box_count_red+blue_box_count_red;

@@ -65,6 +65,7 @@ public:
 
 	occ_info_t apply(int action);
 	float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds);
+	std::vector<float> &getTstate();
 
 	float* agent_ns;
 	float* agent_ew;

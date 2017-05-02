@@ -273,6 +273,7 @@ public:
 	virtual void apply_tutor(int action) = 0;
 	virtual void tutorStop() = 0;
 	virtual tutor_feedback tutorAction() = 0;
+	virtual std::vector<float> &getTstate() = 0;
 	/** Determines whether the environment has reached a terminal state.
       \return true iff the task is episodic and the present episode
       has ended.  Nonepisodic tasks should simply always

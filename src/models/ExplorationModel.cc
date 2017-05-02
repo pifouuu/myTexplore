@@ -27,7 +27,7 @@ ExplorationModel::ExplorationModel(MDPModel* innermodel, int modelType, int expl
 
 	model = innermodel;
 
-	MODEL_DEBUG = true; //true;
+	MODEL_DEBUG = false; //true;
 
 	cout << "Exploration Model " << exploreType << ", v: " << v << ", n: " << n << endl;
 
@@ -111,6 +111,7 @@ bool ExplorationModel::updateWithExperience(experience &e){
 
 	bool changed = model->updateWithExperience(e);
 	bool visitChange = false;
+	bool tutorChange = false;
 
 	// keep track of which states we've been to for this mode
 	if (exploreType == UNVISITED_BONUS){
@@ -125,9 +126,15 @@ bool ExplorationModel::updateWithExperience(experience &e){
 		visitChange = visitChange || retval;
 	}
 
-	if(exploreType)
+	if (exploreType == DIFF_NOVEL_TUTOR){
+		std::vector<float> curTstate = trueEnv->getTstate();
+		if (curTstate != lastTstate) {
+			tutorChange = true;
+		}
+		lastTstate = curTstate;
+	}
 
-	return (changed || visitChange);
+	return (changed || visitChange || tutorChange);
 }
 
 

@@ -85,6 +85,7 @@ private:
       This way we can know what we've visited. */
   std::set<std::vector<float> > statespace;
 
+  std::vector<float> lastTstate;
   /** Underlying MDP model that we've wrapped and that we add bonus rewards onto. */
   MDPModel* model;
 
