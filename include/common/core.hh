@@ -307,6 +307,8 @@ public:
 	/** Returns if the domain is episodic (true by default). */
 	virtual bool isEpisodic(){ return true; };
 
+	virtual std::vector<float> generateSample() = 0;
+
 	/** Get seeding experiences for agent. */
 	virtual std::vector<experience> getSeedings()
 	{

@@ -115,6 +115,21 @@ const std::vector<float> &InfiniteBlocks::sensation() const {
 	return s;
 }
 
+std::vector<float> InfiniteBlocks::generateSample(){
+	*agent_ns = rng.uniformDiscrete(0, size-1);
+	*agent_ew = rng.uniformDiscrete(0, size-1);
+	float tirage = rng.uniformDiscrete(0,2);
+	if (tirage==0) *red_block_hold = 1, *blue_block_hold = 0;
+	else if (tirage==1) *red_block_hold = 0, *blue_block_hold = 1;
+	else *red_block_hold = 0, *blue_block_hold = 0;
+	*agent_eye_ns = rng.uniformDiscrete(0, size-1);
+	*agent_eye_ew = rng.uniformDiscrete(0, size-1);
+	std::vector<float> s = {*agent_ns,*agent_ew,*red_block_hold,*blue_block_hold,
+			*agent_eye_ns, *agent_eye_ew, 0, size-1, size-1, 0, size-1, size-1, 0, 0};
+
+	return s;
+}
+
 bool InfiniteBlocks::terminal() const {
 	return false;
 }
