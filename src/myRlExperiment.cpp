@@ -57,7 +57,8 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 15; //30; //30; //5; //30; //30; //50
+
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
 bool PRETRAIN = false;
@@ -1056,6 +1057,7 @@ int main(int argc, char **argv) {
 	name += "_steps_"+std::to_string(maxsteps);
 	name += "_size_"+std::to_string(roomsize);
 //	name += "_explo";
+
 
 	int eval_freq = 25;
 

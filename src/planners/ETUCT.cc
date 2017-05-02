@@ -41,7 +41,7 @@ ETUCT::ETUCT(int numactions, float gamma, float rrange, float lambda,
 	ACTDEBUG = false; //true;
 	MODELDEBUG = false; //true;//false;
 	UCTDEBUG = false; //trueit
-	QDEBUG = false;
+	QDEBUG = true;
 	USETRUEENV = false;
 
 	featmax = fmax;
@@ -430,10 +430,10 @@ int ETUCT::getBestAction(const std::vector<float> &state, float* avg_var_prop, f
 
 	// return index of action
 
-	*avg_var_prop += (Q[act]!=0 ? info->Q_varBonus[act]/Q[act] : 0.);
-	*avg_nov_prop += (Q[act]!=0 ? info->Q_novBonus[act]/Q[act] : 0.);
-	*avg_reward_prop	+= (Q[act]!=0 ? info->Q_envReward[act]/Q[act] : 0.);
-	*avg_sync_prop += (Q[act]!=0 ? info->Q_syncBonus[act]/Q[act] : 0.);
+	*avg_var_prop = (Q[act]!=0 ? info->Q_varBonus[act]/Q[act] : 0.);
+	*avg_nov_prop = (Q[act]!=0 ? info->Q_novBonus[act]/Q[act] : 0.);
+	*avg_reward_prop = (Q[act]!=0 ? info->Q_envReward[act]/Q[act] : 0.);
+	*avg_sync_prop = (Q[act]!=0 ? info->Q_syncBonus[act]/Q[act] : 0.);
 	return act;
 }
 
