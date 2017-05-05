@@ -115,7 +115,7 @@ public:
 	std::vector<float> generateSample();
 
 
-	bool BRDEBUG = true;
+	bool BRDEBUG = false;
 	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;

@@ -1043,12 +1043,14 @@ int main(int argc, char **argv) {
 	oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
 	auto str = oss.str();
 
+	int endExploration = 500;
+
 	std::string name = str;
 	name += "_"+std::to_string(modelType);
 	name += "_v_"+std::to_string(v);
 	name += "_n_"+std::to_string(n);
 	name += "_tb_"+std::to_string(tutorBonus);
-	name += "_eps_"+std::to_string(epsilon);
+	name += "_explo_"+std::to_string(endExploration);
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
@@ -1265,39 +1267,13 @@ int main(int argc, char **argv) {
 			occ_info_t info(0,0,0,0,0);
 
 			int a = 0;
-			int endExploration = 0;
+
 			int endTutor = 10000;
 
 			//////////////////////////////////
 			// non-episodic
 			//////////////////////////////////
 			for (unsigned step = 0; step < maxsteps; ++step){
-
-				if (step % eval_freq == 0 && step !=0){
-
-					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
-
-					std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, minValues, maxValues, rRange);
-
-					reward_acc[(trial_step+step)/eval_freq] += errors.first;
-					model_acc[(trial_step+step)/eval_freq] += errors.second;
-
-					std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
-
-					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
-					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
-
-					var_prop[(trial_step+step)/eval_freq] += avg_var_prop/eval_freq;
-					nov_prop[(trial_step+step)/eval_freq] += avg_nov_prop/eval_freq;
-					reward_prop[(trial_step+step)/eval_freq] += avg_reward_prop/eval_freq;
-					sync_prop[(trial_step+step)/eval_freq] += avg_sync_prop/eval_freq;
-
-					avg_var_prop = 0.;
-					avg_nov_prop = 0.;
-					avg_reward_prop = 0.;
-					avg_sync_prop = 0.;
-
-				}
 
 				std::vector<float> es = e->sensation();
 
@@ -1336,6 +1312,27 @@ int main(int argc, char **argv) {
 				trial_reward += info.reward;
 				trial_tutor_reward += info.tutor_reward;
 //				trial_tutor_reward_2 += t_feedback.reward;
+
+				if (step % eval_freq == 0){
+
+					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
+
+					std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, minValues, maxValues, rRange);
+
+					reward_acc[(trial_step+step)/eval_freq] += errors.first;
+					model_acc[(trial_step+step)/eval_freq] += errors.second;
+
+					std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
+
+					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
+					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
+
+					var_prop[(trial_step+step)/eval_freq] += avg_var_prop;
+					nov_prop[(trial_step+step)/eval_freq] += avg_nov_prop;
+					reward_prop[(trial_step+step)/eval_freq] += avg_reward_prop;
+					sync_prop[(trial_step+step)/eval_freq] += avg_sync_prop;
+
+				}
 
 				if (step % 200 == 0 && step != 0){
 

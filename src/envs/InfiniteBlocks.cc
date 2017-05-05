@@ -81,8 +81,8 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 
 	*agent_ns = size/2;
 	*agent_ew = size/2;
-	*agent_eye_ns = size/2;
-	*agent_eye_ew = size/2;
+	*agent_eye_ns = 0;
+	*agent_eye_ew = 0;
 
 	*red_blocks_ns = size-1;
 	*red_blocks_ew = size-1;
@@ -122,12 +122,18 @@ std::vector<float> &InfiniteBlocks::getTstate(){
 std::vector<float> InfiniteBlocks::generateSample(){
 	*agent_ns = rng.uniformDiscrete(0, size-1);
 	*agent_ew = rng.uniformDiscrete(0, size-1);
+
 	float tirage = rng.uniformDiscrete(0,2);
 	if (tirage==0) *red_block_hold = 1, *blue_block_hold = 0;
 	else if (tirage==1) *red_block_hold = 0, *blue_block_hold = 1;
 	else *red_block_hold = 0, *blue_block_hold = 0;
-	*agent_eye_ns = rng.uniformDiscrete(0, size-1);
-	*agent_eye_ew = rng.uniformDiscrete(0, size-1);
+
+	tirage = rng.uniformDiscrete(0,3);
+	if (tirage==0) *agent_eye_ns = 0, *agent_eye_ew = 0;
+	else if (tirage==1) *agent_eye_ns = 0, *agent_eye_ew = size-1;
+	else if (tirage==2) *agent_eye_ns = size-1, *agent_eye_ew = 0;
+	else *agent_eye_ns = size-1, *agent_eye_ew = size-1;
+
 	std::vector<float> s = {*agent_ns,*agent_ew,*red_block_hold,*blue_block_hold,
 			*agent_eye_ns, *agent_eye_ew, 0, size-1, size-1, 0, size-1, size-1, 0, 0};
 
@@ -279,7 +285,10 @@ void InfiniteBlocks::print_map() const{
 		}
 	}
 
+//	imwrite("/home/pierre/Dropbox/images/chessboard.jpg", chessBoard);
+
 	imshow("Chess board", chessBoard);
+
 	waitKey(1);
 }
 
