@@ -623,8 +623,8 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	return tutor_feedback(tutor_reward, reward, tutoract);
 }
 
-void InfiniteBlocks::tutorStop(){
-	tutor_attentive = false;
+void InfiniteBlocks::setTutor(bool b){
+	tutor_attentive = b;
 }
 
 std::vector<float> InfiniteBlocks::generate_state(){}

@@ -57,7 +57,7 @@ public:
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;
-	void tutorStop();
+	void setTutor(bool b);
 
 	std::default_random_engine engine;
 

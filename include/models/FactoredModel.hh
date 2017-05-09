@@ -45,7 +45,7 @@ public:
           int predType, int nModels, float treeThreshold,
           const std::vector<float> &featRange, float rRange,
           bool needConf, bool dep, bool relTrans, float featPct, 
-	  bool stoch, bool episodic,  bool rewarding, Random rng = Random());
+	  bool stoch, bool episodic,  Random rng = Random());
 
   /** Copy Constructor for MDP Tree */
   FactoredModel(const FactoredModel &);

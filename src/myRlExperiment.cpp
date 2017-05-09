@@ -1155,7 +1155,7 @@ int main(int argc, char **argv) {
 					minValues, maxValues,
 					statesPerDim,//0,
 					history, v, n, tutorBonus,
-					deptrans, reltrans, featPct, stochastic, episodic, rewarding, batchFreq,
+					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
 		}
@@ -1199,6 +1199,7 @@ int main(int argc, char **argv) {
 
 
 		int virtualSeed = 12;
+		e->setTutor(true);
 		Random virtualRng(virtualSeed);
 		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, roomsize, with_tutor, stochastic, finalReward);
 		virtualInfinite->setDebug(false);
@@ -1290,8 +1291,6 @@ int main(int argc, char **argv) {
 						e->apply_tutor(t_feedback.action);
 					}
 					agent->setRewarding(false);
-
-
 				}
 				else {
 					// next action
@@ -1307,7 +1306,7 @@ int main(int argc, char **argv) {
 					agent->setRewarding(true);
 				}
 				if (step==endTutor){
-					e->tutorStop();
+					e->setTutor(false);
 				}
 
 

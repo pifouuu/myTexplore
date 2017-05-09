@@ -271,7 +271,7 @@ public:
 		\param action The action the agent wishes to apply.
 		\return The immediate one-step reward caused by the action. */
 	virtual void apply_tutor(int action) = 0;
-	virtual void tutorStop() = 0;
+	virtual void setTutor(bool b) = 0;
 	virtual tutor_feedback tutorAction() = 0;
 	virtual std::vector<float> &getTstate() = 0;
 	/** Determines whether the environment has reached a terminal state.

@@ -11,14 +11,13 @@ FactoredModel::FactoredModel(int id, int numactions, int M, int modelType,
 		int predType, int nModels, float treeThreshold,
 		const std::vector<float> &featRange, float rRange, bool needConf,
 		bool dep, bool relTrans, float featPct, bool stoch, bool episodic,
-		bool rewarding,
 		Random rng) :
 		rewardModel(NULL), terminalModel(NULL), id(id), nact(numactions), M(M), modelType(
 				modelType), predType(predType), nModels(nModels), treeBuildType(
 				BUILD_ON_ERROR), // build tree after prediction error
 		treeThresh(treeThreshold), featRange(featRange), rRange(rRange), needConf(
 				needConf), dep(dep), relTrans(relTrans), FEAT_PCT(featPct), stoch(
-				stoch), episodic(episodic), rewarding(rewarding), rng(rng) {
+				stoch), episodic(episodic), rng(rng) {
 
 	//cout << "MDP Tree explore type: " << predType << endl;
 	MODEL_DEBUG = false; //true;
