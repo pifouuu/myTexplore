@@ -78,6 +78,9 @@ void ExplorationModel::setRewarding(bool val){
 	model->setRewarding(val);
 }
 
+void ExplorationModel::setExplore(int type){
+	exploreType = type;
+}
 
 bool ExplorationModel::updateWithExperiences(std::vector<experience> &instances){
 	bool changed = model->updateWithExperiences(instances);

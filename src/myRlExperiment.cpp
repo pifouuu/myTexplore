@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <iomanip>
 #include <ctime>
+#include <sstream> // stringstream
 
 // include input and output archivers
 #include <boost/archive/text_oarchive.hpp>
@@ -270,8 +271,8 @@ int main(int argc, char **argv) {
 	int pretrain_steps = 0;
 	float tutorBonus = 10;
 	int finalReward = 100;
-	int nbRedBlocks = 1;
-	int nbBlueBlocks = 0;
+	int explo = 0;
+	int tutorAtt = 10000;
 	int maxsteps = 100;
 	int batchFreq = 1;
 	bool rewarding=true;
@@ -385,8 +386,8 @@ int main(int argc, char **argv) {
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
 			{"finalReward",1,0,16},
-			{"nbred", 1, 0, 17},
-			{"nbblue",1 ,0, 18},
+			{"explo", 1, 0, 17},
+			{"tutorAtt",1 ,0, 18},
 			{"maxsteps", 1, 0, 19},
 			{"batchFreq", 1, 0, 20},
 			{"roomsize", 1, 0, 21},
@@ -789,10 +790,10 @@ int main(int argc, char **argv) {
 			finalReward = std::atof(optarg);
 			break;
 		case 17:
-			nbRedBlocks = std::atof(optarg);
+			explo = std::atof(optarg);
 			break;
 		case 18:
-			nbBlueBlocks = std::atof(optarg);
+			tutorAtt = std::atof(optarg);
 			break;
 		case 19:
 			maxsteps = std::atof(optarg);
@@ -1040,29 +1041,20 @@ int main(int argc, char **argv) {
 	auto tm = *std::localtime(&t);
 
 	std::ostringstream oss;
+	oss << std::fixed << std::setprecision(1);
 	oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
-	auto str = oss.str();
-
-	int endExploration = 500;
-	int endTutor = 500;
-
-
-	std::string name = str;
-	name += "_"+std::to_string(modelType);
-	name += "_v_"+std::to_string(v);
-	name += "_n_"+std::to_string(n);
-	name += "_tb_"+std::to_string(tutorBonus);
-	name += "_explo_"+std::to_string(endExploration);
-	name += "_tutorAtt_"+std::to_string(endTutor);
-	name += "_pretrain_"+std::to_string(pretrain_steps);
-	name += "_fR_"+std::to_string(finalReward);
-	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
-	name += "_nmodels_"+std::to_string(nmodels);
-	name += "_batch_"+std::to_string(batchFreq);
-	name += "_steps_"+std::to_string(maxsteps);
-	name += "_size_"+std::to_string(roomsize);
-//	name += "_explo";
-
+	oss << "_v_" << v;
+	oss << "_n_"<<n;
+	oss << "_tb_"<<tutorBonus;
+	oss << "_explo_"<<explo;
+	oss << "_tutorAtt_"<<tutorAtt;
+	oss << "_pretrain_"<<pretrain_steps;
+	oss << "_fR_"<<finalReward;
+	oss << "_nmodels_"<<nmodels;
+	oss << "_batch_"<<batchFreq;
+	oss << "_steps_"<<maxsteps;
+	oss << "_size_"<<roomsize;
+	std::string name = oss.str();
 
 	int eval_freq = 25;
 
@@ -1302,10 +1294,11 @@ int main(int argc, char **argv) {
 					}
 				}
 
-				if (step==endExploration) {
+				if (step==explo) {
 					agent->setRewarding(true);
+					agent->setExplore(GREEDY);
 				}
-				if (step==endTutor){
+				if (step==tutorAtt){
 					e->setTutor(false);
 				}
 

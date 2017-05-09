@@ -333,6 +333,7 @@ public:
 	virtual std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act) = 0;
 	virtual void setTrueEnv(Environment* e) = 0;
 	virtual void setRewarding(bool val) = 0;
+	virtual void setExplore(int exploreType) = 0;
 	virtual bool train_only(experience e) = 0;
 	virtual bool train_only_many(std::vector<experience> e) = 0;
 	/** Determines the first action that an agent takes in an
@@ -453,6 +454,7 @@ public:
 	virtual void setTrueEnv(Environment*) {};
 	virtual void setTesting(bool){};
 	virtual void setRewarding(bool){};
+	virtual void setExplore(int){};
 	virtual ~MDPModel() {};
 };
 

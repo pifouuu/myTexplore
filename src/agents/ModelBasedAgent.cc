@@ -137,6 +137,10 @@ ModelBasedAgent::~ModelBasedAgent() {
 void ModelBasedAgent::setRewarding(bool val){
 	model->setRewarding(val);
 }
+
+void ModelBasedAgent::setExplore(int exploreType){
+	model->setExplore(exploreType);
+}
 bool ModelBasedAgent::train_only(experience e){
 	if (model == NULL)
 	    initModel(e.s.size());

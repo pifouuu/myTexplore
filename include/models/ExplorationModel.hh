@@ -70,6 +70,7 @@ public:
 
   void setTesting(bool testMode);
   void setRewarding(bool val);
+  void setExplore(int exploreType);
 
   Environment* trueEnv;
 
