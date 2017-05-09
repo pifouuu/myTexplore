@@ -1044,6 +1044,8 @@ int main(int argc, char **argv) {
 	auto str = oss.str();
 
 	int endExploration = 500;
+	int endTutor = 500;
+
 
 	std::string name = str;
 	name += "_"+std::to_string(modelType);
@@ -1051,6 +1053,7 @@ int main(int argc, char **argv) {
 	name += "_n_"+std::to_string(n);
 	name += "_tb_"+std::to_string(tutorBonus);
 	name += "_explo_"+std::to_string(endExploration);
+	name += "_tutorAtt_"+std::to_string(endTutor);
 	name += "_pretrain_"+std::to_string(pretrain_steps);
 	name += "_fR_"+std::to_string(finalReward);
 	name += "_nbR_"+std::to_string(nbRedBlocks)+"_nbB_"+std::to_string(nbBlueBlocks);
@@ -1268,7 +1271,6 @@ int main(int argc, char **argv) {
 
 			int a = 0;
 
-			int endTutor = 10000;
 
 			//////////////////////////////////
 			// non-episodic
