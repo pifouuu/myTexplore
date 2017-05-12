@@ -271,12 +271,13 @@ int main(int argc, char **argv) {
 	int pretrain_steps = 0;
 	float tutorBonus = 10;
 	int finalReward = 100;
-	int explo = 0;
+	int start_reward = 0;
 	int tutorAtt = 10000;
 	int maxsteps = 100;
 	int batchFreq = 1;
-	bool rewarding=true;
 	int roomsize = 5;
+	int eval_explore = GREEDY;
+	int eval_step = 500;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -386,11 +387,13 @@ int main(int argc, char **argv) {
 			{"pretrain", 1, 0, 14},
 			{"tutorBonus",1,0,15},
 			{"finalReward",1,0,16},
-			{"explo", 1, 0, 17},
+			{"start_reward", 1, 0, 17},
 			{"tutorAtt",1 ,0, 18},
 			{"maxsteps", 1, 0, 19},
 			{"batchFreq", 1, 0, 20},
 			{"roomsize", 1, 0, 21},
+			{"eval_explore", 1, 0, 22},
+			{"eval_step", 1, 0, 23},
 			{0, 0, 0, 0}
 	};
 
@@ -790,7 +793,7 @@ int main(int argc, char **argv) {
 			finalReward = std::atof(optarg);
 			break;
 		case 17:
-			explo = std::atof(optarg);
+			start_reward = std::atof(optarg);
 			break;
 		case 18:
 			tutorAtt = std::atof(optarg);
@@ -803,6 +806,22 @@ int main(int argc, char **argv) {
 			break;
 		case 21:
 			roomsize = std::atof(optarg);
+			break;
+		case 22:
+		{
+			if (strcmp(optarg, "unknown") == 0) eval_explore = EXPLORE_UNKNOWN;
+			else if (strcmp(optarg, "greedy") == 0) eval_explore = GREEDY;
+			else if (strcmp(optarg, "epsilongreedy") == 0) eval_explore = EPSILONGREEDY;
+			else if (strcmp(optarg, "unvisitedstates") == 0) eval_explore = UNVISITED_BONUS;
+			else if (strcmp(optarg, "unvisitedactions") == 0) eval_explore = UNVISITED_ACT_BONUS;
+			else if (strcmp(optarg, "variancenovelty") == 0) eval_explore = DIFF_AND_NOVEL_BONUS;
+			else if (strcmp(optarg, "noveltytutor") == 0) eval_explore = DIFF_NOVEL_TUTOR;
+
+			cout << "eval_explore: " << exploreNames[eval_explore] << endl;
+			break;
+		}
+		case 23:
+			eval_step = std::atof(optarg);
 			break;
 		case 'h':
 		case '?':
@@ -1046,7 +1065,7 @@ int main(int argc, char **argv) {
 	oss << "_v_" << v;
 	oss << "_n_"<<n;
 	oss << "_tb_"<<tutorBonus;
-	oss << "_explo_"<<explo;
+	oss << "startR"<<start_reward;
 	oss << "_tutorAtt_"<<tutorAtt;
 	oss << "_pretrain_"<<pretrain_steps;
 	oss << "_fR_"<<finalReward;
@@ -1054,10 +1073,10 @@ int main(int argc, char **argv) {
 	oss << "_batch_"<<batchFreq;
 	oss << "_steps_"<<maxsteps;
 	oss << "_size_"<<roomsize;
+	oss << "_evalExp_"<<eval_explore;
 	std::string name = oss.str();
 
 	int eval_freq = 25;
-
 
 
 //	float total_reward = 0;
@@ -1294,9 +1313,11 @@ int main(int argc, char **argv) {
 					}
 				}
 
-				if (step==explo) {
+				if (step==start_reward) {
 					agent->setRewarding(true);
-					agent->setExplore(GREEDY);
+				}
+				if (step==eval_step){
+					agent->setExplore(eval_explore);
 				}
 				if (step==tutorAtt){
 					e->setTutor(false);
