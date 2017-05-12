@@ -149,6 +149,9 @@ protected:
   /** Initialize state info struct */
   void initStateInfo(state_t s, state_info* info);
   
+  void resetPlan();
+  void resetQvalue(state_t s, state_info* info);
+
   /** Produces a canonical representation of the given sensation.
       \param s The current sensation from the environment.
       \return A pointer to an equivalent state in statespace. */

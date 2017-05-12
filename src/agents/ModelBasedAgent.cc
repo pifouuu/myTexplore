@@ -147,6 +147,10 @@ bool ModelBasedAgent::train_only(experience e){
 	return (model->updateWithExperience(e));
 }
 
+void ModelBasedAgent::forget(){
+	planner->resetPlan();
+}
+
 bool ModelBasedAgent::train_only_many(std::vector<experience> e){
 	if (model == NULL)
 	    initModel(e[0].s.size());

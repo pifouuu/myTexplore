@@ -468,6 +468,42 @@ void ETUCT::planOnNewModel() {
 
 }
 
+void ETUCT::resetPlan(){
+	for (std::set<std::vector<float> >::iterator i = statespace.begin();
+			i != statespace.end(); i++) {
+		state_t s = canonicalize(*i);
+
+		state_info* info = &(statedata[s]);
+
+		for (int j = 0; j < numactions; j++) {
+			resetQvalue(s, info);
+		}
+
+	}
+}
+
+void ETUCT::resetQvalue(state_t s, state_info* info){
+	info->historyModel =
+			new std::map<std::deque<float>, StateActionInfo>[numactions];
+
+	// model q values, visit counts
+	info->Q_novBonus.resize(numactions, 0);
+	info->Q_syncBonus.resize(numactions, 0);
+	info->Q_varBonus.resize(numactions, 0);
+	info->Q_envReward.resize(numactions, 0);
+	info->uctActions.resize(numactions, 1);
+	info->uctVisits = 1;
+	info->visited = 0; //false;
+	info->needsUpdate = true;
+
+	for (int i = 0; i < numactions; i++) {
+		//info->Q[i] = rng.uniform(0, 0.01);
+		info->Q_novBonus[i] = 0.0;
+		info->Q_syncBonus[i] = 0.0;
+		info->Q_varBonus[i] = 0.0;
+		info->Q_envReward[i] = 0.0;
+	}
+}
 void ETUCT::resetUCTCounts() {
 	// if (PLANNERDEBUG) cout << "Reset UCT Counts" << endl;
 	const int MIN_VISITS = 10;

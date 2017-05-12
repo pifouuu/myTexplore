@@ -336,6 +336,7 @@ public:
 	virtual void setExplore(int exploreType) = 0;
 	virtual bool train_only(experience e) = 0;
 	virtual bool train_only_many(std::vector<experience> e) = 0;
+	virtual void forget() = 0;
 	/** Determines the first action that an agent takes in an
       environment.  This method implies that the environment is
       currently in an initial state.
@@ -473,6 +474,8 @@ public:
 
 	/** Plan a new policy suing the current model. */
 	virtual void planOnNewModel() = 0;
+
+	virtual void resetPlan() = 0;
 
 	/** Evaluate the prediction from the planner **/
 /*	virtual void evaluate_model() = 0;*/

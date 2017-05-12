@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -272,12 +272,13 @@ int main(int argc, char **argv) {
 	float tutorBonus = 10;
 	int finalReward = 100;
 	int start_reward = 0;
-	int tutorAtt = 10000;
 	int maxsteps = 100;
+	int tutorAtt = maxsteps;
 	int batchFreq = 1;
 	int roomsize = 5;
 	int eval_explore = GREEDY;
-	int eval_step = 500;
+	int eval_step = maxsteps;
+	int reset_plan_step = maxsteps;
 	// change some of these parameters based on command line args
 
 	// parse agent type
@@ -394,6 +395,7 @@ int main(int argc, char **argv) {
 			{"roomsize", 1, 0, 21},
 			{"eval_explore", 1, 0, 22},
 			{"eval_step", 1, 0, 23},
+			{"reset_plan_step", 1, 0, 24},
 			{0, 0, 0, 0}
 	};
 
@@ -540,6 +542,7 @@ int main(int argc, char **argv) {
 			else if (strcmp(optarg, "unvisitedstates") == 0) exploreType = UNVISITED_BONUS;
 			else if (strcmp(optarg, "unvisitedactions") == 0) exploreType = UNVISITED_ACT_BONUS;
 			else if (strcmp(optarg, "variancenovelty") == 0) exploreType = DIFF_AND_NOVEL_BONUS;
+			else if (strcmp(optarg, "novelty") == 0) exploreType = NOVEL_STATE_BONUS;
 			//else if (strcmp(optarg, "noveltytutor") == 0) exploreType = DIFF_NOVEL_TUTOR;
 			if (strcmp(agentType, "rmax") == 0 && exploreType != EXPLORE_UNKNOWN){
 				cout << "R-Max should use \"--explore unknown\" exploration" << endl;
@@ -816,12 +819,16 @@ int main(int argc, char **argv) {
 			else if (strcmp(optarg, "unvisitedactions") == 0) eval_explore = UNVISITED_ACT_BONUS;
 			else if (strcmp(optarg, "variancenovelty") == 0) eval_explore = DIFF_AND_NOVEL_BONUS;
 			else if (strcmp(optarg, "noveltytutor") == 0) eval_explore = DIFF_NOVEL_TUTOR;
+			else if (strcmp(optarg, "novelty") == 0) eval_explore = NOVEL_STATE_BONUS;
 
 			cout << "eval_explore: " << exploreNames[eval_explore] << endl;
 			break;
 		}
 		case 23:
 			eval_step = std::atof(optarg);
+			break;
+		case 24:
+			reset_plan_step = std::atof(optarg);
 			break;
 		case 'h':
 		case '?':
@@ -1318,6 +1325,9 @@ int main(int argc, char **argv) {
 				}
 				if (step==eval_step){
 					agent->setExplore(eval_explore);
+				}
+				if (step==reset_plan_step){
+					agent->forget();
 				}
 				if (step==tutorAtt){
 					e->setTutor(false);
