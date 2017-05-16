@@ -253,9 +253,9 @@ std::pair<float,float> evaluation(Environment* env, Agent* agent, int numactions
 int main(int argc, char **argv) {
 
 	// default params for env and agent
-	char* agentType = NULL;
-	char* envType = NULL;
-	char* tutorType = NULL;
+	char* agentType = "texplore";
+	char* envType = "infiniteBlocks";
+	char* tutorType = "s_dep_tutor";
 	float discountfactor = 0.9;
 	float epsilon = 0.05;
 	float alpha = 0.5;
@@ -264,19 +264,16 @@ int main(int argc, char **argv) {
 	float lambda = 0.1;
 	int M = 5;
 	int modelType = C45TREE;
-	int exploreType = GREEDY;
 	int predType = BEST;
-	int plannerType = PAR_ETUCT_ACTUAL;
-	int nmodels = 1;
+	int plannerType = ET_UCT_ACTUAL;
+	int nmodels = 5;
 	bool reltrans = true;
 	bool deptrans = false;
-	float v = 0.;
-	float n = 0.;
 	float featPct = 0.2;
 	int nstates = 0;
 	int k = 1000;
 	char *filename = NULL;
-	bool stochastic = true;
+	bool stochastic = false;
 	int nstocks = 3;
 	int nsectors = 3;
 	int delay = 0;
@@ -285,16 +282,19 @@ int main(int argc, char **argv) {
 	int history = 0;
 	int seed = 1;
 	int pretrain_steps = 0;
-	float tutorBonus = 10;
-	int finalReward = 100;
-	int start_reward = 0;
-	int maxsteps = 100;
-	int tutorAtt = maxsteps;
+	int taskTrain = 0;
+	float nTrain = 0.;
+	float tTrain = 0.;
+	float rTrain = 0.;
+	int stepsTrain = 500;
+	bool resetQ = false;
+	int taskEval = 0;
+	float nEval = 0.;
+	float tEval = 0.;
+	float rEval = 0.;
+	int stepsEval = 1000;
 	int batchFreq = 1;
 	int roomsize = 5;
-	int eval_explore = GREEDY;
-	int eval_step = maxsteps;
-	int reset_plan_step = maxsteps;
 	// change some of these parameters based on command line args
 
 	// parse agent type
