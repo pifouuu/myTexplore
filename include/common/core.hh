@@ -182,14 +182,14 @@ struct classPair {
 struct occ_info_t{
 		float reward;
 		bool success;
-		int blocks_in;
-		int blocks_right;
+		int reward_pick_red;
+		int reward_pick_blue;
 		float tutor_reward;
 		occ_info_t(float r, bool s, int i, int ri, float tr){
 			reward =r ;
 			success =s;
-			blocks_in = i;
-			blocks_right = ri;
+			reward_pick_red = i;
+			reward_pick_blue = ri;
 			tutor_reward = tr;
 		}
 	};
@@ -261,7 +261,6 @@ public:
 	 */
 	virtual float getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds) = 0;
 	virtual bool isSyncTutor(std::vector<float> state) const = 0;
-	virtual int trueBestAction() = 0;
 	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues) = 0;

@@ -393,6 +393,8 @@ occ_info_t InfiniteBlocks::apply(int action){
 	float reward = 0.;
 	float tutor_reward = 0;
 	bool success = false;
+	float reward_pick_red;
+	float reward_pick_blue;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
 
@@ -449,6 +451,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 1;
 					success = true;
+					reward_pick_red++;
 					if (IS_REAL) {
 						std::cout << "Red block taken." << std::endl;
 					}
@@ -457,6 +460,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 1;
+					reward_pick_blue++;
 					success = true;
 					if (IS_REAL) {
 						std::cout << "Blue block taken." << std::endl;
@@ -578,36 +582,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, 0, 0, tutor_reward);
-}
-
-
-int InfiniteBlocks::trueBestAction(){
-	int res = -1;
-	if (*red_block_hold || *blue_block_hold) {
-		if (((*agent_ns==*red_box_ns && *agent_ew==*red_box_ew)||
-				(*agent_ns==*blue_box_ns && *agent_ew==*blue_box_ew)) && eye_hand_sync()){
-			res = actions["PUT_IN"];
-		}
-		else if ((*agent_eye_ns != *red_box_ns || *agent_eye_ew!=*red_box_ew) && (*agent_eye_ns!=*blue_box_ns||*agent_eye_ew!=*blue_box_ew)){
-			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BOX"] : actions["LOOK_BLUE_BOX"]);
-		}
-	}
-	else if (!(*red_block_hold) && !(*blue_block_hold)){
-		if ((*agent_eye_ns != *red_blocks_ns || *agent_eye_ew!=*red_blocks_ew)
-				&& (*agent_eye_ns!=*blue_blocks_ns||*agent_eye_ew!=*blue_blocks_ew)){
-			res = (rng.bernoulli(0.5) ? actions["LOOK_RED_BLOCKS"] : actions["LOOK_BLUE_BLOCKS"]);
-		}
-		else{
-			if (eye_hand_sync()){
-				res = actions["PICK"];
-			}
-		}
-	}
-	if (res==-1){
-		res = actions["GO_TO_EYE"];
-	}
-	return res;
+	return occ_info_t(reward, success, reward_pick_red, reward_pick_blue, tutor_reward);
 }
 
 tutor_feedback InfiniteBlocks::tutorAction(){

@@ -31,7 +31,6 @@ public:
 	bool terminal() const;
 	void reset();
 	int getNumActions();
-	int trueBestAction();
 	int getNumTutorActions();
 	std::vector<float> generate_state();
 	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
