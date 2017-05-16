@@ -19,7 +19,7 @@ class InfiniteBlocks: public Environment {
 public:
 	// Constructor
 
-	InfiniteBlocks(Random &rand, int size, bool with_tutor, bool stochastic, float finalReward);
+	InfiniteBlocks(Random &rand, int size, bool stochastic, float finalReward, int task);
 
 	/* InfiniteBlocks is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -49,14 +49,16 @@ public:
 	int size;
 	bool stochastic;
 	Random &rng;
-	bool WITH_TUTOR;
 	bool tutor_attentive = true;
 	std::vector<float> s;
+	int task;
 	float finalReward;
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;
 	void setTutor(bool b);
+	void setTask(int task);
+	void setReward(float reward);
 
 	std::default_random_engine engine;
 

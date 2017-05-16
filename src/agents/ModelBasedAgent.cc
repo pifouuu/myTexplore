@@ -27,7 +27,7 @@ using namespace std;
 
 ModelBasedAgent::ModelBasedAgent(int numactions, float gamma, 
                                  float rmax, float rrange,
-                                 int modelType,	int exploreType, 
+                                 int modelType,
                                  int predType, int nModels, int plannerType, 
                                  float epsilon, float lambda, float MAX_TIME,
                                  float m, const std::vector<float> &featmin,
@@ -38,7 +38,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
   qmax(rmax/(1.0-gamma)), 
-  modelType(modelType), exploreType(exploreType), 
+  modelType(modelType),
   predType(predType), nModels(nModels), plannerType(plannerType),
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
@@ -58,7 +58,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
 
 ModelBasedAgent::ModelBasedAgent(int numactions, float gamma, 
                                  float rmax, float rrange,
-                                 int modelType,	int exploreType, 
+                                 int modelType,
                                  int predType, int nModels, int plannerType, 
                                  float epsilon, float lambda, float MAX_TIME,
                                  float m, const std::vector<float> &featmin,
@@ -69,7 +69,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   featmin(featmin), featmax(featmax),
   numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
   qmax(rmax/(1.0-gamma)), 
-  modelType(modelType), exploreType(exploreType), 
+  modelType(modelType),
   predType(predType), nModels(nModels), plannerType(plannerType),
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
   M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
@@ -105,20 +105,6 @@ void ModelBasedAgent::initParams(){
   ACTDEBUG = false;//true;
   SIMPLEDEBUG = false; //true; //false; //true;
 
-  // check
-  if (qmax <= 0.1 && (exploreType == TWO_MODE_PLUS_R || 
-		      exploreType == CONTINUOUS_BONUS_R || 
-		      exploreType == CONTINUOUS_BONUS ||
-		      exploreType == THRESHOLD_BONUS_R)) {
-    std::cerr << "For this exploration type, rmax needs to be an additional positive bonus value, not a replacement for the q-value" << endl;
-    exit(-1);
-  }
-
-  if (exploreType == TWO_MODE || exploreType == TWO_MODE_PLUS_R){
-    std::cerr << "This exploration type does not work in this agent." << endl;
-    exit(-1);
-  }
-
   seeding = false;
   
   if (SIMPLEDEBUG)
@@ -138,9 +124,14 @@ void ModelBasedAgent::setRewarding(bool val){
 	model->setRewarding(val);
 }
 
-void ModelBasedAgent::setExplore(int exploreType){
-	model->setExplore(exploreType);
+void ModelBasedAgent::setTutorBonus(float val){
+	model->setTutorBonus(val);
 }
+
+void ModelBasedAgent::setNovelty(float val){
+	model->setNovelty(val);
+}
+
 bool ModelBasedAgent::train_only(experience e){
 	if (model == NULL)
 	    initModel(e.s.size());
@@ -260,10 +251,7 @@ void ModelBasedAgent::last_action(float r) {
 void ModelBasedAgent::initModel(int nfactors){
   if ( AGENTDEBUG) cout << "initModel nfactors: " << nfactors << endl;
  
-  bool needConf = 
-    (exploreType != NO_EXPLORE && exploreType != EXPLORE_UNKNOWN && 
-     exploreType != EPSILONGREEDY && exploreType != UNVISITED_BONUS &&
-     exploreType != UNVISITED_ACT_BONUS);
+  bool needConf = (v != 0.);
 
   std::vector<float> featRange(featmax.size(), 0);
   for (unsigned i = 0; i < featmax.size(); i++){
@@ -310,10 +298,10 @@ void ModelBasedAgent::initModel(int nfactors){
   */
 
   // pass model into exploration model wrapper model
-  if (exploreType != NO_EXPLORE && exploreType != EPSILONGREEDY){
+  if (v!=0. || n!=0.){
     MDPModel* m2 = model;
 
-    model = new ExplorationModel(m2, modelType, exploreType,
+    model = new ExplorationModel(m2, modelType,
                                  predType, nModels, M, numactions,
                                  rmax, qmax, rrange, nfactors, v, n, tutorBonus,
                                  featmax, featmin, rng);

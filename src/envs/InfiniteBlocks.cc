@@ -13,12 +13,12 @@
 
 using namespace cv;
 
-InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool stochastic, float finalReward):
+InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float finalReward, int task):
 			size(size),
 			stochastic(stochastic),
 			rng(rand),
-			WITH_TUTOR(with_tutor),
 			s(14),
+			task(task),
 			finalReward(finalReward),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
@@ -59,16 +59,15 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool with_tutor, bool sto
 	actions[std::string("PUT_IN")] = cnt_actions++;
 
 
-	if (WITH_TUTOR){
-		tutor_eye_ns = &(t_state[0]);
-		tutor_eye_ew = &(t_state[1]);
+	tutor_eye_ns = &(t_state[0]);
+	tutor_eye_ew = &(t_state[1]);
 
-		tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
-		tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
-		tutor_actions[std::string("LOOK_BLUE_BOX")] = cnt_tutor_actions++;
-		tutor_actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_tutor_actions++;
-		tutor_actions[std::string("LOOK_RED_BLOCKS")] = cnt_tutor_actions++;
-	}
+	tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
+	tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
+	tutor_actions[std::string("LOOK_BLUE_BOX")] = cnt_tutor_actions++;
+	tutor_actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_tutor_actions++;
+	tutor_actions[std::string("LOOK_RED_BLOCKS")] = cnt_tutor_actions++;
+
 
 	int nb_fix_actions = cnt_actions;
 
@@ -119,6 +118,13 @@ std::vector<float> &InfiniteBlocks::getTstate(){
 	return t_state;
 }
 
+void InfiniteBlocks::setReward(float reward){
+	finalReward = reward;
+}
+
+void InfiniteBlocks::setTask(int t){
+	task = t;
+}
 std::vector<float> InfiniteBlocks::generateSample(){
 	*agent_ns = rng.uniformDiscrete(0, size-1);
 	*agent_ew = rng.uniformDiscrete(0, size-1);
@@ -242,9 +248,7 @@ void InfiniteBlocks::print_map() const{
 	posToImg[std::pair<int,int>(blockSize*(*red_box_ew),blockSize*(*red_box_ns))].push_back(red_box_img);
 	posToImg[std::pair<int,int>(blockSize*(*agent_eye_ew),blockSize*(*agent_eye_ns))].push_back(agent_eye_img);
 
-	if (WITH_TUTOR){
-		posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
-	}
+	posToImg[std::pair<int,int>(blockSize*(*tutor_eye_ew),blockSize*(*tutor_eye_ns))].push_back(tutor_eye_img);
 
 	posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(agent_hand_img);
 
@@ -503,8 +507,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
 					red_box_count_red++;
-					reward += finalReward;
-					tutor_reward += finalReward;
+					if (task == MATCHING || task == ALL){
+						reward += finalReward;
+					}
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in red box." << std::endl;
@@ -515,7 +520,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
 					blue_box_count_red++;
-					reward += finalReward;
+					if (task == ALL || task == OPPOSITE){
+						reward += finalReward;
+					}
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in blue box." << std::endl;
@@ -528,7 +535,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
 					red_box_count_blue++;
-					reward += finalReward;
+					if (task == ALL || task == OPPOSITE){
+						reward += finalReward;
+					}
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in red box." << std::endl;
@@ -539,7 +548,9 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
 					blue_box_count_blue++;
-					reward += finalReward;
+					if (task == MATCHING || task == ALL){
+						reward += finalReward;
+					}
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in blue box." << std::endl;

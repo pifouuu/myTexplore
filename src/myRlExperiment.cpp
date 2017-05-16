@@ -255,14 +255,13 @@ int main(int argc, char **argv) {
 	// default params for env and agent
 	char* agentType = "texplore";
 	char* envType = "infiniteBlocks";
-	char* tutorType = "s_dep_tutor";
 	float discountfactor = 0.9;
 	float epsilon = 0.05;
 	float alpha = 0.5;
 	float initialvalue = 0.0;
 	float actrate = 10.0;
 	float lambda = 0.1;
-	int M = 5;
+	int M = 0;
 	int modelType = C45TREE;
 	int predType = BEST;
 	int plannerType = ET_UCT_ACTUAL;
@@ -281,87 +280,25 @@ int main(int argc, char **argv) {
 	bool highvar = false;
 	int history = 0;
 	int seed = 1;
+	float v = 0.;
 	int pretrain_steps = 0;
-	int taskTrain = 0;
+	int taskTrain = ALL;
 	float nTrain = 0.;
 	float tTrain = 0.;
 	float rTrain = 0.;
 	int stepsTrain = 500;
 	bool resetQ = false;
-	int taskEval = 0;
+	int taskEval = MATCHING;
 	float nEval = 0.;
 	float tEval = 0.;
 	float rEval = 0.;
 	int stepsEval = 1000;
 	int batchFreq = 1;
 	int roomsize = 5;
-	// change some of these parameters based on command line args
-
-	// parse agent type
-	bool gotAgent = false;
-	for (int i = 1; i < argc-1; i++){
-		if (strcmp(argv[i], "--agent") == 0){
-			gotAgent = true;
-			agentType = argv[i+1];
-		}
-	}
-	if (!gotAgent) {
-		cout << "--agent type  option is required" << endl;
-		displayHelp();
-	}
-
-	// set some default options for rmax or texplore
-	if (strcmp(agentType, "rmax") == 0){
-		modelType = RMAX;
-		exploreType = EXPLORE_UNKNOWN;
-		predType = BEST;
-		plannerType = VALUE_ITERATION;
-		nmodels = 1;
-		reltrans = false;
-		M = 5;
-		history = 0;
-	} else if (strcmp(agentType, "texplore") == 0){
-		modelType = C45TREE;
-		exploreType = DIFF_AND_NOVEL_BONUS;
-		v = 0;
-		n = 0;
-		predType = AVERAGE;
-		plannerType = PAR_ETUCT_ACTUAL;
-		nmodels = 5;
-		reltrans = true;
-		M = 0;
-		history = 0;
-	}
-
-	// parse env type
-	bool gotEnv = false;
-	for (int i = 1; i < argc-1; i++){
-		if (strcmp(argv[i], "--env") == 0){
-			gotEnv = true;
-			envType = argv[i+1];
-		}
-	}
-	if (!gotEnv) {
-		cout << "--env type  option is required" << endl;
-		displayHelp();
-	}
-
-	// parse tutor type
-	bool gotTutor = false;
-	for (int i = 1; i < argc-1; i++){
-		if (strcmp(argv[i], "--tutor") == 0){
-			gotTutor = true;
-			tutorType = argv[i+1];
-		}
-	}
-	if (!gotTutor) {
-		cout << "--tutor type  option is required" << endl;
-		displayHelp();
-	}
 
 	// parse other arguments
 	char ch;
-	const char* optflags = "geairlmoxpcn:";
+	const char* optflags = "geairlmopcn:";
 	int option_index = 0;
 	static struct option long_options[] = {
 			{"gamma", 1, 0, 'g'},
@@ -373,7 +310,6 @@ int main(int argc, char **argv) {
 			{"lambda", 1, 0, 'l'},
 			{"m", 1, 0, 'm'},
 			{"model", 1, 0, 'o'},
-			{"explore", 1, 0, 'x'},
 			{"planner", 1, 0, 'p'},
 			{"combo", 1, 0, 'c'},
 			{"nmodels", 1, 0, '#'},
@@ -386,9 +322,6 @@ int main(int argc, char **argv) {
 			{"k", 1, 0, 'k'},
 			{"filename", 1, 0, 'f'},
 			{"history", 1, 0, 'y'},
-			{"b", 1, 0, 'b'},
-			{"v", 1, 0, 'v'},
-			{"n", 1, 0, 'n'},
 
 			{"env", 1, 0, 1},
 			{"deterministic", 0, 0, 2},
@@ -400,27 +333,21 @@ int main(int argc, char **argv) {
 			{"nolag", 0, 0, 8},
 			{"highvar", 0, 0, 11},
 			{"nepisodes", 1, 0, 12},
-			{"tutor", 1, 0, 13},
+			{"v", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
-			{"tutorBonus",1,0,15},
-			{"finalReward",1,0,16},
-			{"start_reward", 1, 0, 17},
-			{"tutorAtt",1 ,0, 18},
-			{"maxsteps", 1, 0, 19},
-			{"batchFreq", 1, 0, 20},
-			{"roomsize", 1, 0, 21},
-			{"eval_explore", 1, 0, 22},
-			{"eval_step", 1, 0, 23},
-			{"reset_plan_step", 1, 0, 24},
+			{"taskTrain",1,0,15},
+			{"nTrain",1,0,16},
+			{"tTrain", 1, 0, 17},
+			{"rTrain",1 ,0, 18},
+			{"stepsTrain", 1, 0, 19},
+			{"resetQ", 0, 0, 20},
+			{"taskEval", 1, 0, 21},
+			{"nEval", 1, 0, 22},
+			{"tEval", 1, 0, 23},
+			{"rEval", 1, 0, 24},
+			{"stepsEval", 1, 0, 25},
 			{0, 0, 0, 0}
 	};
-
-	bool epsilonChanged = false;
-	bool actrateChanged = false;
-	bool mChanged = false;
-	bool bvnChanged = false;
-	bool lambdaChanged = false;
-	bool with_tutor = true;
 
 	while(-1 != (ch = getopt_long_only(argc, argv, optflags, long_options, &option_index))) {
 		switch(ch) {
@@ -431,7 +358,6 @@ int main(int argc, char **argv) {
 			break;
 
 		case 'e':
-			epsilonChanged = true;
 			epsilon = std::atof(optarg);
 			cout << "epsilon: " << epsilon << endl;
 			break;
@@ -491,7 +417,6 @@ int main(int argc, char **argv) {
 
 		case 'r':
 		{
-			actrateChanged = true;
 			if (strcmp(agentType, "texplore") == 0 || strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") == 0){
 				actrate = std::atof(optarg);
 				cout << "actrate: " << actrate << endl;
@@ -504,7 +429,6 @@ int main(int argc, char **argv) {
 
 		case 'l':
 		{
-			lambdaChanged = true;
 			if (strcmp(agentType, "texplore") == 0 || strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") == 0 || strcmp(agentType, "sarsa") == 0){
 				lambda = std::atof(optarg);
 				cout << "lambda: " << lambda << endl;
@@ -517,7 +441,6 @@ int main(int argc, char **argv) {
 
 		case 'm':
 		{
-			mChanged = true;
 			if (strcmp(agentType, "texplore") == 0 || strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") == 0){
 				M = std::atoi(optarg);
 				cout << "M: " << M << endl;
@@ -547,29 +470,6 @@ int main(int argc, char **argv) {
 				exit(-1);
 			}
 			cout << "model: " << modelNames[modelType] << endl;
-			break;
-		}
-
-		case 'x':
-		{
-			if (strcmp(optarg, "unknown") == 0) exploreType = EXPLORE_UNKNOWN;
-			else if (strcmp(optarg, "greedy") == 0) exploreType = GREEDY;
-			else if (strcmp(optarg, "epsilongreedy") == 0) exploreType = EPSILONGREEDY;
-			else if (strcmp(optarg, "unvisitedstates") == 0) exploreType = UNVISITED_BONUS;
-			else if (strcmp(optarg, "unvisitedactions") == 0) exploreType = UNVISITED_ACT_BONUS;
-			else if (strcmp(optarg, "variancenovelty") == 0) exploreType = DIFF_AND_NOVEL_BONUS;
-			else if (strcmp(optarg, "novelty") == 0) exploreType = NOVEL_STATE_BONUS;
-			//else if (strcmp(optarg, "noveltytutor") == 0) exploreType = DIFF_NOVEL_TUTOR;
-			if (strcmp(agentType, "rmax") == 0 && exploreType != EXPLORE_UNKNOWN){
-				cout << "R-Max should use \"--explore unknown\" exploration" << endl;
-				exit(-1);
-			}
-			else if (strcmp(agentType, "texplore") != 0 && strcmp(agentType, "modelbased") != 0 && strcmp(agentType, "rmax") != 0 && (exploreType != GREEDY && exploreType != EPSILONGREEDY)) {
-				cout << "Model free methods must use either greedy or epsilon-greedy exploration!" << endl;
-				exploreType = EPSILONGREEDY;
-				exit(-1);
-			}
-			cout << "explore: " << exploreNames[exploreType] << endl;
 			break;
 		}
 
@@ -675,35 +575,6 @@ int main(int argc, char **argv) {
 			cout << "nstates for discretization: " << nstates << endl;
 			break;
 
-		case 'v':
-		case 'b':
-		{
-			bvnChanged = true;
-			if (strcmp(agentType, "texplore") == 0){
-				v = std::atof(optarg);
-				cout << "v coefficient (variance bonus): " << v << endl;
-			}
-			else {
-				cout << "--v and --b are invalid options for agent: " << agentType << endl;
-				exit(-1);
-			}
-			break;
-		}
-
-		case 'n':
-		{
-			bvnChanged = true;
-			if (strcmp(agentType, "texplore") == 0){
-				n = std::atof(optarg);
-				cout << "n coefficient (novelty bonus): " << n << endl;
-			}
-			else {
-				cout << "--n is an invalid option for agent: " << agentType << endl;
-				exit(-1);
-			}
-			break;
-		}
-
 		case 2:
 			stochastic = false;
 			cout << "stochastic: " << stochastic << endl;
@@ -796,122 +667,53 @@ int main(int argc, char **argv) {
 			cout << "Num Episodes: " << NUMEPISODES << endl;
 			break;
 		case 13:
-			// already processed this one
-			cout << "tutor: " << tutorType << endl;
-			if (strcmp(tutorType,"no_tutor") == 0) {with_tutor = false;}
-			else {exploreType = DIFF_NOVEL_TUTOR;}
+			v = std::atof(optarg);
 			break;
 		case 14:
 			PRETRAIN = true;
 			pretrain_steps = std::atof(optarg);
 			break;
 		case 15:
-			tutorBonus = std::atof(optarg);
+			taskTrain = std::atoi(optarg);
 			break;
 		case 16:
-			finalReward = std::atof(optarg);
+			nTrain = std::atof(optarg);
 			break;
 		case 17:
-			start_reward = std::atof(optarg);
+			tTrain = std::atof(optarg);
 			break;
 		case 18:
-			tutorAtt = std::atof(optarg);
+			rTrain = std::atof(optarg);
 			break;
 		case 19:
-			maxsteps = std::atof(optarg);
+			stepsTrain = std::atof(optarg);
 			break;
 		case 20:
-			batchFreq = std::atof(optarg);
+			resetQ = true;
 			break;
 		case 21:
-			roomsize = std::atof(optarg);
+			taskEval = std::atof(optarg);
 			break;
 		case 22:
-		{
-			if (strcmp(optarg, "unknown") == 0) eval_explore = EXPLORE_UNKNOWN;
-			else if (strcmp(optarg, "greedy") == 0) eval_explore = GREEDY;
-			else if (strcmp(optarg, "epsilongreedy") == 0) eval_explore = EPSILONGREEDY;
-			else if (strcmp(optarg, "unvisitedstates") == 0) eval_explore = UNVISITED_BONUS;
-			else if (strcmp(optarg, "unvisitedactions") == 0) eval_explore = UNVISITED_ACT_BONUS;
-			else if (strcmp(optarg, "variancenovelty") == 0) eval_explore = DIFF_AND_NOVEL_BONUS;
-			else if (strcmp(optarg, "noveltytutor") == 0) eval_explore = DIFF_NOVEL_TUTOR;
-			else if (strcmp(optarg, "novelty") == 0) eval_explore = NOVEL_STATE_BONUS;
-
-			cout << "eval_explore: " << exploreNames[eval_explore] << endl;
+			nEval = std::atof(optarg);
 			break;
-		}
 		case 23:
-			eval_step = std::atof(optarg);
+			tEval = std::atof(optarg);
 			break;
 		case 24:
-			reset_plan_step = std::atof(optarg);
+			rEval = std::atof(optarg);
 			break;
-		case 'h':
-		case '?':
-		case 0:
+		case 25:
+			stepsEval = std::atof(optarg);
+			break;
 		default:
 			displayHelp();
 			break;
 		}
 	}
-	cout << "explore : " << exploreType << endl;
 	cout << "planner :" << plannerType << endl;
 	cout << "model : " << modelType << endl;
 	cout << "prediction " << predType << endl;
-	cout << "tutor" << tutorType << endl;
-	// default back to greedy if no coefficients
-	if (exploreType == DIFF_AND_NOVEL_BONUS && v == 0 && n == 0)
-		exploreType = GREEDY;
-
-	// check for conflicting options
-	// changed epsilon but not doing epsilon greedy exploration
-	/*if (epsilonChanged && exploreType != EPSILONGREEDY){
-		cout << "No reason to change epsilon when not using epsilon-greedy exploration" << endl;
-		exit(-1);
-	}
-
-	// set history value but not d19oing uct w/history planner
-	if (history > 0 && (plannerType == VALUE_ITERATION || plannerType == POLICY_ITERATION || plannerType == PRI_SWEEPING)){
-		cout << "No reason to set history higher than 0 if not using a UCT planner" << endl;
-		exit(-1);
-	}
-
-	// set action rate but not doing real-time planner
-	if (actrateChanged && (plannerType == VALUE_ITERATION || plannerType == POLICY_ITERATION || plannerType == PRI_SWEEPING)){
-		cout << "No reason to set actrate if not using a UCT planner" << endl;
-		exit(-1);
-	}
-
-	// set lambda but not doing uct (lambda)
-	if (lambdaChanged && (strcmp(agentType, "texplore") == 0 || strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") == 0) && (plannerType == VALUE_ITERATION || plannerType == POLICY_ITERATION || plannerType == PRI_SWEEPING)){
-		cout << "No reason to set actrate if not using a UCT planner" << endl;
-		exit(-1);
-	}
-
-	// set n/v/b but not doing that diff_novel exploration
-	if (bvnChanged && exploreType != DIFF_AND_NOVEL_BONUS){
-		cout << "No reason to set n or v if not doing variance & novelty exploration" << endl;
-		exit(-1);
-	}
-
-	// set combo other than best but only doing 1 model
-	if (predType != BEST && nmodels == 1){
-		cout << "No reason to have model combo other than best with nmodels = 1" << endl;
-		exit(-1);
-	}
-
-	// set M but not doing explore unknown
-	if (mChanged && exploreType != EXPLORE_UNKNOWN){
-		cout << "No reason to set M if not doing R-max style Explore Unknown exploration" << endl;
-		exit(-1);
-	}
-*/
-	if (PRINTS){
-		if (stochastic)
-			cout << "Stohastic\n";
-		else
-			cout << "Deterministic\n";
-	}
 
 	Random rng(1 + seed);
 
@@ -921,95 +723,8 @@ int main(int argc, char **argv) {
 	Environment* e;
 	if (strcmp(envType, "infiniteBlocks") == 0){
 		if (PRINTS) cout << "Environment: infiniteBlocks \n";
-		e = new InfiniteBlocks(rng, roomsize, with_tutor, stochastic, finalReward);
+		e = new InfiniteBlocks(rng, roomsize, stochastic, rTrain, taskTrain);
 	}
-
-	/*else if (strcmp(envType, "cartpole") == 0){
-		if (PRINTS) cout << "Environment: Cart Pole\n";
-		e = new CartPole(rng, stochastic);
-	}
-
-	else if (strcmp(envType, "mcar") == 0){
-		if (PRINTS) cout << "Environment: Mountain Car\n";
-		e = new MountainCar(rng, stochastic, false, delay);
-	}
-
-	// taxi
-	else if (strcmp(envType, "taxi") == 0){
-		if (PRINTS) cout << "Environment: Taxi\n";
-		e = new Taxi(rng, stochastic);
-	}
-
-	// Light World
-	else if (strcmp(envType, "lightworld") == 0){
-		if (PRINTS) cout << "Environment: Light World\n";
-		e = new LightWorld(rng, stochastic, 4);
-	}
-
-	// two rooms
-	else if (strcmp(envType, "tworooms") == 0){
-		if (PRINTS) cout << "Environment: TwoRooms\n";
-		e = new TwoRooms(rng, stochastic, true, delay, false);
-	}
-
-	// car vel, 2 to 7
-	else if (strcmp(envType, "car2to7") == 0){
-		if (PRINTS) cout << "Environment: Car Velocity 2 to 7 m/s\n";
-		e = new RobotCarVel(rng, false, true, false, lag);
-		statesPerDim.resize(4,0);
-		statesPerDim[0] = 12;
-		statesPerDim[1] = 120;
-		statesPerDim[2] = 4;
-		statesPerDim[3] = 10;
-		MAXSTEPS = 100;
-	}
-	// car vel, 7 to 2
-	else if (strcmp(envType, "car7to2") == 0){
-		if (PRINTS) cout << "Environment: Car Velocity 7 to 2 m/s\n";
-		e = new RobotCarVel(rng, false, false, false, lag);
-		statesPerDim.resize(4,0);
-		statesPerDim[0] = 12;
-		statesPerDim[1] = 120;
-		statesPerDim[2] = 4;
-		statesPerDim[3] = 10;
-		MAXSTEPS = 100;
-	}
-	// car vel, random vels
-	else if (strcmp(envType, "carrandom") == 0){
-		if (PRINTS) cout << "Environment: Car Velocity Random Velocities\n";
-		e = new RobotCarVel(rng, true, false, false, lag);
-		statesPerDim.resize(4,0);
-		statesPerDim[0] = 12;
-		statesPerDim[1] = 48;
-		statesPerDim[2] = 4;
-		statesPerDim[3] = 10;
-		MAXSTEPS = 100;
-	}
-
-	// four rooms
-	else if (strcmp(envType, "fourrooms") == 0){
-		if (PRINTS) cout << "Environment: FourRooms\n";
-		e = new FourRooms(rng, stochastic, true, false);
-	}
-
-	// four rooms with energy level
-	else if (strcmp(envType, "energy") == 0){
-		if (PRINTS) cout << "Environment: EnergyRooms\n";
-		e = new EnergyRooms(rng, stochastic, true, false);
-	}
-
-	// gridworld with fuel (fuel stations on top and bottom with random costs)
-	else if (strcmp(envType, "fuelworld") == 0){
-		if (PRINTS) cout << "Environment: FuelWorld\n";
-		e = new FuelRooms(rng, highvar, stochastic);
-	}
-
-	// stocks
-	else if (strcmp(envType, "stocks") == 0){
-		if (PRINTS) cout << "Enironment: Stocks with " << nsectors
-				<< " sectors and " << nstocks << " stocks\n";
-		e = new Stocks(rng, stochastic, nsectors, nstocks);
-	}*/
 
 	else {
 		std::cerr << "Invalid env type" << endl;
@@ -1045,37 +760,14 @@ int main(int argc, char **argv) {
 	if (PRINTS) cout << "Min Reward: " << rMin
 			<< ", Max Reward: " << rMax << endl;
 
-	// set rmax as a bonus for certain exploration types
-	if (rMax <= 0.0 && (exploreType == TWO_MODE_PLUS_R ||
-			exploreType == CONTINUOUS_BONUS_R ||
-			exploreType == CONTINUOUS_BONUS ||
-			exploreType == THRESHOLD_BONUS_R)){
-		rMax = 1.0;
-	}
-
-
-
-
 	if (statesPerDim.size() == 0){
 		cout << "set statesPerDim to " << nstates << " for all dim" << endl;
 		statesPerDim.resize(minValues.size(), nstates);
 	}
 
 	// Construct tutor here.
-	Tutor* tutor;
+	Tutor* tutor = new s_dep_tutor(num_tutor_actions);
 
-	if (!with_tutor){
-		std::cout<<"Tutor : without a tutor."<<std::endl;
-		tutor = new no_tutor(num_tutor_actions);
-	}
-	else if (strcmp(tutorType, "s_dep_tutor") == 0) {
-		if (PRINTS) cout << "Tutor: State-dependent" << endl;
-		tutor = new s_dep_tutor(num_tutor_actions);
-	}
-	else {
-		std::cerr << "ERROR: Invalid tutor type" << endl;
-		exit(-1);
-	}
 	tutor->setTrueEnv(e);
 
 	// agent->evaluate_model();
@@ -1085,24 +777,23 @@ int main(int argc, char **argv) {
 	std::ostringstream oss;
 	oss << std::fixed << std::setprecision(1);
 	oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
-	oss << "_v_" << v;
-	oss << "_n_"<<n;
-	oss << "_tb_"<<tutorBonus;
-	oss << "_startR_"<<start_reward;
-	oss << "_tutorAtt_"<<tutorAtt;
-	oss << "_pretrain_"<<pretrain_steps;
-	oss << "_fR_"<<finalReward;
-	oss << "_nmodels_"<<nmodels;
-	oss << "_batch_"<<batchFreq;
-	oss << "_steps_"<<maxsteps;
-	oss << "_size_"<<roomsize;
-	oss << "_evalExp_"<<eval_explore;
-	oss << "_evalStep_"<<eval_step;
-	oss << "_resetPlan_"<<reset_plan_step;
+	oss << "_taskTrain_" << taskTrain;
+	oss << "_nTrain_"<<nTrain;
+	oss << "_tTrain_"<<tTrain;
+	oss << "_rTrain_"<<rTrain;
+	oss << "_stepsTrain_"<<stepsTrain;
+	oss << "_resetQ_"<<resetQ;
+	oss << "_taskEval_"<<taskEval;
+	oss << "_nEval_"<<nEval;
+	oss << "_tEval_"<<tEval;
+	oss << "_rEval_"<<rEval;
+	oss << "_stepsEval_"<<stepsEval;
+
 	std::string name = oss.str();
 
-	int eval_freq = 25;
 
+	int eval_freq = 25;
+	int maxsteps = stepsEval+stepsTrain;
 
 //	float total_reward = 0;
 //	float total_tutor_reward = 0.;
@@ -1148,45 +839,12 @@ int main(int argc, char **argv) {
 		// Construct agent here.
 		Agent* agent;
 
-		/*if (strcmp(agentType, "qlearner") == 0){
-			if (PRINTS) cout << "Agent: QLearner" << endl;
-			agent = new QLearner(numactions,
-					discountfactor,
-					initialvalue, //0.0, // initialvalue
-					alpha, // alpha
-					epsilon, // epsilon
-					rng);
-		}
-
-		else if (strcmp(agentType, "dyna") == 0){
-			if (PRINTS) cout << "Agent: Dyna" << endl;
-			agent = new Dyna(numactions,
-					discountfactor,
-					initialvalue, //0.0, // initialvalue
-					alpha, // alpha
-					k, // k
-					epsilon, // epsilon
-					rng);
-		}
-
-		else if (strcmp(agentType, "sarsa") == 0){
-			if (PRINTS) cout << "Agent: SARSA" << endl;
-			agent = new Sarsa(numactions,
-					discountfactor,
-					initialvalue, //0.0, // initialvalue
-					alpha, // alpha
-					epsilon, // epsilon
-					lambda,
-					rng);
-		}*/
-
 		if (strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") || strcmp(agentType, "texplore")){
 			if (PRINTS) cout << "Agent: Model Based" << endl;
 			agent = new ModelBasedAgent(numactions,
 					discountfactor,
 					rMax, rRange,
 					modelType,
-					exploreType,
 					predType,
 					nmodels,
 					plannerType,
@@ -1196,54 +854,22 @@ int main(int argc, char **argv) {
 					M,
 					minValues, maxValues,
 					statesPerDim,//0,
-					history, v, n, tutorBonus,
+					history, v, nTrain, tTrain,
 					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
+			agent->setRewarding(true);
 		}
-
-		/*else if (strcmp(agentType, "savedpolicy") == 0){
-			if (PRINTS) cout << "Agent: Saved Policy" << endl;
-			agent = new SavedPolicy(numactions,filename);
-		}*/
 
 		else {
 			std::cerr << "ERROR: Invalid agent type" << endl;
 			exit(-1);
 		}
 
-		// start discrete agent if we're discretizing (if nstates > 0 and not agent type 'c')
-		/*int totalStates = 1;
-		Agent* a2 = agent;
-		// not for model based when doing continuous model
-		if (nstates > 0 && (modelType != M5ALLMULTI || strcmp(agentType, "qlearner") == 0)){
-			int totalStates = powf(nstates,minValues.size());
-			if (PRINTS) cout << "Discretize with " << nstates << ", total: " << totalStates << endl;
-			agent = new DiscretizationAgent(nstates, a2,
-					minValues, maxValues, PRINTS);
-		}
-		else {
-			totalStates = 1;
-			for (unsigned i = 0; i < minValues.size(); i++){
-				int range = 1+maxValues[i] - minValues[i];
-				totalStates *= range;
-			}
-			if (PRINTS) cout << "No discretization, total: " << totalStates << endl;
-		}*/
-
-		// before we start, seed the agent with some experiences
-		// agent->seedExp(e->getSeedings());
-
-		struct act_info_t{
-			std::list<int> occ_list;
-			int success;
-		};
-
-
 		int virtualSeed = 12;
 		e->setTutor(true);
 		Random virtualRng(virtualSeed);
-		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, roomsize, with_tutor, stochastic, finalReward);
+		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, roomsize, stochastic, rTrain, taskTrain);
 		virtualInfinite->setDebug(false);
 		virtualInfinite->setVerbose(false);
 
@@ -1334,10 +960,8 @@ int main(int argc, char **argv) {
 					// first action
 					int a = agent->first_action(es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
 					occ_info_t info = e->apply(a);
-					if (with_tutor){
-						t_feedback = e->tutorAction();
-						e->apply_tutor(t_feedback.action);
-					}
+					t_feedback = e->tutorAction();
+					e->apply_tutor(t_feedback.action);
 					agent->setRewarding(false);
 				}
 				else {
@@ -1345,24 +969,19 @@ int main(int argc, char **argv) {
 					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
 					info = e->apply(a);
 					t_feedback = e->tutorAction();
-					if (with_tutor){
-						e->apply_tutor(t_feedback.action);
+					e->apply_tutor(t_feedback.action);
+				}
+
+				if (step==stepsTrain) {
+					//agent->setRewarding(true);
+					agent->setTutorBonus(tEval);
+					agent->setNovelty(nEval);
+					e->setTask(taskEval);
+					e->setReward(rEval);
+					if (resetQ){
+						agent->forget();
 					}
 				}
-
-				if (step==start_reward) {
-					agent->setRewarding(true);
-				}
-				if (step==eval_step){
-					agent->setExplore(eval_explore);
-				}
-				if (step==reset_plan_step){
-					agent->forget();
-				}
-				if (step==tutorAtt){
-					e->setTutor(false);
-				}
-
 
 				trial_reward += info.reward;
 				trial_tutor_reward += info.tutor_reward;
@@ -1412,11 +1031,7 @@ int main(int argc, char **argv) {
 
 			}
 
-
-
 		}
-
-		// EPISODIC DOMAINS
 		else {
 			/*
 
@@ -1576,79 +1191,6 @@ int main(int argc, char **argv) {
 				trial_tutor_reward_2 += episode_tutor_reward_2;
 
 				trial_step += episode_step;
-
-				for (std::map<int, std::vector<float>>::iterator it = model_acc.begin();
-						it != model_acc.end(); ++it){
-					std::ofstream ofs(rootPath.string()+"/model_acc_"+action_names[it->first]+".ser");
-					boost::archive::text_oarchive oa(ofs);
-					oa & it->second;
-				}
-
-				for (int i=0;i<minValues.size();i++){
-					std::ofstream ofs(rootPath.string()+"/component_acc_"+std::to_string(i)+".ser");
-					boost::archive::text_oarchive oa(ofs);
-					oa & comp_acc[i];
-				}
-
-				std::ofstream ofs(rootPath.string()+"/reward_model_acc"+".ser");
-				boost::archive::text_oarchive oa_model_acc_test_r(ofs);
-				oa_model_acc_test_r & reward_model_acc;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/accumulated_reward.ser");
-				boost::archive::text_oarchive oa_accu_reward(ofs);
-				oa_accu_reward & accu_rewards;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/accu_tutor_rewards.ser");
-				boost::archive::text_oarchive oa_tutor_r(ofs);
-				oa_tutor_r & accu_tutor_rewards;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/accu_tutor_rewards_2.ser");
-				boost::archive::text_oarchive oa_tutor_r_2(ofs);
-				oa_tutor_r_2 & accu_tutor_rewards_2;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/var_prop.ser");
-				boost::archive::text_oarchive oa_var(ofs);
-				oa_var & var_prop;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/nov_prop.ser");
-				boost::archive::text_oarchive oa_nov(ofs);
-				oa_nov & nov_prop;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/sync_prop.ser");
-				boost::archive::text_oarchive oa_sync(ofs);
-				oa_sync & sync_prop;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/reward_prop.ser");
-				boost::archive::text_oarchive oa_reward(ofs);
-				oa_reward & reward_prop;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/x_axis.ser");
-				boost::archive::text_oarchive x_axis(ofs);
-				x_axis & eval_steps;
-				ofs.close();
-				ofs.clear();
-
-				ofs.open(rootPath.string()+"/num_trials.ser");
-				boost::archive::text_oarchive num_trials(ofs);
-				num_trials & step_reached;
-				ofs.close();
-				ofs.clear();
 			}
 			*/
 		}

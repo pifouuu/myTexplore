@@ -41,7 +41,7 @@ public:
       \param rng Random Number Generator
   */
   ExplorationModel(MDPModel * model, int modelType, 
-                   int exploreType, int predType, int nModels,
+                   int predType, int nModels,
                    float m, int numactions, float rmax, 
                    float qmax, float rrange, int nfactors, float v, float n, float tutorBonus,
                    const std::vector<float> &featmax, 
@@ -70,7 +70,9 @@ public:
 
   void setTesting(bool testMode);
   void setRewarding(bool val);
-  void setExplore(int exploreType);
+  void setTutorBonus(float val);
+  void setNovelty(float val);
+
 
   Environment* trueEnv;
 
@@ -94,15 +96,14 @@ private:
   std::vector<float> featmin;
 
   int modelType; 
-  int exploreType; 
   int predType;
   int nModels;
   float M; 
   int numactions; float rmax; float qmax; float rrange;
   int nfactors; 
-  const float v;
-  const float n;
-  const float tutorBonus;
+  float v;
+  float n;
+  float tutorBonus;
 
   bool testMode;
 

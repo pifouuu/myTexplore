@@ -13,6 +13,16 @@
     \author Todd Hester
  */
 
+// types of tasks
+#define ALL 0
+#define MATCHING 1
+#define OPPOSITE 2
+
+const std::string taskNames[] = {
+		"All",
+		"Matching",
+		"Opposite"
+};
 
 // types of models
 #define RMAX        0
@@ -255,6 +265,8 @@ public:
 	virtual occ_info_t apply(int action) = 0;
 	virtual void setDebug(bool b) = 0;
 	virtual void setVerbose(bool b) = 0;
+	virtual void setTask(int task) = 0;
+	virtual void setReward(float reward) = 0;
 	/** Retrieve a true prediction with for a state and an action in a
 	 * given environment given its dynamics and compares it to a provided
 	 *  prediction.
@@ -332,7 +344,8 @@ public:
 	virtual std::tuple<std::vector<float>,float,float> pred(std::vector<float> & s, int act) = 0;
 	virtual void setTrueEnv(Environment* e) = 0;
 	virtual void setRewarding(bool val) = 0;
-	virtual void setExplore(int exploreType) = 0;
+	virtual void setNovelty(float val) = 0;
+	virtual void setTutorBonus(float val) = 0;
 	virtual bool train_only(experience e) = 0;
 	virtual bool train_only_many(std::vector<experience> e) = 0;
 	virtual void forget() = 0;
@@ -454,7 +467,9 @@ public:
 	virtual void setTrueEnv(Environment*) {};
 	virtual void setTesting(bool){};
 	virtual void setRewarding(bool){};
-	virtual void setExplore(int){};
+	virtual void setNovelty(float val){};
+	virtual void setTutorBonus(float val){};
+
 	virtual ~MDPModel() {};
 };
 

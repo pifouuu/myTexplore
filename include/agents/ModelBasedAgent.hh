@@ -43,7 +43,7 @@ public:
       \param episodic is the domain episodic?
       \param rng Initial state of the random number generator to use */
   ModelBasedAgent(int numactions, float gamma, float rmax, float rrange, 
-                  int modelType, int exploreType, 
+                  int modelType,
                   int predType, int nModels, int plannerType,
                   float epsilon, float lambda, float MAX_TIME,
                   float m, const std::vector<float> &featmin, 
@@ -78,7 +78,7 @@ public:
       \param episodic is the domain episodic?
       \param rng Initial state of the random number generator to use*/
   ModelBasedAgent(int numactions, float gamma, float rmax, float rrange, 
-                  int modelType, int exploreType, 
+                  int modelType,
                   int predType, int nModels, int plannerType,
                   float epsilon, float lambda, float MAX_TIME,
                   float m, const std::vector<float> &featmin, 
@@ -107,7 +107,8 @@ public:
   bool train_only(experience e);
   bool train_only_many(std::vector<experience> e);
   void setRewarding(bool val);
-  void setExplore(int exploreType);
+  void setTutorBonus(float val);
+  void setNovelty(float val);
   void forget();
 
   /** Output value function to a file */
@@ -190,7 +191,6 @@ private:
   const float rrange;
   const float qmax;
   const int modelType;
-  const int exploreType;
   const int predType;
   const int nModels;
   const int plannerType;
