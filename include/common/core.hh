@@ -17,11 +17,13 @@
 #define ALL 0
 #define MATCHING 1
 #define OPPOSITE 2
+#define REDONLY 3
 
 const std::string taskNames[] = {
 		"All",
 		"Matching",
-		"Opposite"
+		"Opposite",
+		"Red"
 };
 
 // types of models

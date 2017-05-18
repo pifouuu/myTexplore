@@ -96,7 +96,8 @@ public:
 	std::map<std::string, int> actions;
 	int numactions;
 	int num_tutor_actions;
-
+	float tutor_block_hold;
+	int lastTutorAct;
 
 	std::map<int, std::string> action_names;
 

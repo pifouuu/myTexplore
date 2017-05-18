@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 25; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -294,7 +294,7 @@ int main(int argc, char **argv) {
 	float rEval = 0.;
 	int stepsEval = 1000;
 	int batchFreq = 1;
-	int roomsize = 5;
+	int roomsize = 4;
 
 	// parse other arguments
 	char ch;
@@ -719,57 +719,6 @@ int main(int argc, char **argv) {
 
 	std::vector<int> statesPerDim;
 
-	// Construct environment here.
-	Environment* e;
-	if (strcmp(envType, "infiniteBlocks") == 0){
-		if (PRINTS) cout << "Environment: infiniteBlocks \n";
-		e = new InfiniteBlocks(rng, roomsize, stochastic, rTrain, taskTrain);
-	}
-
-	else {
-		std::cerr << "Invalid env type" << endl;
-		exit(-1);
-	}
-
-	const int numactions = e->getNumActions(); // Most agents will need this?
-	const int num_tutor_actions = e->getNumTutorActions();
-
-	std::map<int,std::string> action_names = e->get_action_names();
-
-	std::vector<float> minValues;
-	std::vector<float> maxValues;
-	e->getMinMaxFeatures(&minValues, &maxValues);
-	bool episodic = e->isEpisodic();
-
-	cout << "Environment is ";
-	if (!episodic) cout << "NOT ";
-	cout << "episodic." << endl;
-
-	// lets just check this for now
-	for (unsigned i = 0; i < minValues.size(); i++){
-		if (PRINTS) cout << "Feat " << i << " min: " << minValues[i]
-																  << " max: " << maxValues[i] << endl;
-	}
-
-	// get max/min reward for the domain
-	float rMax = 0.0;
-	float rMin = -1.0;
-
-	e->getMinMaxReward(&rMin, &rMax);
-	float rRange = rMax - rMin;
-	if (PRINTS) cout << "Min Reward: " << rMin
-			<< ", Max Reward: " << rMax << endl;
-
-	if (statesPerDim.size() == 0){
-		cout << "set statesPerDim to " << nstates << " for all dim" << endl;
-		statesPerDim.resize(minValues.size(), nstates);
-	}
-
-	// Construct tutor here.
-	Tutor* tutor = new s_dep_tutor(num_tutor_actions);
-
-	tutor->setTrueEnv(e);
-
 	// agent->evaluate_model();
 	auto t = std::time(nullptr);
 	auto tm = *std::localtime(&t);
@@ -801,7 +750,7 @@ int main(int argc, char **argv) {
 
 	for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
-		boost::filesystem::path rootPath ( "./resultats_python/" + name +"/trial_"+std::to_string(j));
+		boost::filesystem::path rootPath ( "/home/pierre/Dropbox/resultats/toSort/" + name +"/trial_"+std::to_string(j));
 		boost::system::error_code returnedError;
 
 		boost::filesystem::create_directories( rootPath, returnedError );
@@ -836,6 +785,44 @@ int main(int argc, char **argv) {
 		float avg_reward_prop = 0.;
 		float avg_sync_prop = 0.;
 
+		Environment* e;
+		if (strcmp(envType, "infiniteBlocks") == 0){
+			if (PRINTS) cout << "Environment: infiniteBlocks \n";
+			e = new InfiniteBlocks(rng, roomsize, stochastic, rTrain, taskTrain);
+		}
+
+		else {
+			std::cerr << "Invalid env type" << endl;
+			exit(-1);
+		}
+
+		const int numactions = e->getNumActions(); // Most agents will need this?
+		const int num_tutor_actions = e->getNumTutorActions();
+
+		std::map<int,std::string> action_names = e->get_action_names();
+
+		std::vector<float> minValues;
+		std::vector<float> maxValues;
+		e->getMinMaxFeatures(&minValues, &maxValues);
+		bool episodic = e->isEpisodic();
+
+		statesPerDim.resize(minValues.size(),nstates);
+
+		cout << "Environment is ";
+		if (!episodic) cout << "NOT ";
+		cout << "episodic." << endl;
+
+		// get max/min reward for the domain
+		float rMax = 0.0;
+		float rMin = -1.0;
+
+		e->getMinMaxReward(&rMin, &rMax);
+		float rRange = rMax - rMin;
+
+		e->setTutor(true);
+		e->setReward(rTrain);
+		e->setTask(taskTrain);
+
 		// Construct agent here.
 		Agent* agent;
 
@@ -858,7 +845,6 @@ int main(int argc, char **argv) {
 					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
-			agent->setRewarding(true);
 		}
 
 		else {
@@ -867,7 +853,7 @@ int main(int argc, char **argv) {
 		}
 
 		int virtualSeed = 12;
-		e->setTutor(true);
+
 		Random virtualRng(virtualSeed);
 		Environment* virtualInfinite = new InfiniteBlocks(virtualRng, roomsize, stochastic, rTrain, taskTrain);
 		virtualInfinite->setDebug(false);
@@ -962,7 +948,8 @@ int main(int argc, char **argv) {
 					occ_info_t info = e->apply(a);
 					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
-					agent->setRewarding(false);
+					agent->setRewarding(true);
+					//e->setReward(rEval);
 				}
 				else {
 					// next action
@@ -970,17 +957,6 @@ int main(int argc, char **argv) {
 					info = e->apply(a);
 					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
-				}
-
-				if (step==stepsTrain) {
-					//agent->setRewarding(true);
-					agent->setTutorBonus(tEval);
-					agent->setNovelty(nEval);
-					e->setTask(taskEval);
-					e->setReward(rEval);
-					if (resetQ){
-						agent->forget();
-					}
 				}
 
 				trial_reward += info.reward;
@@ -993,12 +969,12 @@ int main(int argc, char **argv) {
 
 					std::cout << "Trial " << j << ",eval at step "<< trial_step+step << std::endl;
 
-					std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, minValues, maxValues, rRange);
+					//std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, minValues, maxValues, rRange);
 
-					reward_acc[(trial_step+step)/eval_freq] += errors.first;
-					model_acc[(trial_step+step)/eval_freq] += errors.second;
+					//reward_acc[(trial_step+step)/eval_freq] += errors.first;
+					//model_acc[(trial_step+step)/eval_freq] += errors.second;
 
-					std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
+					//std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
 
 					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
 					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
@@ -1027,6 +1003,17 @@ int main(int argc, char **argv) {
 							rootPath);
 
 
+				}
+
+				if (step==stepsTrain) {
+					agent->setRewarding(true);
+					agent->setTutorBonus(tEval);
+					agent->setNovelty(nEval);
+					e->setTask(taskEval);
+					e->setReward(rEval);
+					if (resetQ){
+						agent->forget();
+					}
 				}
 
 			}
@@ -1196,6 +1183,7 @@ int main(int argc, char **argv) {
 		}
 
 		delete agent;
+		delete e;
 	}
 
 }

@@ -62,12 +62,11 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 	tutor_eye_ns = &(t_state[0]);
 	tutor_eye_ew = &(t_state[1]);
 
-	tutor_actions[std::string("LOOK_AGENT")] = cnt_tutor_actions++;
 	tutor_actions[std::string("LOOK_RED_BOX")] = cnt_tutor_actions++;
 	tutor_actions[std::string("LOOK_BLUE_BOX")] = cnt_tutor_actions++;
 	tutor_actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_tutor_actions++;
 	tutor_actions[std::string("LOOK_RED_BLOCKS")] = cnt_tutor_actions++;
-
+	tutor_block_hold = -1;
 
 	int nb_fix_actions = cnt_actions;
 
@@ -397,8 +396,8 @@ occ_info_t InfiniteBlocks::apply(int action){
 	float reward = 0.;
 	float tutor_reward = 0;
 	bool success = false;
-	float reward_pick_red;
-	float reward_pick_blue;
+	float reward_pick_red = 0.;
+	float reward_pick_blue = 0.;;
 	float stoch_param = (stochastic ? 0.8 : 1.);
 
 
@@ -455,7 +454,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 1;
 					success = true;
-					reward_pick_red++;
+					reward_pick_red+=100;
 					if (IS_REAL) {
 						std::cout << "Red block taken." << std::endl;
 					}
@@ -464,7 +463,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 1;
-					reward_pick_blue++;
+					reward_pick_blue+=100;
 					success = true;
 					if (IS_REAL) {
 						std::cout << "Blue block taken." << std::endl;
@@ -507,7 +506,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
 					red_box_count_red++;
-					if (task == MATCHING || task == ALL){
+					if (task==MATCHING||task==ALL||task==REDONLY){
 						reward += finalReward;
 					}
 					success = true;
@@ -600,13 +599,42 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	float tutor_reward = 0.;
 	float reward = 0.;
 	int tutoract;
-	if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
-	if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
-	if (!(*red_block_hold)&&!(*blue_block_hold)){
-		tutoract = tutor_actions["LOOK_RED_BLOCKS"];
+	if (tutor_block_hold != (*blue_block_hold||*red_block_hold)){
+		if (task == MATCHING){
+			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+			else {
+				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}
+				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
+			}
+		}
+		if (task == OPPOSITE){
+			if (*red_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+			else {
+				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}
+				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
+			}
+		}
+		if (task == ALL){
+			if (*red_block_hold||*blue_block_hold) {
+				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+				else {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+			}
+			else {
+				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}
+				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
+			}
+		}
+		if (task == REDONLY){
+			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
+			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
+			else {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}
+		}
+		lastTutorAct = tutoract;
+		tutor_block_hold = (*blue_block_hold||*red_block_hold);
 	}
-
-	return tutor_feedback(tutor_reward, reward, tutoract);
+	return tutor_feedback(tutor_reward, reward, lastTutorAct);
 }
 
 void InfiniteBlocks::setTutor(bool b){
