@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 25; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -968,7 +968,13 @@ int main(int argc, char **argv) {
 					occ_info_t info = e->apply(a);
 					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
-					agent->setRewarding(true);
+					if (rTrain==0){
+						agent->setRewarding(false);
+					}
+					else{
+						agent->setRewarding(true);
+					}
+
 					//e->setReward(rEval);
 				}
 				else {
@@ -1030,7 +1036,9 @@ int main(int argc, char **argv) {
 				}
 
 				if (step==stepsTrain) {
-					agent->setRewarding(true);
+					if (rEval!=0){
+						agent->setRewarding(true);
+					}
 					agent->setTutorBonus(tEval);
 					agent->setNovelty(nEval);
 					e->setTask(taskEval);
