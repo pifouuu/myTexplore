@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 25; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -135,10 +135,10 @@ experience generateExp(Environment* virtualEnv, int act){
 	return exp;
 }
 
-void save_results(std::vector<float> &model_acc,
+void save_results(std::map<int,std::vector<float>> act_success_rates, std::vector<float> &model_acc,
 		std::vector<float> &reward_acc,
 		std::vector<float> &accumulated_rewards,
-		std::vector<float> &accumulated_tutor_rewards,
+		std::vector<float> &accumulated_train_rewards,
 		std::vector<float> &accumulated_rewards_pick_red,
 		std::vector<float> &accumulated_rewards_pick_blue,
 		std::vector<float> &var_prop,
@@ -156,6 +156,15 @@ void save_results(std::vector<float> &model_acc,
 	ofs.close();
 	ofs.clear();
 
+	for (auto pair : act_success_rates){
+		pointer = reinterpret_cast<const char*>(&pair.second[0]);
+		bytes = pair.second.size() * sizeof(pair.second[0]);
+		ofs.open(rootPath.string()+"/action_"+std::to_string(pair.first),ios::out | ios::binary);
+		ofs.write(pointer, bytes);
+		ofs.close();
+		ofs.clear();
+	}
+
 	pointer = reinterpret_cast<const char*>(&reward_acc[0]);
 	bytes = reward_acc.size() * sizeof(reward_acc[0]);
 	ofs.open(rootPath.string()+"/reward_acc",ios::out | ios::binary);
@@ -170,9 +179,9 @@ void save_results(std::vector<float> &model_acc,
 	ofs.close();
 	ofs.clear();
 
-	pointer = reinterpret_cast<const char*>(&accumulated_tutor_rewards[0]);
-	bytes = accumulated_tutor_rewards.size() * sizeof(accumulated_tutor_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_tutor_rewards",ios::out | ios::binary);
+	pointer = reinterpret_cast<const char*>(&accumulated_train_rewards[0]);
+	bytes = accumulated_train_rewards.size() * sizeof(accumulated_train_rewards[0]);
+	ofs.open(rootPath.string()+"/accumulated_train_rewards",ios::out | ios::binary);
 	ofs.write(pointer, bytes);
 	ofs.close();
 	ofs.clear();
@@ -762,11 +771,10 @@ int main(int argc, char **argv) {
 		std::vector<float> reward_acc_train((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
 		std::vector<float> accumulated_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_tutor_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_train_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 		std::vector<float> accumulated_rewards_pick_red((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
 		std::vector<float> accumulated_rewards_pick_blue((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-
 
 		std::vector<float> var_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
 		std::vector<float> nov_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
@@ -775,10 +783,11 @@ int main(int argc, char **argv) {
 
 		int trial_step = 0;
 		float trial_reward = 0.;
-		float trial_tutor_reward = 0.;
+		float trial_train_reward = 0.;
 		float trial_reward_pick_red = 0.;
 		float trial_reward_pick_blue = 0.;
 		float trial_tutor_reward_2 = 0.;
+
 
 		float avg_var_prop = 0.;
 		float avg_nov_prop = 0.;
@@ -797,6 +806,17 @@ int main(int argc, char **argv) {
 		}
 
 		const int numactions = e->getNumActions(); // Most agents will need this?
+
+		std::map<int, std::vector<float>> act_success_rates;
+		for (int i = 0; i<numactions; i++){
+			act_success_rates[i] = std::vector<float>((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		}
+		std::map<int, std::pair<float,float>> act_success_rate;
+		for (int i=0; i<numactions;i++){
+			act_success_rate[i] = std::make_pair(0.,0.);
+		}
+
+
 		const int num_tutor_actions = e->getNumTutorActions();
 
 		std::map<int,std::string> action_names = e->get_action_names();
@@ -902,12 +922,12 @@ int main(int argc, char **argv) {
 
 					accumulated_rewards_pick_blue[trainStep/eval_freq] += trial_reward_pick_blue;
 
-					accumulated_tutor_rewards[trainStep/eval_freq] += trial_tutor_reward;
+					accumulated_train_rewards[trainStep/eval_freq] += trial_train_reward;
 
-					save_results(model_acc,
+					save_results(act_success_rates, model_acc,
 							reward_acc,
 							accumulated_rewards,
-							accumulated_tutor_rewards,
+							accumulated_train_rewards,
 							accumulated_rewards_pick_red,
 							accumulated_rewards_pick_blue,
 							var_prop,
@@ -960,9 +980,11 @@ int main(int argc, char **argv) {
 				}
 
 				trial_reward += info.reward;
-				trial_tutor_reward += info.tutor_reward;
+				trial_train_reward += info.train_reward;
 				trial_reward_pick_red += info.reward_pick_red;
 				trial_reward_pick_blue += info.reward_pick_blue;
+				act_success_rate[a].first++;
+				act_success_rate[a].second += info.success;
 //				trial_tutor_reward_2 += t_feedback.reward;
 
 				if (step % eval_freq == 0){
@@ -975,9 +997,11 @@ int main(int argc, char **argv) {
 					//model_acc[(trial_step+step)/eval_freq] += errors.second;
 
 					//std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
-
+					for (int i=0; i<numactions; i++){
+						act_success_rates[i][(trial_step+step)/eval_freq] += act_success_rate[i].second/act_success_rate[i].first;
+					}
 					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
-					accumulated_tutor_rewards[(trial_step+step)/eval_freq] += trial_tutor_reward;
+					accumulated_train_rewards[(trial_step+step)/eval_freq] += trial_train_reward;
 					accumulated_rewards_pick_red[(trial_step+step)/eval_freq] += trial_reward_pick_red;
 					accumulated_rewards_pick_blue[(trial_step+step)/eval_freq] += trial_reward_pick_blue;
 
@@ -990,10 +1014,10 @@ int main(int argc, char **argv) {
 
 				if (step % 200 == 0 && step != 0){
 
-					save_results(model_acc,
+					save_results(act_success_rates, model_acc,
 							reward_acc,
 							accumulated_rewards,
-							accumulated_tutor_rewards,
+							accumulated_train_rewards,
 							accumulated_rewards_pick_red,
 							accumulated_rewards_pick_blue,
 							var_prop,

@@ -52,6 +52,7 @@ public:
 	bool tutor_attentive = true;
 	std::vector<float> s;
 	int task;
+	int training_task;
 	float finalReward;
 
 	int get_blocks_in() const;
@@ -117,7 +118,7 @@ public:
 	std::vector<float> generateSample();
 
 
-	bool BRDEBUG = false;
+	bool BRDEBUG = true;
 	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;

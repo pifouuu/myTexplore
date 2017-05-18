@@ -19,6 +19,7 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 			rng(rand),
 			s(14),
 			task(task),
+			training_task(task),
 			finalReward(finalReward),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
@@ -393,8 +394,8 @@ float InfiniteBlocks::getEuclidianDistance(std::vector<float> & s1, std::vector<
 }
 
 occ_info_t InfiniteBlocks::apply(int action){
-	float reward = 0.;
-	float tutor_reward = 0;
+	float current_reward = 0.;
+	float train_reward = 0;
 	bool success = false;
 	float reward_pick_red = 0.;
 	float reward_pick_blue = 0.;;
@@ -507,7 +508,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 					*red_block_hold = 0;
 					red_box_count_red++;
 					if (task==MATCHING||task==ALL||task==REDONLY){
-						reward += finalReward;
+						current_reward += finalReward;
+					}
+					if (training_task==MATCHING||training_task==ALL||training_task==REDONLY){
+						train_reward += finalReward;
 					}
 					success = true;
 					if (IS_REAL){
@@ -520,7 +524,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 					*red_block_hold = 0;
 					blue_box_count_red++;
 					if (task == ALL || task == OPPOSITE){
-						reward += finalReward;
+						current_reward += finalReward;
+					}
+					if (training_task==ALL||training_task==OPPOSITE){
+						train_reward += finalReward;
 					}
 					success = true;
 					if (IS_REAL){
@@ -535,7 +542,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 					*blue_block_hold = 0;
 					red_box_count_blue++;
 					if (task == ALL || task == OPPOSITE){
-						reward += finalReward;
+						current_reward += finalReward;
+					}
+					if (training_task == ALL || training_task == OPPOSITE){
+						train_reward += finalReward;
 					}
 					success = true;
 					if (IS_REAL){
@@ -548,7 +558,10 @@ occ_info_t InfiniteBlocks::apply(int action){
 					*blue_block_hold = 0;
 					blue_box_count_blue++;
 					if (task == MATCHING || task == ALL){
-						reward += finalReward;
+						current_reward += finalReward;
+					}
+					if (training_task==MATCHING||training_task==ALL){
+						train_reward += finalReward;
 					}
 					success = true;
 					if (IS_REAL){
@@ -592,7 +605,7 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(reward, success, reward_pick_red, reward_pick_blue, tutor_reward);
+	return occ_info_t(current_reward, success, reward_pick_red, reward_pick_blue, train_reward);
 }
 
 tutor_feedback InfiniteBlocks::tutorAction(){
