@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 25; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 2; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -122,7 +122,7 @@ experience generateExp(Environment* virtualEnv, int act){
 
 	exp.act = act;
 
-	virtualReward = virtualEnv->apply(act).reward;
+	virtualReward = virtualEnv->apply(act).RL_reward;
 
 	sample = virtualEnv->sensation();
 	exp.next = sample;
@@ -137,8 +137,11 @@ experience generateExp(Environment* virtualEnv, int act){
 
 void save_results(std::map<int,std::vector<float>> act_success_rates, std::vector<float> &model_acc,
 		std::vector<float> &reward_acc,
-		std::vector<float> &accumulated_rewards,
-		std::vector<float> &accumulated_train_rewards,
+		std::vector<float> &accumulated_RL_rewards,
+		std::vector<float> &accumulated_ALL_rewards,
+		std::vector<float> &accumulated_MATCHING_rewards,
+		std::vector<float> &accumulated_OPPOSITE_rewards,
+		std::vector<float> &accumulated_RED_rewards,
 		std::vector<float> &accumulated_rewards_pick_red,
 		std::vector<float> &accumulated_rewards_pick_blue,
 		std::vector<float> &var_prop,
@@ -172,16 +175,37 @@ void save_results(std::map<int,std::vector<float>> act_success_rates, std::vecto
 	ofs.close();
 	ofs.clear();
 
-	pointer = reinterpret_cast<const char*>(&accumulated_rewards[0]);
-	bytes = accumulated_rewards.size() * sizeof(accumulated_rewards[0]);
+	pointer = reinterpret_cast<const char*>(&accumulated_RL_rewards[0]);
+	bytes = accumulated_RL_rewards.size() * sizeof(accumulated_RL_rewards[0]);
 	ofs.open(rootPath.string()+"/accumulated_rewards",ios::out | ios::binary);
 	ofs.write(pointer, bytes);
 	ofs.close();
 	ofs.clear();
 
-	pointer = reinterpret_cast<const char*>(&accumulated_train_rewards[0]);
-	bytes = accumulated_train_rewards.size() * sizeof(accumulated_train_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_train_rewards",ios::out | ios::binary);
+	pointer = reinterpret_cast<const char*>(&accumulated_ALL_rewards[0]);
+	bytes = accumulated_ALL_rewards.size() * sizeof(accumulated_ALL_rewards[0]);
+	ofs.open(rootPath.string()+"/accumulated_ALL_rewards",ios::out | ios::binary);
+	ofs.write(pointer, bytes);
+	ofs.close();
+	ofs.clear();
+
+	pointer = reinterpret_cast<const char*>(&accumulated_MATCHING_rewards[0]);
+	bytes = accumulated_MATCHING_rewards.size() * sizeof(accumulated_MATCHING_rewards[0]);
+	ofs.open(rootPath.string()+"/accumulated_MATCHING_rewards",ios::out | ios::binary);
+	ofs.write(pointer, bytes);
+	ofs.close();
+	ofs.clear();
+
+	pointer = reinterpret_cast<const char*>(&accumulated_OPPOSITE_rewards[0]);
+	bytes = accumulated_OPPOSITE_rewards.size() * sizeof(accumulated_OPPOSITE_rewards[0]);
+	ofs.open(rootPath.string()+"/accumulated_OPPOSITE_rewards",ios::out | ios::binary);
+	ofs.write(pointer, bytes);
+	ofs.close();
+	ofs.clear();
+
+	pointer = reinterpret_cast<const char*>(&accumulated_RED_rewards[0]);
+	bytes = accumulated_RED_rewards.size() * sizeof(accumulated_RED_rewards[0]);
+	ofs.open(rootPath.string()+"/accumulated_RED_rewards",ios::out | ios::binary);
 	ofs.write(pointer, bytes);
 	ofs.close();
 	ofs.clear();
@@ -303,7 +327,7 @@ int main(int argc, char **argv) {
 	float rEval = 0.;
 	int stepsEval = 1000;
 	int batchFreq = 1;
-	int roomsize = 4;
+	int roomsize = 5;
 
 	// parse other arguments
 	char ch;
@@ -770,8 +794,12 @@ int main(int argc, char **argv) {
 		std::vector<float> reward_acc((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 		std::vector<float> reward_acc_train((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
-		std::vector<float> accumulated_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_train_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_RL_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_ALL_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_MATCHING_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_OPPOSITE_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_RED_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+
 		std::vector<float> accumulated_rewards_pick_red((maxsteps+pretrain_steps)/eval_freq+1, 0.);
 
 		std::vector<float> accumulated_rewards_pick_blue((maxsteps+pretrain_steps)/eval_freq+1, 0.);
@@ -782,12 +810,15 @@ int main(int argc, char **argv) {
 		std::vector<float> sync_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
 
 		int trial_step = 0;
-		float trial_reward = 0.;
-		float trial_train_reward = 0.;
+		float trial_RL_reward = 0.;
+		float trial_ALL_reward = 0.;
+		float trial_MATCHING_reward = 0.;
+		float trial_OPPOSITE_reward = 0.;
+		float trial_RED_reward = 0.;
+
 		float trial_reward_pick_red = 0.;
 		float trial_reward_pick_blue = 0.;
 		float trial_tutor_reward_2 = 0.;
-
 
 		float avg_var_prop = 0.;
 		float avg_nov_prop = 0.;
@@ -917,17 +948,23 @@ int main(int argc, char **argv) {
 					reward_acc[trainStep/eval_freq] += errors.first;
 					model_acc[trainStep/eval_freq] += errors.second;
 					
-					accumulated_rewards[trainStep/eval_freq] += trial_reward;
+					accumulated_RL_rewards[trainStep/eval_freq] += trial_RL_reward;
 					accumulated_rewards_pick_red[trainStep/eval_freq] += trial_reward_pick_red;
 
 					accumulated_rewards_pick_blue[trainStep/eval_freq] += trial_reward_pick_blue;
 
-					accumulated_train_rewards[trainStep/eval_freq] += trial_train_reward;
+					accumulated_ALL_rewards[trainStep/eval_freq] += trial_ALL_reward;
+					accumulated_MATCHING_rewards[trainStep/eval_freq] += trial_MATCHING_reward;
+					accumulated_OPPOSITE_rewards[trainStep/eval_freq] += trial_OPPOSITE_reward;
+					accumulated_RED_rewards[trainStep/eval_freq] += trial_RED_reward;
 
 					save_results(act_success_rates, model_acc,
 							reward_acc,
-							accumulated_rewards,
-							accumulated_train_rewards,
+							accumulated_RL_rewards,
+							accumulated_ALL_rewards,
+							accumulated_MATCHING_rewards,
+							accumulated_OPPOSITE_rewards,
+							accumulated_RED_rewards,
 							accumulated_rewards_pick_red,
 							accumulated_rewards_pick_blue,
 							var_prop,
@@ -948,7 +985,7 @@ int main(int argc, char **argv) {
 		if (!episodic){
 
 			tutor_feedback t_feedback(0.,0., 0);
-			occ_info_t info(0,0,0,0,0);
+			occ_info_t info;
 
 			int a = 0;
 
@@ -979,14 +1016,18 @@ int main(int argc, char **argv) {
 				}
 				else {
 					// next action
-					a = agent->next_action(info.reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
+					a = agent->next_action(info.RL_reward, es, &avg_var_prop, &avg_nov_prop, &avg_reward_prop, &avg_sync_prop);
 					info = e->apply(a);
 					t_feedback = e->tutorAction();
 					e->apply_tutor(t_feedback.action);
 				}
 
-				trial_reward += info.reward;
-				trial_train_reward += info.train_reward;
+				trial_RL_reward += info.RL_reward;
+				trial_ALL_reward += info.ALL_reward;
+				trial_MATCHING_reward += info.MATCHING_reward;
+				trial_OPPOSITE_reward += info.OPPOSITE_reward;
+				trial_RED_reward += info.RED_reward;
+
 				trial_reward_pick_red += info.reward_pick_red;
 				trial_reward_pick_blue += info.reward_pick_blue;
 				act_success_rate[a].first++;
@@ -1006,8 +1047,12 @@ int main(int argc, char **argv) {
 					for (int i=0; i<numactions; i++){
 						act_success_rates[i][(trial_step+step)/eval_freq] += act_success_rate[i].second/act_success_rate[i].first;
 					}
-					accumulated_rewards[(trial_step+step)/eval_freq] += trial_reward;
-					accumulated_train_rewards[(trial_step+step)/eval_freq] += trial_train_reward;
+					accumulated_RL_rewards[(trial_step+step)/eval_freq] += trial_RL_reward;
+					accumulated_ALL_rewards[(trial_step+step)/eval_freq] += trial_ALL_reward;
+					accumulated_MATCHING_rewards[(trial_step+step)/eval_freq] += trial_MATCHING_reward;
+					accumulated_OPPOSITE_rewards[(trial_step+step)/eval_freq] += trial_OPPOSITE_reward;
+					accumulated_RED_rewards[(trial_step+step)/eval_freq] += trial_RED_reward;
+
 					accumulated_rewards_pick_red[(trial_step+step)/eval_freq] += trial_reward_pick_red;
 					accumulated_rewards_pick_blue[(trial_step+step)/eval_freq] += trial_reward_pick_blue;
 
@@ -1022,8 +1067,11 @@ int main(int argc, char **argv) {
 
 					save_results(act_success_rates, model_acc,
 							reward_acc,
-							accumulated_rewards,
-							accumulated_train_rewards,
+							accumulated_RL_rewards,
+							accumulated_ALL_rewards,
+							accumulated_MATCHING_rewards,
+							accumulated_OPPOSITE_rewards,
+							accumulated_RED_rewards,
 							accumulated_rewards_pick_red,
 							accumulated_rewards_pick_blue,
 							var_prop,

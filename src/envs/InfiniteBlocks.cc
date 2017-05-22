@@ -18,9 +18,8 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 			stochastic(stochastic),
 			rng(rand),
 			s(14),
-			task(task),
-			training_task(task),
-			finalReward(finalReward),
+			RL_task(task),
+			RL_reward(finalReward),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
 			red_block_hold(&(s[2])),
@@ -119,11 +118,11 @@ std::vector<float> &InfiniteBlocks::getTstate(){
 }
 
 void InfiniteBlocks::setReward(float reward){
-	finalReward = reward;
+	RL_reward = reward;
 }
 
 void InfiniteBlocks::setTask(int t){
-	task = t;
+	RL_task = t;
 }
 std::vector<float> InfiniteBlocks::generateSample(){
 	*agent_ns = rng.uniformDiscrete(0, size-1);
@@ -227,7 +226,7 @@ void InfiniteBlocks::print_map() const{
 
 
 	for(int i=0;i<blockSize*size;i=i+blockSize){
-		color=~color;
+		//color=~color;
 		for(int j=0;j<blockSize*size;j=j+blockSize){
 			Mat ROI=chessBoard(Rect(i,j,blockSize,blockSize));
 			ROI.setTo(Scalar::all(color));
@@ -394,8 +393,12 @@ float InfiniteBlocks::getEuclidianDistance(std::vector<float> & s1, std::vector<
 }
 
 occ_info_t InfiniteBlocks::apply(int action){
-	float current_reward = 0.;
-	float train_reward = 0;
+	float reward = 0.;
+	float ALL_reward = 0;
+	float RED_reward = 0;
+	float OPPOSITE_reward = 0;
+	float MATCHING_reward = 0;
+
 	bool success = false;
 	float reward_pick_red = 0.;
 	float reward_pick_blue = 0.;;
@@ -507,12 +510,12 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
 					red_box_count_red++;
-					if (task==MATCHING||task==ALL||task==REDONLY){
-						current_reward += finalReward;
+					if (RL_task==MATCHING||RL_task==ALL||RL_task==REDONLY){
+						reward += RL_reward;
 					}
-					if (training_task==MATCHING||training_task==ALL||training_task==REDONLY){
-						train_reward += finalReward;
-					}
+					MATCHING_reward += 100;
+					ALL_reward += 100;
+					RED_reward += 100;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in red box." << std::endl;
@@ -523,12 +526,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
 					blue_box_count_red++;
-					if (task == ALL || task == OPPOSITE){
-						current_reward += finalReward;
+					if (RL_task == ALL || RL_task == OPPOSITE){
+						reward += RL_reward;
 					}
-					if (training_task==ALL||training_task==OPPOSITE){
-						train_reward += finalReward;
-					}
+					ALL_reward += 100;
+					OPPOSITE_reward += 100;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in blue box." << std::endl;
@@ -541,12 +543,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
 					red_box_count_blue++;
-					if (task == ALL || task == OPPOSITE){
-						current_reward += finalReward;
+					if (RL_task == ALL || RL_task == OPPOSITE){
+						reward += RL_reward;
 					}
-					if (training_task == ALL || training_task == OPPOSITE){
-						train_reward += finalReward;
-					}
+					ALL_reward +=100;
+					OPPOSITE_reward +=100;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in red box." << std::endl;
@@ -557,12 +558,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
 					blue_box_count_blue++;
-					if (task == MATCHING || task == ALL){
-						current_reward += finalReward;
+					if (RL_task == MATCHING || RL_task == ALL){
+						reward += RL_reward;
 					}
-					if (training_task==MATCHING||training_task==ALL){
-						train_reward += finalReward;
-					}
+					MATCHING_reward += 100;
+					ALL_reward += 100;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in blue box." << std::endl;
@@ -605,7 +605,8 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	actions_occurences[action].push_back(numstep);
 	numstep++;
-	return occ_info_t(current_reward, success, reward_pick_red, reward_pick_blue, train_reward);
+	return occ_info_t(reward, success, reward_pick_red, reward_pick_blue,
+			ALL_reward, MATCHING_reward, OPPOSITE_reward, RED_reward);
 }
 
 tutor_feedback InfiniteBlocks::tutorAction(){
@@ -613,7 +614,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	float reward = 0.;
 	int tutoract;
 	if (tutor_block_hold != (*blue_block_hold||*red_block_hold)){
-		if (task == MATCHING){
+		if (RL_task == MATCHING){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else {
@@ -621,7 +622,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (task == OPPOSITE){
+		if (RL_task == OPPOSITE){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else {
@@ -629,7 +630,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (task == ALL){
+		if (RL_task == ALL){
 			if (*red_block_hold||*blue_block_hold) {
 				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 				else {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
@@ -639,7 +640,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (task == REDONLY){
+		if (RL_task == REDONLY){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}

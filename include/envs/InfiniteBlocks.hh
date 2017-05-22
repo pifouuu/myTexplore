@@ -51,9 +51,8 @@ public:
 	Random &rng;
 	bool tutor_attentive = true;
 	std::vector<float> s;
-	int task;
-	int training_task;
-	float finalReward;
+	int RL_task;
+	float RL_reward;
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;

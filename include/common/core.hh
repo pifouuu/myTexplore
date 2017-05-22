@@ -192,17 +192,25 @@ struct classPair {
 
 /** To store information about occurrences of actions **/
 struct occ_info_t{
-		float reward;
-		bool success;
+		float RL_reward;
+		float success;
 		int reward_pick_red;
 		int reward_pick_blue;
-		float train_reward;
-		occ_info_t(float r, bool s, int i, int ri, float tr){
-			reward =r ;
+		float ALL_reward;
+		float MATCHING_reward;
+		float OPPOSITE_reward;
+		float RED_reward;
+		occ_info_t() : RL_reward(0), success(0), reward_pick_red(0), reward_pick_blue(0),
+				ALL_reward(0), MATCHING_reward(0), OPPOSITE_reward(0), RED_reward(0){}
+		occ_info_t(float r, bool s, int i, int ri, float allr, float matchr, float opr, float redr){
+			RL_reward =r ;
 			success =s;
 			reward_pick_red = i;
 			reward_pick_blue = ri;
-			train_reward = tr;
+			ALL_reward = allr;
+			MATCHING_reward = matchr;
+			OPPOSITE_reward = opr;
+			RED_reward = redr;
 		}
 	};
 
