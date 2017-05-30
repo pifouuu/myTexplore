@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -783,7 +783,7 @@ int main(int argc, char **argv) {
 
 	for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
-		boost::filesystem::path rootPath ( "/home/pierre/Dropbox/resultats/toSort/" + name +"/trial_"+std::to_string(j));
+		boost::filesystem::path rootPath ( "/home/pierre/Dropbox/resultats/toSort_different/" + name +"/trial_"+std::to_string(j));
 		boost::system::error_code returnedError;
 
 		boost::filesystem::create_directories( rootPath, returnedError );
@@ -1093,6 +1093,7 @@ int main(int argc, char **argv) {
 					e->setReward(rEval);
 					if (resetQ){
 						agent->forget();
+						std::cout << "resetting Q"<<std::endl;
 					}
 				}
 

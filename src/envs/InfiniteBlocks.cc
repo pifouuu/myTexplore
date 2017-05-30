@@ -613,6 +613,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	float tutor_reward = 0.;
 	float reward = 0.;
 	int tutoract;
+	RL_task = REDONLY;
 	if (tutor_block_hold != (*blue_block_hold||*red_block_hold)){
 		if (RL_task == MATCHING){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
