@@ -613,9 +613,9 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	float tutor_reward = 0.;
 	float reward = 0.;
 	int tutoract;
-	RL_task = REDONLY;
+	int tutorTask = REDONLY;
 	if (tutor_block_hold != (*blue_block_hold||*red_block_hold)){
-		if (RL_task == MATCHING){
+		if (tutorTask == MATCHING){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else {
@@ -623,7 +623,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (RL_task == OPPOSITE){
+		if (tutorTask == OPPOSITE){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else {
@@ -631,7 +631,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (RL_task == ALL){
+		if (tutorTask == ALL){
 			if (*red_block_hold||*blue_block_hold) {
 				if (rng.bernoulli(0.5)) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 				else {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
@@ -641,7 +641,7 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 				else {tutoract = tutor_actions["LOOK_BLUE_BLOCKS"];}
 			}
 		}
-		if (RL_task == REDONLY){
+		if (tutorTask == REDONLY){
 			if (*red_block_hold) {tutoract = tutor_actions["LOOK_RED_BOX"];}
 			else if (*blue_block_hold) {tutoract = tutor_actions["LOOK_BLUE_BOX"];}
 			else {tutoract = tutor_actions["LOOK_RED_BLOCKS"];}
