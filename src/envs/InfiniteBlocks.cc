@@ -79,8 +79,8 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 
 	*agent_ns = size/2;
 	*agent_ew = size/2;
-	*agent_eye_ns = 0;
-	*agent_eye_ew = 0;
+	*agent_eye_ns = size/2;
+	*agent_eye_ew = size/2;
 
 	*red_blocks_ns = size-1;
 	*red_blocks_ew = size-1;
