@@ -58,7 +58,7 @@
 #include <stdlib.h>
 
 unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 5; //30; //30; //5; //30; //30; //50
+const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
 
 unsigned MAXSTEPS = 100; // per episode
 bool PRINTS = false;
@@ -294,9 +294,9 @@ int main(int argc, char **argv) {
 	float initialvalue = 0.0;
 	float actrate = 10.0;
 	float lambda = 0.1;
-	int M = 0;
+	int M = 5;
 	int modelType = C45TREE;
-	int predType = BEST;
+	int predType = AVERAGE;
 	int plannerType = ET_UCT_ACTUAL;
 	int nmodels = 5;
 	bool reltrans = true;
