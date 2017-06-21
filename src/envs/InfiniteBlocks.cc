@@ -13,13 +13,13 @@
 
 using namespace cv;
 
-InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float finalReward, int task):
+InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float reward, int task):
 			size(size),
 			stochastic(stochastic),
 			rng(rand),
 			s(14),
 			RL_task(task),
-			RL_reward(finalReward),
+			RL_reward(reward),
 			agent_ns(&(s[0])),
 			agent_ew(&(s[1])),
 			red_block_hold(&(s[2])),
@@ -35,12 +35,24 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 			blue_blocks_ns(&s[12]),
 			blue_blocks_ew(&s[13]),
 			t_state(2),
-			numstep(0),
-			red_box_count_red(0),
-			red_box_count_blue(0),
-			blue_box_count_red(0),
-			blue_box_count_blue(0)
+			numstep(0)
 {
+
+	*agent_ns = size/2;
+	*agent_ew = size/2;
+	*red_block_hold = 0;
+	*blue_block_hold = 0;
+	*agent_eye_ns = size/2;
+	*agent_eye_ew = size/2;
+	*red_box_ns = 0;
+	*red_box_ew =size-1;
+	*blue_box_ew = 0;
+	*blue_box_ns =size-1;
+	*red_blocks_ns = size-1;
+	*red_blocks_ew = size-1;
+	*blue_blocks_ns = 0;
+	*blue_blocks_ew = 0;
+
 	int cnt_actions = 0;
 	int cnt_tutor_actions = 0;
 
@@ -48,16 +60,12 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 	actions[std::string("SOUTH")] = cnt_actions++;
 	actions[std::string("EAST")] = cnt_actions++;
 	actions[std::string("WEST")] = cnt_actions++;
-//	actions[std::string("GO_TO_EYE")] = cnt_actions++;
 	actions[std::string("LOOK_RED_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BOX")] = cnt_actions++;
 	actions[std::string("LOOK_BLUE_BLOCKS")] = cnt_actions++;
 	actions[std::string("LOOK_RED_BLOCKS")] = cnt_actions++;
-
 	actions[std::string("PICK")] = cnt_actions++;
-//	actions[std::string("PUT_DOWN")] = cnt_actions++;
 	actions[std::string("PUT_IN")] = cnt_actions++;
-
 
 	tutor_eye_ns = &(t_state[0]);
 	tutor_eye_ew = &(t_state[1]);
@@ -68,40 +76,15 @@ InfiniteBlocks::InfiniteBlocks(Random &rand, int size, bool stochastic, float fi
 	tutor_actions[std::string("LOOK_RED_BLOCKS")] = cnt_tutor_actions++;
 	tutor_block_hold = -1;
 
-	int nb_fix_actions = cnt_actions;
-
 	numactions = cnt_actions;
 	num_tutor_actions = cnt_tutor_actions;
+
 	for (std::map<std::string, int>::iterator it = actions.begin();
 			it != actions.end() ; ++it ){
 		action_names[it->second] = it->first;
 	}
 
-	*agent_ns = size/2;
-	*agent_ew = size/2;
-	*agent_eye_ns = size/2;
-	*agent_eye_ew = size/2;
-
-	*red_blocks_ns = size-1;
-	*red_blocks_ew = size-1;
-	*blue_blocks_ns = 0;
-	*blue_blocks_ew = 0;
-	*red_box_ns = 0;
-	*red_box_ew =size-1;
-	*blue_box_ew = 0;
-	*blue_box_ns =size-1;
-
-//	*red_blocks_ns = size-1;
-//	*red_blocks_ew = size-1;
-//	*blue_blocks_ns =  size-2;
-//	*blue_blocks_ew =  size-2;
-//	*red_box_ns = rng.uniformDiscrete(0, size-1);
-//	*red_box_ew =rng.uniformDiscrete(0, size-1);
-//	*blue_box_ew = rng.uniformDiscrete(0, size-1);
-//	*blue_box_ns =rng.uniformDiscrete(0, size-1);
-
-	*red_block_hold = 0;
-	*blue_block_hold = 0;
+	RL_reward = reward;
 
 	if (BRDEBUG) print_map();
 }
@@ -124,26 +107,7 @@ void InfiniteBlocks::setReward(float reward){
 void InfiniteBlocks::setTask(int t){
 	RL_task = t;
 }
-std::vector<float> InfiniteBlocks::generateSample(){
-	*agent_ns = rng.uniformDiscrete(0, size-1);
-	*agent_ew = rng.uniformDiscrete(0, size-1);
 
-	float tirage = rng.uniformDiscrete(0,2);
-	if (tirage==0) *red_block_hold = 1, *blue_block_hold = 0;
-	else if (tirage==1) *red_block_hold = 0, *blue_block_hold = 1;
-	else *red_block_hold = 0, *blue_block_hold = 0;
-
-	tirage = rng.uniformDiscrete(0,3);
-	if (tirage==0) *agent_eye_ns = 0, *agent_eye_ew = 0;
-	else if (tirage==1) *agent_eye_ns = 0, *agent_eye_ew = size-1;
-	else if (tirage==2) *agent_eye_ns = size-1, *agent_eye_ew = 0;
-	else *agent_eye_ns = size-1, *agent_eye_ew = size-1;
-
-	std::vector<float> s = {*agent_ns,*agent_ew,*red_block_hold,*blue_block_hold,
-			*agent_eye_ns, *agent_eye_ew, 0, size-1, size-1, 0, size-1, size-1, 0, 0};
-
-	return s;
-}
 
 bool InfiniteBlocks::terminal() const {
 	return false;
@@ -156,18 +120,6 @@ std::map<int, std::string> InfiniteBlocks::get_action_names(){
 bool InfiniteBlocks::isSyncTutor(std::vector<float> state) const {
 	return (state[4]==*tutor_eye_ns && state[5]==*tutor_eye_ew && tutor_attentive);
 }
-int InfiniteBlocks::get_blocks_in() const {
-	return red_box_count_blue+blue_box_count_blue+red_box_count_red+blue_box_count_red;
-}
-
-//int InfiniteBlocks::get_blocks_right() const {
-//	int nb_blocks_right = 0;
-//	for (auto block: blocks){
-//		nb_blocks_right += (*block.is_in_blue_box && *block.color==1) || (*block.is_in_red_box && *block.color==0);
-//	}
-//	return nb_blocks_right;
-//}
-
 
 int InfiniteBlocks::getNumActions() {
 	if (BRDEBUG) cout << "Return number of actions: " << numactions << endl;
@@ -194,7 +146,7 @@ void InfiniteBlocks::getMinMaxReward(float *minR,
 		float *maxR){
 
 	*minR = 0.0;
-	*maxR = 100.0;
+	*maxR = RL_reward;
 
 }
 
@@ -223,8 +175,6 @@ void InfiniteBlocks::print_map() const{
 	Mat agent_hand_img = imread(img_dir+"agent_hand.png",CV_LOAD_IMAGE_COLOR);
 	resize(agent_hand_img, agent_hand_img, sizeBlock);
 
-
-
 	for(int i=0;i<blockSize*size;i=i+blockSize){
 		//color=~color;
 		for(int j=0;j<blockSize*size;j=j+blockSize){
@@ -233,7 +183,6 @@ void InfiniteBlocks::print_map() const{
 			color=~color;
 		}
 	}
-
 
 	if (*red_block_hold){
 		posToImg[std::pair<int,int>(blockSize*(*agent_ew),blockSize*(*agent_ns))].push_back(red_block_img);
@@ -303,42 +252,6 @@ void InfiniteBlocks::setVerbose(bool b){
 	IS_REAL = b;
 }
 
-/*
-std::vector<int> InfiniteBlocks::find_block_under_eye() {
-	std::vector<int> l;
-	int cnt = 0;
-	for (auto block: blocks){
-		if (*(block.ns)==*agent_eye_ns && *(block.ew)==*agent_eye_ew){
-			if (!NOPICKBACK || (!(*(block.is_in_blue_box))&& !(*(block.is_in_red_box)))){
-				l.push_back(cnt);
-			}
-		}
-		cnt++;
-	}
-	return(l);
-}
-
-std::vector<int> InfiniteBlocks::find_red_block_under_hand() {
-	std::vector<int> l;
-	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==RED){
-			l.push_back(it-blocks.begin());
-		}
-	}
-	return(l);
-}
-
-std::vector<int> InfiniteBlocks::find_blue_block_under_hand() {
-	std::vector<int> l;
-	for (std::vector<block_t>::iterator it = blocks.begin(); it != blocks.end(); ++it){
-		if (*(it->ns)==(*agent_ns) && *(it->ew)==(*agent_ew) && *(it->color)==BLUE){
-			l.push_back(it-blocks.begin());
-		}
-	}
-	return(l);
-}
-*/
-
 bool InfiniteBlocks::eye_hand_sync(){
 	return (*agent_eye_ns==*agent_ns
 			&& *agent_eye_ew==*agent_ew);
@@ -365,7 +278,7 @@ void InfiniteBlocks::apply_tutor(int action){
 		(*tutor_eye_ns) = (*red_blocks_ns);
 	}
 }
-
+/*
 std::vector<std::pair<int,int>> InfiniteBlocks::get_nearby_pos(int ns, int ew){
 	std::vector<std::pair<int,int>> nearby_pos;
 	if (ns<size-1){nearby_pos.push_back(std::make_pair(ns+1,ew));}
@@ -374,7 +287,7 @@ std::vector<std::pair<int,int>> InfiniteBlocks::get_nearby_pos(int ns, int ew){
 	if (ns>0){nearby_pos.push_back(std::make_pair(ns-1,ew));}
 	return nearby_pos;
 }
-
+*/
 
 
 float InfiniteBlocks::getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
@@ -436,29 +349,12 @@ occ_info_t InfiniteBlocks::apply(int action){
 //		reward--;
 
 	}
-	/*
-
-	if (action==actions["GO_TO_EYE"]) {
-		if (rng.bernoulli(stoch_param)) {
-			(*agent_ns) = (*agent_eye_ns);
-			(*agent_ew) = (*agent_eye_ew);
-		}
-		else {
-			std::vector<std::pair<int,int>> nearby_pos = get_nearby_pos(*agent_eye_ns,*agent_eye_ew);
-			std::shuffle(nearby_pos.begin(), nearby_pos.end(), engine);
-			(*agent_ns) = nearby_pos.front().first;
-			(*agent_ew) = nearby_pos.front().second;
-		}
-		success = true;
-	}
-	*/
 	if (action == actions["PICK"]){
 		if (!(*red_block_hold) && !(*blue_block_hold) && eye_hand_sync()) {
 			if (*agent_ns==*red_blocks_ns && *agent_ew==*red_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 1;
 					success = true;
-					reward_pick_red+=100;
 					if (IS_REAL) {
 						std::cout << "Red block taken." << std::endl;
 					}
@@ -467,7 +363,6 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*agent_ns==*blue_blocks_ns && *agent_ew==*blue_blocks_ew) {
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 1;
-					reward_pick_blue+=100;
 					success = true;
 					if (IS_REAL) {
 						std::cout << "Blue block taken." << std::endl;
@@ -509,13 +404,12 @@ occ_info_t InfiniteBlocks::apply(int action){
 			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
-					red_box_count_red++;
 					if (RL_task==MATCHING||RL_task==ALL||RL_task==REDONLY){
 						reward += RL_reward;
 					}
-					MATCHING_reward += 100;
-					ALL_reward += 100;
-					RED_reward += 100;
+					MATCHING_reward += RL_reward;
+					ALL_reward += RL_reward;
+					RED_reward += RL_reward;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in red box." << std::endl;
@@ -525,12 +419,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
 					*red_block_hold = 0;
-					blue_box_count_red++;
 					if (RL_task == ALL || RL_task == OPPOSITE){
 						reward += RL_reward;
 					}
-					ALL_reward += 100;
-					OPPOSITE_reward += 100;
+					ALL_reward += RL_reward;
+					OPPOSITE_reward += RL_reward;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Red block put in blue box." << std::endl;
@@ -542,12 +435,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 			if (*red_box_ns==*agent_ns && *red_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
-					red_box_count_blue++;
 					if (RL_task == ALL || RL_task == OPPOSITE){
 						reward += RL_reward;
 					}
-					ALL_reward +=100;
-					OPPOSITE_reward +=100;
+					ALL_reward +=RL_reward;
+					OPPOSITE_reward +=RL_reward;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in red box." << std::endl;
@@ -557,12 +449,11 @@ occ_info_t InfiniteBlocks::apply(int action){
 			else if (*blue_box_ns==*agent_ns && *blue_box_ew==*agent_ew){
 				if (rng.bernoulli(stoch_param)){
 					*blue_block_hold = 0;
-					blue_box_count_blue++;
 					if (RL_task == MATCHING || RL_task == ALL){
 						reward += RL_reward;
 					}
-					MATCHING_reward += 100;
-					ALL_reward += 100;
+					MATCHING_reward += RL_reward;
+					ALL_reward += RL_reward;
 					success = true;
 					if (IS_REAL){
 						std::cout << "Blue block put in blue box." << std::endl;
@@ -603,7 +494,6 @@ occ_info_t InfiniteBlocks::apply(int action){
 
 	}
 
-	actions_occurences[action].push_back(numstep);
 	numstep++;
 	return occ_info_t(reward, success, reward_pick_red, reward_pick_blue,
 			ALL_reward, MATCHING_reward, OPPOSITE_reward, RED_reward);
@@ -652,13 +542,8 @@ tutor_feedback InfiniteBlocks::tutorAction(){
 	return tutor_feedback(tutor_reward, reward, lastTutorAct);
 }
 
-void InfiniteBlocks::setTutor(bool b){
-	tutor_attentive = b;
-}
-
 std::vector<float> InfiniteBlocks::generate_state(){}
 void InfiniteBlocks::reset(){}
-std::pair<std::vector<float>,float> InfiniteBlocks::getMostProbNextState(std::vector<float> state, int action){}
 float InfiniteBlocks::getStateActionInfoError(std::vector<float> s, std::vector<StateActionInfo> preds){}
 
 

@@ -57,62 +57,10 @@
 #include <getopt.h>
 #include <stdlib.h>
 
-unsigned NUMEPISODES = 100; //10; //200; //500; //200;
-const unsigned NUMTRIALS = 30; //30; //30; //5; //30; //30; //50
-
-unsigned MAXSTEPS = 100; // per episode
-bool PRINTS = false;
-bool PRETRAIN = false;
+const unsigned NUMTRIALS = 30;
 
 
-void displayHelp(){
-	cout << "\n Call experiment --agent type --env type [options]\n";
-	cout << "Agent types: qlearner sarsa modelbased rmax texplore dyna savedpolicy\n";
-	cout << "Env types: taxi tworooms fourrooms energy fuelworld mcar cartpole car2to7 car7to2 carrandom stocks lightworld\n";
-	cout << "Tutor types : s_dep_tutor, no_tutor\n";
-
-	cout << "\n Agent Options:\n";
-	cout << "--gamma value (discount factor between 0 and 1)\n";
-	cout << "--epsilon value (epsilon for epsilon-greedy exploration)\n";
-	cout << "--alpha value (learning rate alpha)\n";
-	cout << "--initialvalue value (initial q values)\n";
-	cout << "--actrate value (action selection rate (Hz))\n";
-	cout << "--lambda value (lambda for eligibility traces)\n";
-	cout << "--m value (parameter for R-Max)\n";
-	cout << "--k value (For Dyna: # of model based updates to do between each real world update)\n";
-	cout << "--history value (# steps of history to use for planning with delay)\n";
-	cout << "--filename file (file to load saved policy from for savedpolicy agent)\n";
-	cout << "--model type (tabular,tree,m5tree)\n";
-	cout << "--planner type (vi,pi,sweeping,uct,parallel-uct,delayed-uct,delayed-parallel-uct)\n";
-	cout << "--explore type (unknown,greedy,epsilongreedy,variancenovelty)\n";
-	cout << "--combo type (average,best,separate)\n";
-	cout << "--nmodels value (# of models)\n";
-	cout << "--nstates value (optionally discretize domain into value # of states on each feature)\n";
-	cout << "--reltrans (learn relative transitions)\n";
-	cout << "--abstrans (learn absolute transitions)\n";
-	cout << "--v value (For TEXPLORE: b/v coefficient for rewarding state-actions where models disagree)\n";
-	cout << "--n value (For TEXPLORE: n coefficient for rewarding state-actions which are novel)\n";
-
-	cout << "\n Env Options:\n";
-	cout << "--deterministic (deterministic version of domain)\n";
-	cout << "--stochastic (stochastic version of domain)\n";
-	cout << "--delay value (# steps of action delay (for mcar and tworooms)\n";
-	cout << "--lag (turn on brake lag for car driving domain)\n";
-	cout << "--highvar (have variation fuel costs in Fuel World)\n";
-	cout << "--nsectors value (# sectors for stocks domain)\n";
-	cout << "--nstocks value (# stocks for stocks domain)\n";
-
-	cout << "\n--prints (turn on debug printing of actions/rewards)\n";
-	cout << "--nepisodes value (# of episodes to run (1000 default)\n";
-	cout << "--seed value (integer seed for random number generator)\n";
-	cout << "--pretrain pre train the model\n";
-
-	cout << "\n For more info, see: http://www.ros.org/wiki/rl_experiment\n";
-
-	exit(-1);
-
-}
-
+/*
 experience generateExp(Environment* virtualEnv, int act){
 	std::vector<float> sample = virtualEnv->generateSample();
 	float virtualReward;
@@ -134,126 +82,19 @@ experience generateExp(Environment* virtualEnv, int act){
 	virtualEnv->reset();
 	return exp;
 }
+*/
 
-void save_results(std::map<int,std::vector<float>> act_success_rates, std::vector<float> &model_acc,
-		std::vector<float> &reward_acc,
-		std::vector<float> &accumulated_RL_rewards,
-		std::vector<float> &accumulated_ALL_rewards,
-		std::vector<float> &accumulated_MATCHING_rewards,
-		std::vector<float> &accumulated_OPPOSITE_rewards,
-		std::vector<float> &accumulated_RED_rewards,
-		std::vector<float> &accumulated_rewards_pick_red,
-		std::vector<float> &accumulated_rewards_pick_blue,
-		std::vector<float> &var_prop,
-		std::vector<float> &sync_prop,
-		std::vector<float> &nov_prop,
-		std::vector<float> &reward_prop,
-		boost::filesystem::path rootPath){
-
+void save_result(std::vector<float> &tab, std::string name, boost::filesystem::path rootPath){
 	ofstream ofs;
-
-	const char* pointer = reinterpret_cast<const char*>(&model_acc[0]);
-	size_t bytes = model_acc.size() * sizeof(model_acc[0]);
-	ofs.open(rootPath.string()+"/model_acc",ios::out | ios::binary);
+	const char* pointer = reinterpret_cast<const char*>(&tab[0]);
+	size_t bytes = tab.size() * sizeof(tab);
+	ofs.open(rootPath.string()+"/"+name, ios::out | ios::binary);
 	ofs.write(pointer, bytes);
 	ofs.close();
 	ofs.clear();
-
-	for (auto pair : act_success_rates){
-		pointer = reinterpret_cast<const char*>(&pair.second[0]);
-		bytes = pair.second.size() * sizeof(pair.second[0]);
-		ofs.open(rootPath.string()+"/action_"+std::to_string(pair.first),ios::out | ios::binary);
-		ofs.write(pointer, bytes);
-		ofs.close();
-		ofs.clear();
-	}
-
-	pointer = reinterpret_cast<const char*>(&reward_acc[0]);
-	bytes = reward_acc.size() * sizeof(reward_acc[0]);
-	ofs.open(rootPath.string()+"/reward_acc",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_RL_rewards[0]);
-	bytes = accumulated_RL_rewards.size() * sizeof(accumulated_RL_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_rewards",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_ALL_rewards[0]);
-	bytes = accumulated_ALL_rewards.size() * sizeof(accumulated_ALL_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_ALL_rewards",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_MATCHING_rewards[0]);
-	bytes = accumulated_MATCHING_rewards.size() * sizeof(accumulated_MATCHING_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_MATCHING_rewards",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_OPPOSITE_rewards[0]);
-	bytes = accumulated_OPPOSITE_rewards.size() * sizeof(accumulated_OPPOSITE_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_OPPOSITE_rewards",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_RED_rewards[0]);
-	bytes = accumulated_RED_rewards.size() * sizeof(accumulated_RED_rewards[0]);
-	ofs.open(rootPath.string()+"/accumulated_RED_rewards",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_rewards_pick_red[0]);
-	bytes = accumulated_rewards_pick_red.size() * sizeof(accumulated_rewards_pick_red[0]);
-	ofs.open(rootPath.string()+"/accumulated_rewards_pick_red",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&accumulated_rewards_pick_blue[0]);
-	bytes = accumulated_rewards_pick_blue.size() * sizeof(accumulated_rewards_pick_blue[0]);
-	ofs.open(rootPath.string()+"/accumulated_rewards_pick_blue",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&var_prop[0]);
-	bytes = var_prop.size() * sizeof(var_prop[0]);
-	ofs.open(rootPath.string()+"/var_prop",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&sync_prop[0]);
-	bytes = sync_prop.size() * sizeof(sync_prop[0]);
-	ofs.open(rootPath.string()+"/sync_prop",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&nov_prop[0]);
-	bytes = nov_prop.size() * sizeof(nov_prop[0]);
-	ofs.open(rootPath.string()+"/nov_prop",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
-	pointer = reinterpret_cast<const char*>(&reward_prop[0]);
-	bytes = reward_prop.size() * sizeof(reward_prop[0]);
-	ofs.open(rootPath.string()+"/reward_prop",ios::out | ios::binary);
-	ofs.write(pointer, bytes);
-	ofs.close();
-	ofs.clear();
-
 }
 
+/*
 std::pair<float,float> evaluation(Environment* env, Agent* agent, int numactions, Random* rng,
 		std::vector<float> minValues, std::vector<float> maxValues, int rRange){
 
@@ -281,7 +122,7 @@ std::pair<float,float> evaluation(Environment* env, Agent* agent, int numactions
 	model_error /= K;
 	return std::make_pair(reward_error, model_error);
 }
-
+*/
 
 int main(int argc, char **argv) {
 
@@ -302,19 +143,12 @@ int main(int argc, char **argv) {
 	bool reltrans = true;
 	bool deptrans = false;
 	float featPct = 0.2;
-	int nstates = 0;
 	int k = 1000;
 	char *filename = NULL;
 	bool stochastic = false;
-	int nstocks = 3;
-	int nsectors = 3;
-	int delay = 0;
-	bool lag = false;
-	bool highvar = false;
 	int history = 0;
 	int seed = 1;
-	float v = 0.;
-	int pretrain_steps = 0;
+	//int pretrain_steps = 0;
 	int taskTrain = ALL;
 	float nTrain = 0.;
 	float tTrain = 0.;
@@ -351,7 +185,6 @@ int main(int argc, char **argv) {
 			{"seed", 1, 0, 's'},
 			{"agent", 1, 0, 'q'},
 			{"prints", 0, 0, 'd'},
-			{"nstates", 1, 0, 'w'},
 			{"k", 1, 0, 'k'},
 			{"filename", 1, 0, 'f'},
 			{"history", 1, 0, 'y'},
@@ -359,14 +192,7 @@ int main(int argc, char **argv) {
 			{"env", 1, 0, 1},
 			{"deterministic", 0, 0, 2},
 			{"stochastic", 0, 0, 3},
-			{"delay", 1, 0, 4},
-			{"nsectors", 1, 0, 5},
-			{"nstocks", 1, 0, 6},
-			{"lag", 0, 0, 7},
-			{"nolag", 0, 0, 8},
-			{"highvar", 0, 0, 11},
 			{"nepisodes", 1, 0, 12},
-			{"v", 1, 0, 13},
 			{"pretrain", 1, 0, 14},
 			{"taskTrain",1,0,15},
 			{"nTrain",1,0,16},
@@ -382,6 +208,7 @@ int main(int argc, char **argv) {
 			{0, 0, 0, 0}
 	};
 
+	// Read and update parameters from command line arguments
 	while(-1 != (ch = getopt_long_only(argc, argv, optflags, long_options, &option_index))) {
 		switch(ch) {
 
@@ -599,113 +426,25 @@ int main(int argc, char **argv) {
 			cout << "agent: " << agentType << endl;
 			break;
 
-		case 'd':
-			PRINTS = true;
-			break;
-
-		case 'w':
-			nstates = std::atoi(optarg);
-			cout << "nstates for discretization: " << nstates << endl;
-			break;
-
 		case 2:
 			stochastic = false;
 			cout << "stochastic: " << stochastic << endl;
 			break;
-
-		case 11:
-		{
-			if (strcmp(envType, "fuelworld") == 0){
-				highvar = true;
-				cout << "fuel world fuel cost variation: " << highvar << endl;
-			} else {
-				cout << "--highvar is only a valid option for the fuelworld domain." << endl;
-				exit(-1);
-			}
-			break;
-		}
 
 		case 3:
 			stochastic = true;
 			cout << "stochastic: " << stochastic << endl;
 			break;
 
-		case 4:
-		{
-			if (strcmp(envType, "mcar") == 0 || strcmp(envType, "tworooms") == 0){
-				delay = std::atoi(optarg);
-				cout << "delay steps: " << delay << endl;
-			} else {
-				cout << "--delay option is only valid for the mcar and tworooms domains" << endl;
-				exit(-1);
-			}
-			break;
-		}
-
-		case 5:
-		{
-			if (strcmp(envType, "stocks") == 0){
-				nsectors = std::atoi(optarg);
-				cout << "nsectors: " << nsectors << endl;
-			} else {
-				cout << "--nsectors option is only valid for the stocks domain" << endl;
-				exit(-1);
-			}
-			break;
-		}
-
-		case 6:
-		{
-			if (strcmp(envType, "stocks") == 0){
-				nstocks = std::atoi(optarg);
-				cout << "nstocks: " << nstocks << endl;
-			} else {
-				cout << "--nstocks option is only valid for the stocks domain" << endl;
-				exit(-1);
-			}
-			break;
-		}
-
-		case 7:
-		{
-			if (strcmp(envType, "car2to7") == 0 || strcmp(envType, "car7to2") == 0 || strcmp(envType, "carrandom") == 0){
-				lag = true;
-				cout << "lag: " << lag << endl;
-			} else {
-				cout << "--lag option is only valid for car velocity tasks" << endl;
-				exit(-1);
-			}
-			break;
-		}
-
-		case 8:
-		{
-			if (strcmp(envType, "car2to7") == 0 || strcmp(envType, "car7to2") == 0 || strcmp(envType, "carrandom") == 0){
-				lag = false;
-				cout << "lag: " << lag << endl;
-			} else {
-				cout << "--nolag option is only valid for car velocity tasks" << endl;
-				exit(-1);
-			}
-			break;
-		}
-
 		case 1:
 			// already processed this one
 			cout << "env: " << envType << endl;
 			break;
 
-		case 12:
-			NUMEPISODES = std::atoi(optarg);
-			cout << "Num Episodes: " << NUMEPISODES << endl;
-			break;
-		case 13:
-			v = std::atof(optarg);
-			break;
-		case 14:
+		/*case 14:
 			PRETRAIN = true;
 			pretrain_steps = std::atof(optarg);
-			break;
+			break;*/
 		case 15:
 			taskTrain = std::atoi(optarg);
 			break;
@@ -740,22 +479,19 @@ int main(int argc, char **argv) {
 			stepsEval = std::atof(optarg);
 			break;
 		default:
-			displayHelp();
+			return 1;
 			break;
 		}
 	}
-	cout << "planner :" << plannerType << endl;
-	cout << "model : " << modelType << endl;
-	cout << "prediction " << predType << endl;
 
+	// Random generator for all random searches/selections
 	Random rng(1 + seed);
 
-	std::vector<int> statesPerDim;
-
-	// agent->evaluate_model();
+	// Init time
 	auto t = std::time(nullptr);
 	auto tm = *std::localtime(&t);
 
+	// Init name for saving results
 	std::ostringstream oss;
 	oss << std::fixed << std::setprecision(1);
 	oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
@@ -773,42 +509,40 @@ int main(int argc, char **argv) {
 
 	std::string name = oss.str();
 
-
 	int eval_freq = 25;
 	int maxsteps = stepsEval+stepsTrain;
 
-//	float total_reward = 0;
-//	float total_tutor_reward = 0.;
-
-
 	for (unsigned j = 0; j < NUMTRIALS; ++j) {
 
-		boost::filesystem::path rootPath ( "/home/pierre/Dropbox/resultats/toSort_different/" + name +"/trial_"+std::to_string(j));
+		boost::filesystem::path rootPath ( "/home/pierre/workspace/myTexplore/resultats/folder1/" + name +"/trial_"+std::to_string(j));
 		boost::system::error_code returnedError;
 
-		boost::filesystem::create_directories( rootPath, returnedError );
+		boost::filesystem::create_directories(rootPath, returnedError);
 
-		std::vector<float> model_acc((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> model_acc_train((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		// Add pretrain steps in vector lengths if need be
+		// Initialize all result vectors
+		std::vector<float> model_acc((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> model_acc_train((maxsteps)/eval_freq+1, 0.);
 
-		std::vector<float> reward_acc((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> reward_acc_train((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> reward_acc((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> reward_acc_train((maxsteps)/eval_freq+1, 0.);
 
-		std::vector<float> accumulated_RL_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_ALL_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_MATCHING_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_OPPOSITE_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
-		std::vector<float> accumulated_RED_rewards((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_RL_rewards((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_ALL_rewards((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_MATCHING_rewards((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_OPPOSITE_rewards((maxsteps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_RED_rewards((maxsteps)/eval_freq+1, 0.);
 
-		std::vector<float> accumulated_rewards_pick_red((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_rewards_pick_red((maxsteps)/eval_freq+1, 0.);
 
-		std::vector<float> accumulated_rewards_pick_blue((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+		std::vector<float> accumulated_rewards_pick_blue((maxsteps)/eval_freq+1, 0.);
 
-		std::vector<float> var_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
-		std::vector<float> nov_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
-		std::vector<float> reward_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
-		std::vector<float> sync_prop((maxsteps+pretrain_steps)/eval_freq+1, 0);
+		std::vector<float> var_prop((maxsteps)/eval_freq+1, 0);
+		std::vector<float> nov_prop((maxsteps)/eval_freq+1, 0);
+		std::vector<float> reward_prop((maxsteps)/eval_freq+1, 0);
+		std::vector<float> sync_prop((maxsteps)/eval_freq+1, 0);
 
+		// Initialize global results for this trial
 		int trial_step = 0;
 		float trial_RL_reward = 0.;
 		float trial_ALL_reward = 0.;
@@ -816,9 +550,8 @@ int main(int argc, char **argv) {
 		float trial_OPPOSITE_reward = 0.;
 		float trial_RED_reward = 0.;
 
-		float trial_reward_pick_red = 0.;
-		float trial_reward_pick_blue = 0.;
-		float trial_tutor_reward_2 = 0.;
+		//float trial_reward_pick_red = 0.;
+		//float trial_reward_pick_blue = 0.;
 
 		float avg_var_prop = 0.;
 		float avg_nov_prop = 0.;
@@ -826,59 +559,53 @@ int main(int argc, char **argv) {
 		float avg_sync_prop = 0.;
 
 		Environment* e;
+		// Only infiniteBlocks is supported for now
+
 		if (strcmp(envType, "infiniteBlocks") == 0){
-			if (PRINTS) cout << "Environment: infiniteBlocks \n";
 			e = new InfiniteBlocks(rng, roomsize, stochastic, rTrain, taskTrain);
 		}
-
 		else {
 			std::cerr << "Invalid env type" << endl;
 			exit(-1);
 		}
 
-		const int numactions = e->getNumActions(); // Most agents will need this?
+		const int numactions = e->getNumActions();
 
-		std::map<int, std::vector<float>> act_success_rates;
+		/*std::map<int, std::vector<float>> act_success_rates;
 		for (int i = 0; i<numactions; i++){
-			act_success_rates[i] = std::vector<float>((maxsteps+pretrain_steps)/eval_freq+1, 0.);
+			act_success_rates[i] = std::vector<float>((maxsteps)/eval_freq+1, 0.);
 		}
 		std::map<int, std::pair<float,float>> act_success_rate;
 		for (int i=0; i<numactions;i++){
 			act_success_rate[i] = std::make_pair(0.,0.);
-		}
-
-
-		const int num_tutor_actions = e->getNumTutorActions();
+		}*/
 
 		std::map<int,std::string> action_names = e->get_action_names();
 
+		// get max/min value for all features of the state in the environment.
+		// This is cheating as the agent should not know this beforehand.
 		std::vector<float> minValues;
 		std::vector<float> maxValues;
 		e->getMinMaxFeatures(&minValues, &maxValues);
 		bool episodic = e->isEpisodic();
 
-		statesPerDim.resize(minValues.size(),nstates);
-
-		cout << "Environment is ";
-		if (!episodic) cout << "NOT ";
-		cout << "episodic." << endl;
-
 		// get max/min reward for the domain
 		float rMax = 0.0;
 		float rMin = -1.0;
-
 		e->getMinMaxReward(&rMin, &rMax);
 		float rRange = rMax - rMin;
 
-		e->setTutor(true);
+		// Initializing the first task and the associated reward
 		e->setReward(rTrain);
 		e->setTask(taskTrain);
 
 		// Construct agent here.
 		Agent* agent;
 
+		//Temporary
+		float vTrain = 0.;
+
 		if (strcmp(agentType, "modelbased") == 0 || strcmp(agentType, "rmax") || strcmp(agentType, "texplore")){
-			if (PRINTS) cout << "Agent: Model Based" << endl;
 			agent = new ModelBasedAgent(numactions,
 					discountfactor,
 					rMax, rRange,
@@ -891,8 +618,7 @@ int main(int argc, char **argv) {
 					(1.0/actrate), //0.1, //0.1, //0.01, // max time
 					M,
 					minValues, maxValues,
-					statesPerDim,//0,
-					history, v, nTrain, tTrain,
+					history, vTrain, nTrain, tTrain,
 					deptrans, reltrans, featPct, stochastic, episodic, batchFreq,
 					rng);
 			agent->setTrueEnv(e);
@@ -910,7 +636,8 @@ int main(int argc, char **argv) {
 		virtualInfinite->setDebug(false);
 		virtualInfinite->setVerbose(false);
 
-		if (PRETRAIN && pretrain_steps>0){
+		/*
+		if (pretrain_steps>0){
 
 			std::cout << "Pretraining :" <<std::endl;
 
@@ -979,6 +706,7 @@ int main(int argc, char **argv) {
 
 			trial_step += pretrain_steps;
 		}
+		*/
 
 
 		// STEP BY STEP DOMAIN
@@ -1028,10 +756,6 @@ int main(int argc, char **argv) {
 				trial_OPPOSITE_reward += info.OPPOSITE_reward;
 				trial_RED_reward += info.RED_reward;
 
-				trial_reward_pick_red += info.reward_pick_red;
-				trial_reward_pick_blue += info.reward_pick_blue;
-				act_success_rate[a].first++;
-				act_success_rate[a].second += info.success;
 //				trial_tutor_reward_2 += t_feedback.reward;
 
 				if (step % eval_freq == 0){
@@ -1040,21 +764,13 @@ int main(int argc, char **argv) {
 
 					//std::pair<float,float> errors = evaluation(virtualInfinite, agent, numactions, &rng, minValues, maxValues, rRange);
 
-					//reward_acc[(trial_step+step)/eval_freq] += errors.first;
-					//model_acc[(trial_step+step)/eval_freq] += errors.second;
 
-					//std::cout<< "error reward : "<<errors.first<<", error model : "<<errors.second<<std::endl;
-					for (int i=0; i<numactions; i++){
-						act_success_rates[i][(trial_step+step)/eval_freq] += act_success_rate[i].second/act_success_rate[i].first;
-					}
 					accumulated_RL_rewards[(trial_step+step)/eval_freq] += trial_RL_reward;
 					accumulated_ALL_rewards[(trial_step+step)/eval_freq] += trial_ALL_reward;
 					accumulated_MATCHING_rewards[(trial_step+step)/eval_freq] += trial_MATCHING_reward;
 					accumulated_OPPOSITE_rewards[(trial_step+step)/eval_freq] += trial_OPPOSITE_reward;
 					accumulated_RED_rewards[(trial_step+step)/eval_freq] += trial_RED_reward;
 
-					accumulated_rewards_pick_red[(trial_step+step)/eval_freq] += trial_reward_pick_red;
-					accumulated_rewards_pick_blue[(trial_step+step)/eval_freq] += trial_reward_pick_blue;
 
 					var_prop[(trial_step+step)/eval_freq] += avg_var_prop;
 					nov_prop[(trial_step+step)/eval_freq] += avg_nov_prop;
@@ -1065,20 +781,18 @@ int main(int argc, char **argv) {
 
 				if (step % 200 == 0 && step != 0){
 
-					save_results(act_success_rates, model_acc,
-							reward_acc,
-							accumulated_RL_rewards,
-							accumulated_ALL_rewards,
-							accumulated_MATCHING_rewards,
-							accumulated_OPPOSITE_rewards,
-							accumulated_RED_rewards,
-							accumulated_rewards_pick_red,
-							accumulated_rewards_pick_blue,
-							var_prop,
-							sync_prop,
-							nov_prop,
-							reward_prop,
-							rootPath);
+					save_result(model_acc, "model_acc", rootPath);
+
+					save_result(reward_acc, "reward_acc", rootPath);
+					save_result(accumulated_RL_rewards, "accumulated_RL_rewards", rootPath);
+					save_result(accumulated_ALL_rewards, "accumulated_ALL_rewards", rootPath);
+					save_result(accumulated_MATCHING_rewards, "accumulated_MATCHING_rewards", rootPath);
+					save_result(accumulated_OPPOSITE_rewards, "accumulated_OPPOSITE_rewards", rootPath);
+					save_result(accumulated_RED_rewards, "accumulated_RED_rewards", rootPath);
+					save_result(var_prop, "var_prop", rootPath);
+					save_result(sync_prop, "sync_prop", rootPath);
+					save_result(nov_prop, "nov_prop", rootPath);
+					save_result(reward_prop, "reward_prop", rootPath);
 
 
 				}

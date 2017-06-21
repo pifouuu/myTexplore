@@ -48,42 +48,7 @@ public:
                   float epsilon, float lambda, float MAX_TIME,
                   float m, const std::vector<float> &featmin, 
                   const std::vector<float> &featmax,
-                  int statesPerDim, int history, float v, float n, float tutorBonus,
-                  bool depTrans, bool relTrans, float featPct,
-                  bool stoch, bool episodic, int batchFreq, Random rng = Random());
-
-  /** Standard constructor 
-      \param numactions The number of possible actions
-      \param gamma The discount factor
-      \param rmax max reward value, given out for unknown states
-      \param rrange range between max and min reward in domain
-      \param modelType specifies model type
-      \param exploreType specifies exploration type
-      \param predType specifies how to combine multiple models
-      \param nModels number of models in ensemble
-      \param plannerType specifies planner type
-      \param epsilon used for epsilon-greedy action selection
-      \param lambda used for eligibility traces in uct planning
-      \param MAX_TIME amount of time the uct planners are given for planning
-      \param m # visits required for a state to become known when doing rmax exploration
-      \param featmin min values of each feature
-      \param featmax max values of each feature
-      \param statesPerDim # of values to discretize each feature into
-      \param history # of previous actions to use for delayed domains
-      \param b bonus reward used when models disagree
-      \param depTrans assume dependent or indep. feature transitions
-      \param relTrans model transitions relatively vs absolutely
-      \param featPct pct of feature to remove from set used for each split in tree
-      \param stoch is the domain stochastic?
-      \param episodic is the domain episodic?
-      \param rng Initial state of the random number generator to use*/
-  ModelBasedAgent(int numactions, float gamma, float rmax, float rrange, 
-                  int modelType,
-                  int predType, int nModels, int plannerType,
-                  float epsilon, float lambda, float MAX_TIME,
-                  float m, const std::vector<float> &featmin, 
-                  const std::vector<float> &featmax,
-                  std::vector<int> statesPerDim, int history, float v, float n, float tutorBonus,
+                  int history, float v, float n, float tutorBonus,
                   bool depTrans, bool relTrans, float featPct,
                   bool stoch, bool episodic, int batchFreq, Random rng = Random());
   
@@ -203,8 +168,8 @@ private:
   const float M;
   const std::vector<int> statesPerDim;
   const int history;
-  const float v;
   const float n;
+  const float v;
   const float tutorBonus;
   const bool depTrans;
   const bool relTrans;

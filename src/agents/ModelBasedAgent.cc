@@ -32,7 +32,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
                                  float epsilon, float lambda, float MAX_TIME,
                                  float m, const std::vector<float> &featmin,
                                  const std::vector<float> &featmax, 
-                                 std::vector<int> nstatesPerDim, int history, float v, float n, float tutorBonus,
+                                 int history, float v, float n, float tutorBonus,
                                  bool depTrans, bool relTrans, float featPct, bool stoch, bool episodic, int batchFreq,
                                  Random rng):
   featmin(featmin), featmax(featmax),
@@ -41,7 +41,7 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
   modelType(modelType),
   predType(predType), nModels(nModels), plannerType(plannerType),
   epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
-  M(m), statesPerDim(nstatesPerDim), history(history), v(v), n(n), tutorBonus(tutorBonus),
+  M(m), history(history), v(v), n(n), tutorBonus(tutorBonus),
   depTrans(depTrans), relTrans(relTrans), featPct(featPct),
   stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
 {
@@ -55,35 +55,6 @@ ModelBasedAgent::ModelBasedAgent(int numactions, float gamma,
 }
 
 
-
-ModelBasedAgent::ModelBasedAgent(int numactions, float gamma, 
-                                 float rmax, float rrange,
-                                 int modelType,
-                                 int predType, int nModels, int plannerType, 
-                                 float epsilon, float lambda, float MAX_TIME,
-                                 float m, const std::vector<float> &featmin,
-                                 const std::vector<float> &featmax, 
-                                 int nstatesPerDim, int history, float v, float n, float tutorBonus,
-                                 bool depTrans, bool relTrans, float featPct,
-				 bool stoch, bool episodic, int batchFreq, Random rng):
-  featmin(featmin), featmax(featmax),
-  numactions(numactions), gamma(gamma), rmax(rmax), rrange(rrange),
-  qmax(rmax/(1.0-gamma)), 
-  modelType(modelType),
-  predType(predType), nModels(nModels), plannerType(plannerType),
-  epsilon(epsilon), lambda(lambda), MAX_TIME(MAX_TIME),
-  M(m), statesPerDim(featmin.size(),nstatesPerDim),  history(history), v(v), n(n), tutorBonus(tutorBonus),
-  depTrans(depTrans), relTrans(relTrans), featPct(featPct),
-  stoch(stoch), episodic(episodic), rng(rng), batchFreq(batchFreq)
-{
-
-  if (statesPerDim[0] > 0){
-    cout << "MBA: Planner will use states discretized by " << statesPerDim[0] << " with continuous model" << endl;
-  }
-
-  initParams();
-
-}
 
 
 void ModelBasedAgent::initParams(){

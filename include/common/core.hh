@@ -286,13 +286,11 @@ public:
 	virtual std::vector<float> generate_state() = 0;
 	virtual float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues) = 0;
-	virtual std::pair<std::vector<float>,float> getMostProbNextState(std::vector<float> s, int action) = 0;
 
 	/** Allows an agent to affect its environment.
 		\param action The action the agent wishes to apply.
 		\return The immediate one-step reward caused by the action. */
 	virtual void apply_tutor(int action) = 0;
-	virtual void setTutor(bool b) = 0;
 	virtual tutor_feedback tutorAction() = 0;
 	virtual std::vector<float> &getTstate() = 0;
 	/** Determines whether the environment has reached a terminal state.
@@ -328,8 +326,6 @@ public:
 
 	/** Returns if the domain is episodic (true by default). */
 	virtual bool isEpisodic(){ return true; };
-
-	virtual std::vector<float> generateSample() = 0;
 
 	/** Get seeding experiences for agent. */
 	virtual std::vector<experience> getSeedings()

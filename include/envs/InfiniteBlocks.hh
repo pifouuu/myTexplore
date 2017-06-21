@@ -19,7 +19,7 @@ class InfiniteBlocks: public Environment {
 public:
 	// Constructor
 
-	InfiniteBlocks(Random &rand, int size, bool stochastic, float finalReward, int task);
+	InfiniteBlocks(Random &rand, int size, bool stochastic, float reward, int task);
 
 	/* InfiniteBlocks is not supposed to become a base class so no need
 	 * for a virtual constructor ? TO be changed if so.
@@ -35,7 +35,7 @@ public:
 	std::vector<float> generate_state();
 	float getEuclidianDistance(std::vector<float> & s1, std::vector<float> & s2,
 			std::vector<float> minValues, std::vector<float>maxValues);
-	std::pair<std::vector<float>,float> getMostProbNextState(std::vector<float> s, int action);
+	//std::pair<std::vector<float>,float> getMostProbNextState(std::vector<float> s, int action);
 	void getMinMaxFeatures(std::vector<float> *minFeat, std::vector<float> *maxFeat);
 
 	void getMinMaxReward(float* minR, float* maxR);
@@ -56,7 +56,6 @@ public:
 
 	int get_blocks_in() const;
 	int get_blocks_right() const;
-	void setTutor(bool b);
 	void setTask(int task);
 	void setReward(float reward);
 
@@ -70,27 +69,23 @@ public:
 
 	float* agent_ns;
 	float* agent_ew;
-	float* blue_block_hold;
 	float* red_block_hold;
-	float* red_blocks_ns;
-	float* blue_blocks_ns;
-	float* red_blocks_ew;
-	float* blue_blocks_ew;
+	float* blue_block_hold;
 	float* agent_eye_ns;
 	float* agent_eye_ew;
 	float* red_box_ns;
 	float* red_box_ew;
 	float* blue_box_ns;
 	float* blue_box_ew;
+	float* red_blocks_ns;
+	float* red_blocks_ew;
+	float* blue_blocks_ns;
+	float* blue_blocks_ew;
 
 	std::vector<float> t_state;
 	float* tutor_eye_ns;
 	float* tutor_eye_ew;
 
-	int red_box_count_red;
-	int blue_box_count_red;
-	int red_box_count_blue;
-	int blue_box_count_blue;
 
 	std::map<std::string, int> tutor_actions;
 	std::map<std::string, int> actions;
@@ -107,21 +102,17 @@ public:
 	int applyNoise(int action);
 	std::vector<std::pair<int,int>> get_nearby_pos(int, int);
 	bool isSyncTutor(std::vector<float>) const;
-	std::vector<int> find_red_block_under_hand();
-	std::vector<int> find_blue_block_under_hand();
 	std::vector<int> find_block_under_eye();
 	bool eye_hand_sync();
 	void setDebug(bool b);
 	void setVerbose(bool b);
 	tutor_feedback tutorAction();
-	std::vector<float> generateSample();
 
 
 	bool BRDEBUG = false;
 	bool IS_REAL = true;
 	bool NOPICKBACK = true;
 	int numstep;
-	std::map<int, std::list<int>> actions_occurences;
 
 };
 
